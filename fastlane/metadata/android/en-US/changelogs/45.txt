@@ -1,0 +1,2 @@
+New name: Depot-Kompass, new package name app.depotkompass – please reinstall once and bring your data along via the .dksafe backup.
+New: credits listing all components and data sources used, "Support" section with copy buttons.

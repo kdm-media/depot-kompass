@@ -1,0 +1,6 @@
+Buchungstag;Geschäftsart;Wertpapierbezeichnung;ISIN;Stück/Nominale;Kurs;Betrag (EUR);Provision;Steuern
+03.02.2025;Kauf;Beispiel Werke AG;DE000TEST0012;20;45,50;-910,00;4,95;
+10.03.2025;Kauf;Beispiel Werke AG;DE000TEST0012;10;48,00;-480,00;4,95;
+15.05.2025;Dividende;Beispiel Werke AG;DE000TEST0012;30;;36,00;;9,50
+20.08.2025;Verkauf;Beispiel Werke AG;DE000TEST0012;12;52,00;624,00;4,95;8,10
+21.08.2025;Depotentgelt;;;;;-2,00;;

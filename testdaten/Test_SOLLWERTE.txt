@@ -1,0 +1,13 @@
+Großer Test – Stand 02.11.2026 (erfundene Daten, Zeitraum 11.11.2024–02.11.2026)
+
+Kraken: Wert heute 82.580,38 €, Rendite 46,23 %, max. Drawdown −27,38 %, Hoch 104.241,24 € (2026-09-07), Tief 27.398,45 € (2024-11-18), realisiert 1.266,02 €, Dividenden 0,00 €, Konto 10.765,42 €, 5 Positionen
+Bitvavo: Wert heute 46.020,68 €, Rendite 59,16 %, max. Drawdown −33,90 %, Hoch 66.524,80 € (2026-08-24), Tief 9.425,08 € (2024-12-09), realisiert 2.746,71 €, Dividenden 0,00 €, Konto 7.756,57 €, 2 Positionen
+OKX: Wert heute 9.649,79 €, Rendite -10,66 %, max. Drawdown −35,34 %, Hoch 22.424,24 € (2026-09-28), Tief 3.146,89 € (2025-03-10), realisiert -1.302,31 €, Dividenden 0,00 €, 2 Positionen
+Scalable: Wert heute 216.567,00 €, Rendite 17,02 %, max. Drawdown −7,56 %, Hoch 216.635,10 € (2026-10-19), Tief 120.119,87 € (2024-12-16), realisiert 96,35 €, Dividenden 338,59 €, 5 Positionen
+Smartbroker: Wert heute 367.687,20 €, Rendite 27,63 %, max. Drawdown −4,00 %, Hoch 375.967,58 € (2026-10-12), Tief 300.329,00 € (2024-11-25), realisiert 9.582,88 €, Dividenden 8.420,36 €, 19 Positionen
+Trade Republic: Wert heute 105.549,66 €, Rendite 10,88 %, max. Drawdown −2,42 %, Hoch 110.615,75 € (2026-05-04), Tief 100.000,00 € (2024-11-11), realisiert 7.644,61 €, Dividenden 0,00 €, Konto 85.387,03 €, 2 Positionen
+
+GESAMT: Wert heute 828.054,72 €, Rendite 23,35 %, max. Drawdown −5,26 %, Hoch 856.277,17 € (2026-09-28), Tief 100.000,00 € (2024-11-11)
+OHNE Kursliste (nur die 6 Broker-Dateien, offline aus den Kauf-/Verkaufskursen): Wert 818.450,07 €, eingesetzt 686.454,07 €, Rendite 21,31 %, max. Drawdown −3,44 %
+MIT Kursliste (Test_7 zuletzt): siehe GESAMT oben; eingesetzt 686.454,07 €
+Daytrading TR: 286 Handelstage, 156 Gewinntage, 561 Verkäufe, Summe 7.644,61 €

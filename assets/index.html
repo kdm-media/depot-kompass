@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<!-- Sicherheit (0.16): nur eigene Skripte, kein Netz aus der Oberflaeche, kein javascript:-Link -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file: 'wasm-unsafe-eval'; style-src 'self' file: 'unsafe-inline'; img-src 'self' file: data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; object-src 'none'; frame-src 'none'">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Depot-Kompass</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="kopf">
+  <div class="marke"><img src="logo.svg" alt="" class="logo-bild"><span id="titel">Depot-Kompass</span></div>
+  <div style="display:flex;gap:8px">
+  <button id="aktualisieren-oben" class="knopf-rund" type="button" data-los="kurse" aria-label="Kurse und Daten aktualisieren" title="Kurse &amp; Daten aktualisieren">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 4a8 8 0 0 1 7.4 5H17v2h6V5h-2v2.7A10 10 0 0 0 2 12h2a8 8 0 0 1 8-8Zm8 8a8 8 0 0 1-15.4 3H7v-2H1v6h2v-2.7A10 10 0 0 0 22 12h-2Z"/></svg>
+  </button>
+  <button class="knopf-rund" type="button" data-ziel="mehr" aria-label="Mehr: Import, Einstellungen, Sicherheit" title="Mehr">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3h-4l-.4 2.9a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1L11 21h4l.4-2.9a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5L19.4 13ZM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7Z"/></svg>
+  </button>
+  <button id="auge" class="knopf-rund" type="button" aria-pressed="false" title="Beträge ausblenden">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 5c-5 0-9 4.5-10 7 1 2.5 5 7 10 7s9-4.5 10-7c-1-2.5-5-7-10-7Zm0 11.5A4.5 4.5 0 1 1 12 7.5a4.5 4.5 0 0 1 0 9Zm0-7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"/></svg>
+  </button>
+  </div>
+</header>
+
+<main id="inhalt"></main>
+
+<nav class="leiste" id="leiste">
+  <button data-ziel="uebersicht"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10Zm0 8h8v-6H3v6Zm10 0h8V11h-8v10Zm0-18v6h8V3h-8Z"/></svg><span class="l">Übersicht</span></button>
+  <button data-ziel="positionen"><svg viewBox="0 0 24 24"><path d="M4 6h16v2H4V6Zm0 5h16v2H4v-2Zm0 5h16v2H4v-2Z"/></svg><span class="l">Positionen</span></button>
+  <button data-ziel="kalender"><svg viewBox="0 0 24 24"><path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10ZM8 12h3v3H8v-3Z"/></svg><span class="l">Kalender</span></button>
+  <button data-ziel="news"><svg viewBox="0 0 24 24"><path d="M4 4h13v14a2 2 0 0 0 2 2H6a2 2 0 0 1-2-2V4Zm15 4h1v10a1 1 0 0 1-2 0V8h1ZM7 7v4h7V7H7Zm0 6v2h7v-2H7Z"/></svg><span class="l">News</span></button>
+  <button data-ziel="notizen"><svg viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5V3Zm9 1.5V8h3.5L14 4.5ZM8 11v2h8v-2H8Zm0 4v2h6v-2H8Z"/></svg><span class="l">Notizen</span></button>
+  <button data-ziel="ki"><svg viewBox="0 0 24 24"><path d="M10 2l1.9 5.6L17.5 9.5l-5.6 1.9L10 17l-1.9-5.6L2.5 9.5l5.6-1.9L10 2Zm8 10l.95 2.55L21.5 15.5l-2.55.95L18 19l-.95-2.55-2.55-.95 2.55-.95L18 12Z"/></svg><span class="l">KI</span></button>
+</nav>
+
+<div id="meldung" role="status" aria-live="polite"></div>
+<script src="sprache.js"></script>
+<script src="sprache_en.js"></script>
+<script src="pdflesen.js"></script>
+<script src="texterkennung.js"></script>
+<script src="nachkauf.js"></script>
+<script src="extras.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

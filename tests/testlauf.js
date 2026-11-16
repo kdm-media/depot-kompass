@@ -1,0 +1,1419 @@
+// Testlauf Depot-Kompass - laeuft in der Testseite (headless Chromium) und
+// meldet das Ergebnis per Seitentitel bzw. postMessage an den Rahmen.
+// Sollwerte: tests/erwartet.json (Python, unabhaengig gerechnet).
+"use strict";
+
+const nah = (a, b, tol = 0.011) => Math.abs(a - b) <= tol;
+
+async function datei(name, ordner = "beispieldaten/") { return (await fetch(ordner + name)).text(); }
+
+async function importiere(text, name, alles = true, konto = null) {
+  ui.einfuehrung = null; ui.seite = "daten";
+  ui.vorschau = erkennen(text, name); zeichnen();
+  if (alles && document.querySelector('[data-umfang="alles"]')) document.querySelector('[data-umfang="alles"]').click();
+  if (konto) {                       // wie von Hand: Kontoname in der Vorschau aendern
+    const f = document.getElementById("vorschau-konto");
+    f.value = konto; f.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+  const v = ui.vorschau, n = v.buchungen.filter((b) => !b.ueberspringen).length;
+  vorschauUebernehmen();
+  return { format: v.format, n, ziel: v.ziel };
+}
+
+async function beispielStand() {
+  localStorage.clear();
+  S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1");
+  await importiere(await datei("tr_beispiel.csv"), "Transaktionsexport.csv");
+  await importiere(await datei("kraken_ledger.csv"), "ledgers.csv");
+  oeffnen("d1");
+}
+
+async function rechnen() {
+  const soll = await (await fetch("erwartet.json")).json();
+  const f = [];
+  const pruefe = (ok, text) => { if (!ok) f.push(text); };
+
+  await beispielStand();
+  // --- Trade Republic
+  const b = bestand();
+  for (const [isin, [st, ein]] of Object.entries(soll.tr.positionen)) {
+    const p = Object.values(b).find((x) => x.instrument === isin);
+    pruefe(p && nah(p.stueck, st, 1e-9), `TR ${isin}: Stück ${p?.stueck} statt ${st}`);
+    pruefe(p && nah(p.einstand, ein), `TR ${isin}: Einstand ${p?.einstand} statt ${ein}`);
+  }
+  const real = Object.values(b).reduce((s, x) => s + x.realisiert, 0);
+  const div = Object.values(b).reduce((s, x) => s + x.dividenden, 0);
+  pruefe(nah(real, soll.tr.realisiert), `TR realisiert ${real} statt ${soll.tr.realisiert}`);
+  pruefe(nah(div, soll.tr.dividenden), `TR Dividenden ${div} statt ${soll.tr.dividenden}`);
+  pruefe(nah(kontoStand().stand, soll.tr.konto), `TR Konto ${kontoStand().stand} statt ${soll.tr.konto}`);
+  const tage = gvJeTag(["d1"]);
+  for (const [d, g] of Object.entries(soll.tr.tage)) pruefe(tage[d] && nah(tage[d].gv, g), `G/V ${d}: ${tage[d]?.gv} statt ${g}`);
+  pruefe(Object.keys(tage).length === Object.keys(soll.tr.tage).length, `G/V-Tage: ${Object.keys(tage).length}`);
+
+  // --- doppelt importieren darf nichts aendern
+  const vorher = D.buchungen.length;
+  const r = await importiere(await datei("tr_beispiel.csv"), "Transaktionsexport.csv");
+  oeffnen(r.ziel === "neu" ? "d1" : r.ziel);
+  pruefe(D.buchungen.length === vorher, `Doppelimport: ${D.buchungen.length - vorher} neue Buchungen`);
+
+  // --- Kraken: eigenes Depot, Bestand, Konto, Haltefristen (FIFO)
+  const kid = Object.keys(S.depots).find((id) => S.depots[id].name === "Kraken");
+  pruefe(!!kid, "Kraken-Depot nicht automatisch angelegt");
+  if (kid) {
+    oeffnen(kid);
+    const ada = Object.values(bestand()).find((x) => x.instrument === "ADA");
+    pruefe(ada && nah(ada.stueck, soll.kraken.ada[0], 1e-9) && nah(ada.einstand, soll.kraken.ada[1], 1e-3) && nah(ada.realisiert, soll.kraken.ada[2], 1e-3),
+      `Kraken ADA ${JSON.stringify(ada && [ada.stueck, ada.einstand, ada.realisiert])} statt ${soll.kraken.ada}`);
+    pruefe(nah(kontoStand().stand, soll.kraken.konto), `Kraken Konto ${kontoStand().stand} statt ${soll.kraken.konto}`);
+    const hf = haltefristen().filter((x) => x.instrument === "ADA").map((x) => [x.kauf, rund(x.stueck, 8), x.ende]);
+    pruefe(JSON.stringify(hf) === JSON.stringify(soll.kraken.haltefristen), `Haltefristen ${JSON.stringify(hf)}`);
+    oeffnen("d1");
+  }
+
+  // --- Wertverlauf, Drawdown, KGV (kuenstliches Depot)
+  const t0 = Date.UTC(2026, 0, 5) / 1000, w = 7 * 86400;
+  S.depots.v = neuesDepot("Verlauf", "beobachtet"); oeffnen("v");
+  D.instrumente.A = { name: "Test", art: "Aktie", kurs: 120, faktorEUR: 1,
+    verlauf: { punkte: [100, 110, 99, 120].map((c, k) => [t0 + k * w, c]).concat(Array.from({ length: 8 }, (_, k) => [t0 + (4 + k) * w, 120])) } };
+  const tag = (k) => new Date((t0 + k * w) * 1000).toISOString().slice(0, 10);
+  D.buchungen = [{ nr: 1, typ: "kauf", datum: tag(0), instrument: "A", konto: "K", stueck: 1, kurs: 100 },
+                 { nr: 2, typ: "kauf", datum: tag(2), instrument: "A", konto: "K", stueck: 1, kurs: 99 }];
+  const v = wertverlauf(["v"]).gesamt;
+  pruefe(JSON.stringify(v.index.slice(0, 4).map((x) => rund(x, 4))) === JSON.stringify(soll.verlauf.index), `Index ${v.index.slice(0, 4)}`);
+  pruefe(nah(v.rendite * 100, soll.verlauf.rendite, 1e-3), `Rendite ${v.rendite * 100}`);
+  pruefe(nah(v.drawdown * 100, soll.verlauf.drawdown, 1e-3), `Drawdown ${v.drawdown * 100}`);
+  const kgv = depotKgv([{ wert: 600, inst: { art: "Aktie", termine: { kgv: 20 } } }, { wert: 400, inst: { art: "Aktie", termine: { kgv: 10 } } }]);
+  pruefe(nah(kgv.kgv, soll.kgv, 1e-3), `KGV ${kgv.kgv}`);
+  delete S.depots.v; oeffnen("d1");
+
+  // --- Sachwerte: Kaufpreis mit Wertverlust, oder Wert von Hand; zaehlen nur im Gesamtvermoegen
+  const vor2 = new Date(Date.now() - 2 * 365.25 * 864e5).toISOString().slice(0, 10);
+  S.sachwerte = [{ id: "s1", name: "Laptop", art: "Technik", kaufdatum: vor2, kaufpreis: 2000, verlust: 25, wert: null },
+                 { id: "s2", name: "Kamera", art: "Technik", kaufdatum: "", kaufpreis: 900, verlust: 25, wert: 500 }];
+  pruefe(nah(sachwerteSumme(), 2000 * 0.75 ** 2 + 500, 0.5), `Sachwerte ${sachwerteSumme()} statt ${2000 * 0.75 ** 2 + 500}`);
+  ui.seite = "depots"; zeichnen();
+  pruefe(/Gesamtvermögen \(Depots \+ Cash \+ Sachwerte\)/.test(document.getElementById("inhalt").innerHTML), "Sachwerte fehlen im Gesamtvermögen");
+  pruefe(!!document.querySelector(".fuss-hinweis"), "Hinweis keine Anlageberatung/Garantie fehlt");
+
+  // --- Eigene News-Quelle (RSS + Atom), Filter auf eigene Werte
+  const rss = `<?xml version="1.0"?><rss><channel><item><title>Alpha AG baut neues Werk in der Region</title><link>https://zeitung.example/1</link>
+    <pubDate>Tue, 03 Nov 2026 08:00:00 GMT</pubDate></item><item><title>Stadtfest am Wochenende</title><link>https://zeitung.example/2</link></item></channel></rss>`;
+  const atom = `<feed xmlns="http://www.w3.org/2005/Atom"><entry><title>Atom-Meldung</title><link href="https://blog.example/a"/><updated>2026-11-01T10:00:00Z</updated></entry></feed>`;
+  const zl = [["Alpha AG", { name: "Alpha AG", ticker: "" }]];
+  const nur = eigeneQuelleAuswerten({ name: "Regional", alle: false }, rss, zl), alles = eigeneQuelleAuswerten({ name: "Regional", alle: true }, rss, zl);
+  pruefe(nur.length === 1 && nur[0].bezug === "Alpha AG" && alles.length === 2, `Eigene Quelle: ${nur.length}/${alles.length}`);
+  const at = rssEintraege(atom);
+  pruefe(at.length === 1 && at[0].link === "https://blog.example/a" && at[0].zeit > 0, "Atom-Feed nicht gelesen");
+
+  // --- Stichtag-Depot (nur bestand.csv, Vorgabe 08.11.: "bei DB fehlt der Chart")
+  {
+    const vor = S.aktiv;
+    S.depots.st = neuesDepot("Stichtag", "eigen"); oeffnen("st");
+    const t0s = Date.UTC(2025, 10, 3) / 1000;
+    D.instrumente.X = { name: "Stichtag AG", art: "Aktie", kurs: 150, faktorEUR: 1, verlauf: { punkte: Array.from({ length: 53 }, (_, k) => [t0s + k * 7 * 86400, 100 + k]) } };
+    D.buchungen = [{ nr: 1, typ: "einbuchung", datum: heute(), instrument: "X", konto: "K", stueck: 10, einstand: 1000, kurs: 150 }];
+    ui.alle = false; zeige("uebersicht");
+    const svg = document.querySelector("#inhalt .wertchart svg");
+    pruefe(!!svg && /heutiger Bestand/.test(document.getElementById("inhalt").textContent), "Stichtag-Depot: kein Chart des heutigen Bestands");
+    const bv = bestandVerlauf(["st"]);
+    pruefe(bv && nah(bv.wert[0], 1000) && nah(bv.wert.at(-1), 1520), `Stichtag-Verlauf ${bv && [bv.wert[0], bv.wert.at(-1)]}`);
+    delete D.instrumente.X.verlauf; zeige("uebersicht");
+    pruefe(!!document.querySelector("#inhalt .wertchart svg"), "Stichtag ohne Kurse: kein Chart");
+    // Echter Kraken-Fall: Konto-Aktivitaeten (Einzahlungen, Transfers als Verlust) + Bestand von heute, ohne Kurse
+    D.buchungen.push({ nr: 2, typ: "einzahlung", datum: "2026-07-15", konto: "K", betrag: 22, kontobewegung: true },
+                     { nr: 3, typ: "verlust", datum: "2026-07-16", konto: "K", betrag: -20 },
+                     { nr: 4, typ: "einzahlung", datum: "2026-09-19", konto: "K", betrag: 5 },
+                     { nr: 5, typ: "verlust", datum: "2026-09-22", konto: "K", betrag: -5 });
+    zeige("uebersicht");
+    pruefe(!!document.querySelector("#inhalt .wertchart svg"), "Kraken-Fall (Konto + Bestand, ohne Kurse): kein Chart");
+    // nur Kontobewegungen
+    D.buchungen = D.buchungen.filter((b) => b.typ !== "einbuchung"); D.instrumente = {}; zeige("uebersicht");
+    pruefe(!!document.querySelector("#inhalt .wertchart svg"), "Nur Kontobewegungen: kein Chart");
+    delete S.depots.st; oeffnen(vor); ui.alle = undefined;
+  }
+
+  // --- Hebel-Rechner
+  const l = hebelRechnen({ einstieg: "100", hebel: "5", stop: "90", ziel: "120", einsatz: "500", richtung: "long" });
+  pruefe(nah(l.ko, 80) && nah(l.verlust, -50) && nah(l.gewinn, 100) && nah(l.crv, 2) && nah(l.verlustEur, -250), `Rechner long ${JSON.stringify(l)}`);
+  const k2 = hebelRechnen({ einstieg: "100", hebel: "10", stop: "112", ziel: "95", richtung: "short" });
+  pruefe(nah(k2.ko, 110) && k2.stopHinterKo && nah(k2.verlust, -100) && nah(k2.gewinn, 50), `Rechner short ${JSON.stringify(k2)}`);
+  // --- Beispiel 08.11.: Hyperliquid Doppeltop short, Hebel 10, Einstieg 93, Stop = KO 102,3, Ziel 77
+  {
+    const r = { titel: "Hyper Liquid Doppel top short", richtung: "short", einstieg: "93", hebel: "10", stop: "102,3", ziel: "77", einsatz: "200", maxverlust: "50" };
+    const x = hebelRechnen(r);
+    pruefe(nah(x.ko, 102.3) && nah(x.koAbstand, 10) && nah(x.verlust, -100) && nah(x.gewinn, 172.043, 0.01) && nah(x.crv, 1.7204, 0.001),
+           `HYPE: ${JSON.stringify([x.ko, x.koAbstand, x.verlust, x.gewinn, x.crv])}`);
+    pruefe(nah(x.risikoEur, 200) && nah(x.einsatzFuerMax, 50), `HYPE Risiko ${x.risikoEur} / Einsatz für 50 € ${x.einsatzFuerMax}`);
+    const xo = hebelRechnen({ ...r, stop: "98", ohneStop: true });
+    pruefe(xo.ohneStop && nah(xo.risikoEur, 200) && nah(xo.einsatzFuerMax, 50), "ohne Stop: ganzer Einsatz ist Risiko");
+    const xm = hebelRechnen({ ...r, stop: "98" });
+    pruefe(nah(xm.verlust, -53.763, 0.01) && nah(xm.einsatzFuerMax, 50 / 0.53763, 0.05), `mit Stop 98: ${xm.verlust} / ${xm.einsatzFuerMax}`);
+    // Chart: 4 Marken (Ziel, Einstieg, Stop, KO), Stop = KO hier gleich
+    ui.rechner = { ...r }; ui.rechnerOffen = true; zeige("notizen");
+    const svg = document.querySelector("#rechner-ergebnis svg.hebelchart");
+    pruefe(svg && svg.querySelectorAll("line").length === 4 && /KO 102,3/.test(svg.textContent), `Hebel-Chart fehlt/Marken: ${svg?.textContent}`);
+    // Hebel ziehen -> KO rueckt naeher
+    const regler = document.querySelector('input[type="range"][data-rechner="hebel"]');
+    pruefe(regler.max === "10", `Schieberegler geht bis ${regler.max} statt 10`);
+    regler.value = "5"; regler.dispatchEvent(new Event("input", { bubbles: true }));
+    pruefe(/KO 111,6/.test(document.querySelector("#rechner-ergebnis svg").textContent), "Schieberegler: KO nicht 111,6 bei Hebel 5");
+    // Speichern als Notiz -> Chart in der Notiz, wieder im Rechner oeffnen
+    ui.rechner.hebel = "10"; document.querySelector("[data-rechner-notiz]").click();
+    document.getElementById("notiz-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    const nz = (S.notizen || []).at(-1);
+    pruefe(nz && nz.rechner && nz.titel === "Hyper Liquid Doppel top short", "Notiz ohne Rechnung/Titel gespeichert");
+    ui.notiz = { id: nz.id }; zeichnen();
+    pruefe(!!document.querySelector("#inhalt svg.hebelchart"), "Notiz zeigt keinen Chart");
+    document.querySelector("[data-rechner-laden]").click();
+    pruefe(ui.rechnerOffen && ui.rechner.einstieg === "93" && !ui.notiz, "Im Rechner öffnen klappt nicht");
+    ui.rechnerOffen = false; ui.rechner = null; S.notizen = []; zeige("uebersicht");
+  }
+
+  // --- Nachkauf-Rechner (0.50). Sollwerte unabhaengig mit Python Decimal gerechnet (16.11.2026).
+  // Vorgabe-Beispiel B war falsch (0,000459 BTC / 271 €) - richtig: 0,00457321 BTC / 269,82 €.
+  {
+    const nahS = (a, b) => Math.abs(a - b) <= 0.00001;          // Stueck-Toleranz laut Vorgabe
+    const grund = { bestand: "0,005062", einstand: "98.972,23", kurs: "59.000", art: "krypto" };
+    const a = nachkaufRechnen({ ...grund, budget: "500" });
+    pruefe(nahS(a.A.bestand, 0.01353658) && nah(a.A.einstand, 73947.61, 1) && nah(a.A.stueck, 0.00847458, 1e-8) && nah(a.A.aenderungPct, -25.28, 0.01) && a.A.gebuehr === 0,
+           `Nachkauf A: ${JSON.stringify(a.A)}`);
+    pruefe(a.A.bestand === 0.01353658 && a.A.einstand === 73947.61, `Nachkauf A Rundung (8 Stellen / 2 Stellen): ${a.A.bestand} / ${a.A.einstand}`);
+    const b = nachkaufRechnen({ ...grund, ziel: "80.000" });
+    pruefe(nahS(b.B.stueck, 0.00457321) && nah(b.B.budget, 269.82, 1) && nah(b.B.einstand, 80000, 0.01), `Nachkauf B: ${JSON.stringify(b.B)}`);
+    const c = nachkaufRechnen({ ...grund, budget: "500", stufen: "85.000" });
+    const z85 = c.C.find((z) => z.kurs === 85000);
+    pruefe(z85 && nah(z85.erloes, 1150.61, 1) && nah(z85.gv, 149.61, 1) && nah(z85.pct, 14.95, 0.01), `Nachkauf C bei 85.000: ${JSON.stringify(z85)}`);
+    pruefe(c.C.some((z) => z.breakEven && nah(z.kurs, 73947.61, 0.01)) && nah(c.nach.breakEven, 73947.61, 0.01), "Nachkauf C: Break-even-Zeile fehlt");
+    const d = nachkaufRechnen({ ...grund, budget: "500", trigger: "80000" });
+    pruefe(nah(d.D.anteil, 92.43, 0.1) && nahS(d.D.runner, 0.00102411) && nah(d.D.runnerWert, 81.93, 1) && nah(d.D.zurueck, 1001.00, 0.01), `Nachkauf D: ${JSON.stringify(d.D)}`);
+    // Standard-Tabelle: 9 Stufen ±20 % um Break-even + Ziel-Ausstieg
+    const t = nachkaufRechnen({ ...grund, budget: "500", ausstieg: "85000" });
+    pruefe(t.C.length === 10 && nah(t.C[0].kurs, 73947.61 * 0.8, 0.02) && nah(t.C.at(-1).kurs, 73947.61 * 1.2, 0.02) && t.C.some((z) => z.ausstieg) && nah(t.ausstieg.gv, 149.61, 1),
+           `Nachkauf C Standard: ${t.C.map((z) => z.kurs).join(" ")}`);
+    // Gebuehren 0,25 %: Kauf vom Budget ab, Verkauf vom Erloes ab
+    const g = nachkaufRechnen({ ...grund, budget: "500", ziel: "80000", trigger: "80000", gebuehrAn: true, gebuehr: "0,25" });
+    pruefe(nahS(g.A.stueck, 0.00845339) && nah(g.A.einstand, 74063.53, 0.01) && nah(g.A.gebuehr, 1.25) && nah(g.A.netto, 498.75) && nah(g.nach.breakEven, 74249.15, 0.01),
+           `Nachkauf Gebühr A: ${JSON.stringify(g.A)} BE ${g.nach.breakEven}`);
+    pruefe(nahS(g.B.stueck, 0.00460564) && nah(g.B.budget, 272.41, 0.01) && nah(g.B.netto, 271.73, 0.01) && nah(g.D.anteil, 92.81, 0.01), `Nachkauf Gebühr B/D: ${JSON.stringify([g.B, g.D])}`);
+    // Sonderfaelle
+    pruefe(nachkaufRechnen({ ...grund, kurs: "0", budget: "500" }).fehler.length === 1, "Kurs 0 nicht abgefangen");
+    pruefe(nachkaufRechnen({ ...grund, bestand: "0", ziel: "80000" }).fehler.length === 1, "Bestand 0 nicht abgefangen");
+    pruefe(/über dem aktuellen Kurs/.test(nachkaufRechnen({ ...grund, ziel: "59000" }).B.fehler) && /über dem aktuellen Kurs/.test(nachkaufRechnen({ ...grund, ziel: "50000" }).B.fehler),
+           "Ziel ≤ Kurs: keine klare Meldung");
+    pruefe(/kein Nachkauf nötig/.test(nachkaufRechnen({ ...grund, ziel: "99000" }).B.fehler), "Ziel über Einstand nicht erkannt");
+    pruefe(/senken geht nicht/.test(nachkaufRechnen({ ...grund, kurs: "120000", ziel: "99000" }).B.fehler), "Kurs über Einstand nicht erkannt");
+    const s = nachkaufRechnen({ ...grund, ziel: "59.500" });
+    pruefe(nah(s.B.budget, 23577.39, 0.01) && s.warnungen.some((w) => /Sunk-Cost/.test(w)), `Sunk-Cost-Warnung fehlt: ${JSON.stringify(s)}`);
+    pruefe(!a.warnungen.length, "Warnung bei normalem Budget");
+    const dk = nachkaufRechnen({ ...grund, budget: "500", trigger: "73947.61" });
+    pruefe(dk.D.fehler && /kein Runner/.test(dk.D.fehler), `Trigger = Break-even muss ohne Runner sein: ${JSON.stringify(dk.D)}`);
+    const ak = nachkaufRechnen({ bestand: "10", einstand: "120", kurs: "80", budget: "400", art: "aktie" });
+    pruefe(ak.st === 4 && ak.A.bestand === 15 && ak.A.einstand === 106.67, `Aktie (4 Stellen): ${JSON.stringify(ak.A)}`);
+    // Dezimal statt Kommazahl: 0,1 + 0,2 Stueck bleibt genau 0,3
+    pruefe(nachkaufRechnen({ bestand: "0,1", einstand: "10", kurs: "5", budget: "1", art: "krypto" }).A.bestand === 0.3, "Dezimalrechnung ungenau");
+
+    // Oberflaeche: aus einer Position oeffnen -> Kopie, gespeicherte Position bleibt unveraendert
+    zeige("positionen");
+    const pos = positionen().liste.find((p) => p.stueck > 0 && !(D.instrumente[p.id] || {}).ohneStueck);
+    const vorher = JSON.stringify(S.depots);
+    ui.detail = pos.id; zeichnen();
+    const kn = document.querySelector(`[data-nachkauf-aus]`);
+    pruefe(!!kn, "Knopf „Nachkauf rechnen“ fehlt in der Position");
+    kn?.click();
+    pruefe(ui.seite === "notizen" && ui.nachkaufOffen && document.getElementById("nachkauf-ergebnis"), "Nachkauf-Rechner öffnet nicht aus der Position");
+    pruefe(nah(zahl(ui.nachkauf.bestand), pos.stueck, 1e-8) && nah(zahl(ui.nachkauf.einstand), pos.einstand / pos.stueck, 0.01), `Werte nicht übernommen: ${JSON.stringify(ui.nachkauf)}`);
+    for (const [n, w] of [["bestand", "999"], ["einstand", "1"], ["budget", "5000"], ["ziel", "2"], ["trigger", "3"]]) {
+      const el = document.querySelector(`[data-nachkauf="${n}"]`); el.value = w; el.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    pruefe(JSON.stringify(S.depots) === vorher, "Nachkauf-Rechner hat die gespeicherte Position verändert!");
+    // Live-Rechnung ohne Knopf, drei Hauptwerte sichtbar
+    Object.assign(ui.nachkauf, grund, { budget: "500", ziel: "", trigger: "80000" }); zeichnen();
+    const el = document.querySelector('[data-nachkauf="budget"]'); el.value = "500"; el.dispatchEvent(new Event("input", { bubbles: true }));
+    const txt = document.getElementById("nachkauf-ergebnis").textContent;
+    pruefe(/Neuer Einstandskurs/.test(txt) && /73\.947,61/.test(txt) && /Break-even-Kurs/.test(txt) && /Benötigtes Budget/.test(txt) && /92,43/.test(txt), `Ergebnis-Anzeige: ${txt.slice(0, 200)}`);
+    pruefe(document.querySelectorAll("#nachkauf-ergebnis tr.nk-be").length === 1 && document.querySelectorAll("#nachkauf-ergebnis svg.nkchart").length === 2, "Break-even-Zeile oder Charts fehlen");
+    // Betraege aus: keine Stueckzahl, kein Betrag, kein Chart
+    ui.verdeckt = true; zeichnen();
+    const v = document.getElementById("nachkauf-ergebnis");
+    pruefe(!/0,0135|1\.001|81,9/.test(v.textContent) && !v.querySelector("svg"), `Beträge aus verbirgt nicht alles: ${v.textContent.slice(0, 200)}`);
+    ui.verdeckt = false; ui.nachkaufOffen = false; ui.nachkauf = null; zeige("uebersicht");
+
+    // --- Positionsgroessen-Rechner (0.50), Sollwerte mit Python Decimal
+    {
+      const p1 = positionRechnen({ einstieg: "100", stop: "95", maxverlust: "50", ziel: "115", art: "aktie" });
+      pruefe(p1.stueck === 10 && p1.groesse === 1000 && p1.stopAbstand === -5 && p1.gewinn === 150 && p1.crv === 3, `Positionsgröße einfach: ${JSON.stringify(p1)}`);
+      const p2 = positionRechnen({ einstieg: "59.000", stop: "56.050", maxverlust: "50", ziel: "65000" });
+      pruefe(p2.stueck === 0.01694915 && p2.groesse === 1000 && nah(p2.gewinn, 101.69) && p2.crv === 2.03, `Positionsgröße BTC: ${JSON.stringify(p2)}`);
+      // 50 € Risiko: 10 % Stop = 500 €, 5 % = 1.000 €, 2 % = 2.500 €
+      const tab = Object.fromEntries(p2.tabelle.map((z) => [z.abstand, z.groesse]));
+      pruefe(tab[10] === 500 && tab[5] === 1000 && tab[2] === 2500 && p2.tabelle.length === 8, `Spannen-Tabelle: ${JSON.stringify(tab)}`);
+      const p3 = positionRechnen({ einstieg: "59000", stop: "56050", maxverlust: "50", ziel: "65000", gebuehrAn: true, gebuehr: "0,25" });
+      pruefe(p3.stueck === 0.01544342 && nah(p3.groesse, 911.16) && nah(p3.gebuehren, 4.44) && nah(p3.gewinn, 87.87) && p3.crv === 1.76, `Positionsgröße Gebühr: ${JSON.stringify(p3)}`);
+      const p4 = positionRechnen({ richtung: "short", einstieg: "100", stop: "104", maxverlust: "50", ziel: "90", art: "aktie" });
+      pruefe(p4.stueck === 12.5 && p4.groesse === 1250 && p4.crv === 2.5 && p4.stopAbstand === 4, `Positionsgröße short: ${JSON.stringify(p4)}`);
+      const p5 = positionRechnen({ einstieg: "100", stop: "95", risikoArt: "pct", risikoPct: "1", kapital: "5.000", art: "aktie" });
+      pruefe(p5.maxVerlust === 50 && p5.stueck === 10 && p5.anteil === 20 && p5.risikoPct === 1 && !p5.warnungen.length, `Risiko in %: ${JSON.stringify(p5)}`);
+      pruefe(positionRechnen({ einstieg: "100", stop: "99", maxverlust: "50", kapital: "1000" }).warnungen.some((w) => /größer als dein Kapital/.test(w)), "Warnung Position > Kapital fehlt");
+      pruefe(/unter dem Einstieg/.test(positionRechnen({ einstieg: "100", stop: "100", maxverlust: "50" }).fehler[0]) && /über dem Einstieg/.test(positionRechnen({ richtung: "short", einstieg: "100", stop: "90", maxverlust: "50" }).fehler[0]),
+             "Stop auf der falschen Seite nicht abgefangen");
+      pruefe(positionRechnen({ einstieg: "0", stop: "95", maxverlust: "50" }).fehler.length && positionRechnen({ einstieg: "100", stop: "95" }).fehler.length, "Leere Eingaben nicht abgefangen");
+      const sw = schwankung([[0, 100], [1, 110], [2, 99], [3, 104.94], [4, 104.94], [5, 115.434], [6, 92.3472]]);
+      pruefe(nah(sw.woche, (10 + 10 + 6 + 0 + 10 + 20) / 6, 0.001) && nah(sw.ruecksetzer, 20, 0.001) && schwankung([[0, 1], [1, 2]]) === null, `Schwankung: ${JSON.stringify(sw)}`);
+    }
+
+    // --- Rechner-Plan als Notiz (0.52): speichern -> Notiz mit Chart -> wieder im Rechner oeffnen
+    {
+      const plaene = { posgr: { art: "aktie", richtung: "long", einstieg: "100", stop: "95", ziel: "115", maxverlust: "50", titel: "Plan Test" },
+                       nachkauf: { art: "krypto", bestand: "0,005062", einstand: "98.972,23", kurs: "59.000", budget: "500", trigger: "80000" },
+                       gewinn: { art: "aktie", modus: "betrag", bestand: "3", einstand: "600", k1: "1.022", b1: "500", k2: "1.200", b2: "800" } };
+      for (const [typ, d] of Object.entries(plaene)) {
+        S.notizen = []; ui[typ] = { ...d }; ui[typ + "Offen"] = true; zeige("notizen");
+        pruefe(!!document.querySelector(`[data-plan-notiz="${typ}"]`), `Speichern-Knopf fehlt im Rechner ${typ}`);
+        document.querySelector(`[data-plan-notiz="${typ}"]`).click();
+        pruefe(ui.notiz && ui.notiz.plan && ui.notiz.plan.typ === typ && !!document.querySelector("#notiz-form .plan-block"), `Plan ${typ}: Notiz-Entwurf ohne Plan-Block`);
+        pruefe(!/Stück|€/.test(ui.notiz.text), `Plan ${typ}: Notiztext enthält Beträge/Stück: ${ui.notiz.text}`);
+        document.getElementById("notiz-form").dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+        const n = S.notizen[0];
+        pruefe(n && n.plan && n.plan.typ === typ && n.plan.daten.einstand === d.einstand && (typ !== "posgr" || n.titel === "Plan Test"), `Plan ${typ} nicht gespeichert: ${JSON.stringify(n)}`);
+        ui[typ] = null; ui[typ + "Offen"] = false; zeige("notizen");
+        pruefe(/🧮/.test(document.querySelector("[data-notiz]").textContent), `Plan ${typ}: Notiz-Zeile ohne Rechner-Symbol`);
+        document.querySelector("[data-notiz]").click();
+        const block = document.querySelector("#notiz-form .plan-block");
+        pruefe(block && block.querySelector("svg") && block.querySelector(".kennzahlen"), `Plan ${typ}: Notiz zeigt keinen Chart/keine Zahlen`);
+        document.querySelector("[data-plan-laden]").click();
+        pruefe(ui.seite === "notizen" && ui[typ + "Offen"] && !ui.notiz && JSON.stringify(ui[typ]) === JSON.stringify(n.plan.daten), `Plan ${typ}: Im Rechner öffnen stellt die Eingaben nicht her`);
+        ui[typ].einstand = "1"; pruefe(n.plan.daten.einstand === d.einstand, `Plan ${typ}: Ändern im Rechner verändert die gespeicherte Notiz`);
+        ui[typ] = null; ui[typ + "Offen"] = false;
+      }
+      const ch = markenChart([["Ziel", 115, "g"], ["Einstieg", 100, "t"], ["Stop", 95, "r", 1]], 100, [[100, 95, "r"]]);
+      pruefe((ch.match(/<line/g) || []).length === 3 && /Ziel 115 \(\+15 %\)/.test(ch) && /Stop 95 \(-5 %\)/.test(ch) && /Einstieg 100</.test(ch), `Marken-Chart: ${ch.replace(/<[^>]+>/g, "|")}`);
+      // Englisch: "(+15 %)" statt "(+15. %)" im Chart (0.54)
+      { const alt = window.sprache; window.sprache = () => "en"; fmtCache && Object.keys(fmtCache).forEach((k) => delete fmtCache[k]);
+        const en = markenChart([["Ziel", 115, "g"], ["Einstieg", 100, "t"], ["Stop", 95.5, "r", 1]], 100);
+        pruefe(/\(\+15 %\)/.test(en) && /\(-4\.5 %\)/.test(en) && !/\d\. %/.test(en), `Marken-Chart englisch: ${en.replace(/<[^>]+>/g, "|")}`);
+        window.sprache = alt; Object.keys(fmtCache).forEach((k) => delete fmtCache[k]); }
+      S.notizen = []; zeige("uebersicht");
+    }
+    // --- Dollar in den Rechnern (0.53): gleiche Rechnung, $-Zeichen, Umrechnung in Euro mit Kurs
+    {
+      ui.posgr = { art: "aktie", richtung: "long", waehrung: "usd", usdKurs: "1,08", einstieg: "100", stop: "95", ziel: "115", maxverlust: "50" }; ui.posgrOffen = true; zeige("notizen");
+      let e = document.getElementById("posgr-ergebnis").textContent;
+      pruefe(/1\.000,00\s\$/.test(e) && /-50,00\s\$|−50,00\s\$/.test(e) && /Position ≈ 925,93\s€/.test(e) && /Verlust am Stop ≈ 46,30\s€/.test(e) && /Gewinn am Ziel ≈ 138,89\s€/.test(e), `Dollar Positionsgröße: ${e.slice(0, 260)}`);
+      pruefe(!/1\.000,00\s€/.test(e) && /Einstieg \$/.test(document.getElementById("posgr").textContent) && /Max\. Verlust \$/.test(document.getElementById("posgr").textContent), "Dollar: Beschriftung/Beträge noch in Euro");
+      delete ui.posgr.usdKurs; delete (S.einstellungen ||= {}).eurUsd; zeichnen();
+      pruefe(/Kurs „1 € = … \$“ eintragen/.test(document.getElementById("posgr-ergebnis").textContent), "Dollar ohne Kurs: Hinweis fehlt");
+      S.einstellungen.eurUsd = { kurs: 1.25, datum: "2026-11-16" }; zeichnen();
+      pruefe(/Position ≈ 800,00\s€/.test(document.getElementById("posgr-ergebnis").textContent) && /1,25 \(vom/.test(document.querySelector('[data-posgr="usdKurs"]').placeholder), "Gemerkter Euro-Dollar-Kurs wird nicht genutzt");
+      document.querySelector('[data-posgr-wahl="waehrung"][data-wert="eur"]').click();
+      pruefe(/1\.000,00\s€/.test(document.getElementById("posgr-ergebnis").textContent) && !document.querySelector('[data-posgr="usdKurs"]') && !/≈/.test(document.getElementById("posgr-ergebnis").textContent), "Zurück auf Euro klappt nicht");
+      ui.gewinn = { art: "aktie", modus: "betrag", waehrung: "usd", usdKurs: "1,25", bestand: "1", einstand: "500", k1: "1.022", b1: "500" }; ui.gewinnOffen = true; zeichnen();
+      e = document.getElementById("gewinn-ergebnis").textContent;
+      pruefe(/500,00\s\$/.test(e) && /Du nimmst raus ≈ 400,00\s€/.test(e) && /Stufe 1: Betrag \$/.test(document.getElementById("gewinn").textContent), `Dollar Gewinnmitnahme: ${e.slice(0, 200)}`);
+      ui.nachkauf = { art: "krypto", waehrung: "usd", bestand: "0,005062", einstand: "98.972,23", kurs: "59.000", budget: "500" }; ui.nachkaufOffen = true; zeichnen();
+      e = document.getElementById("nachkauf-ergebnis").textContent;
+      pruefe(/73\.947,61\s\$/.test(e) && /Budget ≈ 400,00\s€/.test(e) && !/73\.947,61\s€/.test(e), `Dollar Nachkauf: ${e.slice(0, 200)}`);
+      // Betraege aus verbirgt auch die Dollar- und die umgerechneten Euro-Betraege
+      ui.verdeckt = true; zeichnen();
+      pruefe(!/500,00|400,00|1\.001/.test(document.getElementById("nachkauf-ergebnis").textContent + document.getElementById("gewinn-ergebnis").textContent), "Beträge aus verbirgt Dollar/Umrechnung nicht");
+      ui.verdeckt = false; for (const k of ["posgr", "gewinn", "nachkauf"]) { ui[k] = null; ui[k + "Offen"] = false; }
+      delete S.einstellungen.eurUsd;
+      // Legenden: in jedem Rechner, auf der Notizen-Seite und bei den Watchlist-Marken
+      ui.posgrOffen = ui.gewinnOffen = ui.nachkaufOffen = ui.rechnerOffen = true; zeige("notizen");
+      pruefe(document.querySelectorAll("#inhalt details.legende").length === 5, `Legenden auf der Notizen-Seite: ${document.querySelectorAll("#inhalt details.legende").length} statt 5`);
+      ui.posgrOffen = ui.gewinnOffen = ui.nachkaufOffen = ui.rechnerOffen = false;
+      ui.watch = "neu"; zeichnen(); pruefe(/Kaufmarke erreicht/.test(document.querySelector("#watch-form details.legende")?.textContent || ""), "Legende zu den Marken fehlt im Watchlist-Formular"); ui.watch = null;
+      // Aktualisieren-Knopf oben neben dem Einstell-Knopf
+      const kn = document.getElementById("aktualisieren-oben");
+      pruefe(kn && kn.dataset.los === "kurse" && kn.nextElementSibling?.dataset.ziel === "mehr", "Aktualisieren-Knopf sitzt nicht neben dem Einstell-Knopf");
+      zeige("uebersicht");
+    }
+    // --- Schluessel-Ampel (0.52)
+    {
+      pruefe(schluesselFormat("anthropic", "sk-or-v1-abcdefabcdef1234").s === "falsch" && /OpenRouter/.test(schluesselFormat("anthropic", "sk-or-v1-abcdefabcdef1234").t), "OpenRouter-Schlüssel bei Anthropic nicht erkannt");
+      pruefe(schluesselFormat("openrouter", "sk-ant-api03-abcdefabcdef").s === "falsch" && schluesselFormat("openai", "sk-ant-api03-abcdefabcdef").s === "falsch" && schluesselFormat("finnhub", "AIzaSyabcdefabcdef123456").s === "falsch", "vertauschte Schlüssel nicht erkannt");
+      pruefe(schluesselFormat("openai", "sk-proj-abcdefabcdef1234").s === "unklar" && schluesselFormat("openrouter", "sk-or-v1-abcdefabcdef1234").s === "unklar" && schluesselFormat("google", "AIzaSyabcdefabcdef123456").s === "unklar", "richtiges Format als falsch gewertet");
+      pruefe(schluesselFormat("google", "abcdefabcdef12345678").s === "falsch" && schluesselFormat("finnhub", "kurz").s === "falsch" && schluesselFormat("twelvedata", "0123456789abcdef0123456789abcdef").s === "unklar", "Format-Grenzfälle");
+      pruefe(schluesselBewerten("openai", { status: 200, text: "ok" }).s === "ok" && schluesselBewerten("openai", { status: 401, text: "Incorrect API key" }).s === "falsch" &&
+             schluesselBewerten("google", { status: 400, text: "API key not valid. Please pass a valid API key." }).s === "falsch" && schluesselBewerten("google", { status: 400, text: "bad request" }).s === "unklar" &&
+             schluesselBewerten("finnhub", { status: 429, text: "limit" }).s === "ok" && schluesselBewerten("fmp", { status: 500, text: "" }).s === "unklar" && schluesselBewerten("fmp", null).s === "unklar" &&
+             schluesselBewerten("alphavantage", { error: { message: "nicht pruefbar" } }).s === "unklar" && /Alpha Vantage/.test(schluesselBewerten("alphavantage", { error: { message: "nicht pruefbar" } }).t) &&
+             /ausgeschaltet/.test(schluesselBewerten("openai", { error: { message: "Internet ist in der App ausgeschaltet" } }).t), "Bewertung der Online-Prüfung");
+      // Oberflaeche: falscher Schluessel -> rote Ampel, richtiger -> gelb (ohne App keine Online-Pruefung), entfernen -> Ampel weg
+      zeige("schluessel");
+      const form = () => document.querySelector('[data-schluessel-form="anthropic"]');
+      form().querySelector('[name="wert"]').value = "sk-or-v1-abcdefabcdef1234"; form().dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      pruefe(form().querySelector(".ampel.falsch") && /OpenRouter/.test(form().querySelector(".ampel").textContent) && EIN().schluesselStatus.anthropic.s === "falsch", `Ampel nicht rot: ${form().textContent.slice(0, 200)}`);
+      form().querySelector('[name="wert"]').value = "sk-ant-api03-abcdefabcdef1234"; form().dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+      pruefe(form().querySelector(".ampel.unklar") && !form().querySelector(".ampel.falsch") && !!form().querySelector("[data-schluessel-pruefen]"), `Ampel nicht gelb: ${form().textContent.slice(0, 200)}`);
+      localStorage.removeItem("test-schluessel-anthropic"); schluesselStatusSetzen("anthropic", null); zeige("schluessel");
+      pruefe(!form().querySelector(".ampel") && !(EIN().schluesselStatus || {}).anthropic, "Ampel bleibt nach dem Entfernen stehen");
+      zeige("uebersicht");
+    }
+    // --- Gewinnmitnahme-Rechner (0.50)
+    {
+      const g1 = gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100", k1: "110", a1: "30", k2: "120", a2: "30", k3: "150", a3: "20", art: "aktie" });
+      const s = g1.stufen;
+      pruefe(s.length === 3 && s[0].stueck === 3 && s[0].erloes === 330 && s[0].gewinn === 30 && s[0].rest === 7 && s[0].restBis === 95.71, `Gewinnmitnahme Stufe 1: ${JSON.stringify(s[0])}`);
+      pruefe(s[1].gewinn === 60 && s[1].restBis === 77.5 && s[2].gewinn === 100 && s[2].restBis === 5 && s[2].rest === 2, `Gewinnmitnahme Stufe 2/3: ${JSON.stringify(s.slice(1))}`);
+      pruefe(g1.gewinn === 190 && g1.erloes === 990 && g1.rest === 2 && g1.restAnteil === 20 && g1.frei === null && g1.investiert === 1000, `Gewinnmitnahme Summe: ${JSON.stringify(g1)}`);
+      const g2 = gewinnmitnahmeRechnen({ modus: "pct", bestand: "0,01353658", einstand: "73.947,61", k1: "80000", a1: "50", k2: "90000", a2: "25", gebuehrAn: true, gebuehr: "0,25" });
+      pruefe(g2.stufen[0].stueck === 0.00676829 && nah(g2.stufen[0].erloes, 540.11) && nah(g2.stufen[0].gewinn, 39.61) && nah(g2.stufen[0].restBis, 68265.88) &&
+             nah(g2.stufen[1].gewinn, 53.56) && nah(g2.stufen[1].restBis, 46531.77) && g2.rest === 0.00338415, `Gewinnmitnahme Gebühr: ${JSON.stringify(g2.stufen)}`);
+      const g3 = gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100", k1: "200", a1: "50", k2: "300", a2: "50", art: "aktie" });
+      pruefe(g3.frei === 1 && g3.stufen[0].frei && g3.stufen[0].offen === 0 && g3.rest === 0 && g3.stufen[1].restBis === null && g3.gewinn === 1500, `Einstand zurück / alles verkauft: ${JSON.stringify(g3)}`);
+      pruefe(/mehr als 100/.test(gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100", k1: "110", a1: "60", k2: "120", a2: "50" }).fehler[0]), "Anteile > 100 % nicht abgefangen");
+      pruefe(gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100" }).fehler.length === 1 && gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100", k1: "110" }).fehler.length === 1, "Leere/halbe Stufe nicht abgefangen");
+      pruefe(gewinnmitnahmeRechnen({ modus: "pct", bestand: "10", einstand: "100", k1: "90", a1: "50" }).warnungen.length === 1, "Verkauf unter Break-even ohne Warnung");
+      // Betrag in Euro rausnehmen (0.51, Beispiel 16.11.: Kurs 1.022, die eingezahlten 500 € rausnehmen, Rest laeuft)
+      const r1 = gewinnmitnahmeRechnen({ bestand: "1", einstand: "500", k1: "1.022", b1: "500", art: "aktie" });
+      pruefe(r1.betrag && r1.stufen[0].stueck === 0.4892 && r1.stufen[0].erloes === 500 && nah(r1.stufen[0].gewinn, 255.38) && r1.stufen[0].rest === 0.5108 && r1.stufen[0].restWert === 522 &&
+             r1.frei === 1 && nah(r1.stufen[0].anteil, 48.92) && r1.stufen[0].ganz.stueck === 1 && r1.stufen[0].ganz.erloes === 1022, `Betrag rausnehmen: ${JSON.stringify(r1)}`);
+      const r2 = gewinnmitnahmeRechnen({ bestand: "3", einstand: "600", k1: "1022", b1: "500", k2: "1200", b2: "800", art: "aktie" });
+      pruefe(nah(r2.stufen[0].gewinn, 206.46) && nah(r2.stufen[0].restBis, 517.77) && r2.stufen[1].stueck === 0.6667 && r2.stufen[1].gewinn === 400 && nah(r2.stufen[1].restBis, 271.14) &&
+             r2.erloes === 1300 && nah(r2.gewinn, 606.46) && r2.rest === 1.8441 && r2.frei === null, `Betrag zwei Stufen: ${JSON.stringify(r2.stufen)}`);
+      const r3 = gewinnmitnahmeRechnen({ bestand: "0,5", einstand: "1000", k1: "1022", b1: "300", gebuehrAn: true, gebuehr: "0,25", art: "krypto" });
+      pruefe(r3.stufen[0].stueck === 0.29427777 && r3.stufen[0].erloes === 300 && nah(r3.stufen[0].gewinn, 5.72) && nah(r3.stufen[0].restBis, 974.62) && r3.stufen[0].ganz === null, `Betrag mit Gebühr: ${JSON.stringify(r3.stufen)}`);
+      pruefe(/gibt die Position nicht her/.test(gewinnmitnahmeRechnen({ bestand: "1", einstand: "500", k1: "1022", b1: "1100" }).fehler[0]), "Betrag größer als Position nicht abgefangen");
+      pruefe(gewinnmitnahmeRechnen({ bestand: "1", einstand: "500", k1: "1022" }).fehler.length === 1 && gewinnmitnahmeRechnen({ bestand: "1", einstand: "500", k1: "1022", a1: "30" }).fehler.length === 1, "Betrags-Modus: fehlender Betrag nicht abgefangen");
+      // Oberflaeche: aus Position oeffnen (Kopie), Eingaben aendern nichts am Depot, Betraege-aus verbirgt
+      zeige("positionen");
+      const pos = positionen().liste.find((p) => p.stueck > 0 && !(D.instrumente[p.id] || {}).ohneStueck), vorher = JSON.stringify(S.depots);
+      ui.detail = pos.id; zeichnen();
+      document.querySelector("[data-gewinn-aus]")?.click();
+      pruefe(ui.seite === "notizen" && ui.gewinnOffen && nah(zahl(ui.gewinn.bestand), pos.stueck, 1e-8), "Gewinnmitnahme öffnet nicht aus der Position");
+      // Auswahl im Rechner: Position waehlen -> Werte (Kopie) drin
+      for (const ziel of ["nachkauf", "gewinn", "posgr"]) {
+        ui[ziel] = null; ui[ziel + "Offen"] = true; zeige("notizen");
+        const sel = document.querySelector(`select[data-rechner-pos="${ziel}"]`);
+        pruefe(!!sel && sel.options.length > 1, `Positions-Auswahl fehlt im Rechner ${ziel}`);
+        sel.value = pos.id; sel.dispatchEvent(new Event("change", { bubbles: true }));
+        const kurs = (D.instrumente[pos.id] || {}).kurs;
+        pruefe(ui[ziel].posId === pos.id && (ziel === "posgr" ? (kurs == null || nah(zahl(ui.posgr.einstieg), kurs, 0.0001)) : nah(zahl(ui[ziel].bestand), pos.stueck, 1e-8)), `Auswahl füllt ${ziel} nicht: ${JSON.stringify(ui[ziel])}`);
+        pruefe(document.querySelector(`select[data-rechner-pos="${ziel}"]`).value === pos.id, `Auswahl ${ziel} bleibt nicht stehen`);
+      }
+      ui.nachkaufOffen = false; ui.nachkauf = null; ui.detail = pos.id; zeichnen();
+      pruefe(!!document.querySelector("[data-posgr-aus]"), "Knopf Positionsgröße fehlt in der Position"); document.querySelector("[data-posgr-aus]")?.click();
+      pruefe(ui.seite === "notizen" && ui.posgrOffen && ui.posgr.posId === pos.id, "Positionsgröße öffnet nicht aus der Position");
+      ui.posgrOffen = true; zeichnen();
+      const setze = (sel, w) => { const el = document.querySelector(sel); el.value = w; el.dispatchEvent(new Event("input", { bubbles: true })); };
+      ui.gewinn.modus = "pct"; zeichnen();
+      for (const [n, w] of [["bestand", "10"], ["einstand", "100"], ["k1", "110"], ["a1", "30"]]) setze(`[data-gewinn="${n}"]`, w);
+      // Betrags-Modus (0.51): Feld "Betrag €" statt "Anteil %", Knopf uebernimmt den Einstand (10 x 100 = 1.000 €)
+      const pctStand = { ...ui.gewinn }; document.querySelector('[data-gewinn-wahl="modus"][data-wert="betrag"]').click();
+      pruefe(document.querySelector('[data-gewinn="b1"]') && !document.querySelector('[data-gewinn="a1"]'), "Betrags-Modus zeigt kein Betragsfeld");
+      setze('[data-gewinn="k1"]', "200"); document.querySelector("[data-gewinn-einstand]").click();
+      pruefe(ui.gewinn.b1 === "1000,00" && /ab Stufe 1/.test(document.getElementById("gewinn-ergebnis").textContent) && /5 Stück/.test(document.getElementById("gewinn-ergebnis").textContent),
+             `Einstand übernehmen: ${ui.gewinn.b1} / ${document.getElementById("gewinn-ergebnis").textContent.slice(0, 160)}`);
+      ui.gewinn = pctStand; zeichnen();
+      for (const [n, w] of [["einstieg", "100"], ["stop", "95"], ["maxverlust", "50"]]) setze(`[data-posgr="${n}"]`, w);
+      document.querySelector("[data-posgr-depot]").click();
+      pruefe(JSON.stringify(S.depots) === vorher, "Rechner haben das Depot verändert!");
+      pruefe(zahl(ui.posgr.kapital) > 0, "Depotwert nicht als Kapital übernommen");
+      const tg = document.getElementById("gewinn-ergebnis").textContent, tp = document.getElementById("posgr-ergebnis").textContent;
+      pruefe(/Du nimmst raus/.test(tg) && /330,00/.test(tg) && /\+30,00/.test(tg) && /95,71/.test(tg), `Gewinnmitnahme-Anzeige: ${tg.slice(0, 200)}`);
+      pruefe(/Positionsgröße/.test(tp) && /1\.000,00/.test(tp) && /−50,00|-50,00/.test(tp) && document.querySelectorAll("#posgr-ergebnis table tr").length === 9, `Positionsgröße-Anzeige: ${tp.slice(0, 200)}`);
+      ui.verdeckt = true; zeichnen();
+      pruefe(!/330,00|\+30,00|7 Stück/.test(document.getElementById("gewinn-ergebnis").textContent) && !/1\.000,00|50,00|10 Stück/.test(document.getElementById("posgr-ergebnis").textContent),
+             "Beträge aus verbirgt in den neuen Rechnern nicht alles");
+      ui.verdeckt = false; ui.gewinnOffen = false; ui.posgrOffen = false; ui.gewinn = null; ui.posgr = null; zeige("uebersicht");
+    }
+  }
+
+  // --- Einstellungen: Verstecken-Modus
+  ui.verdeckt = true; S.einstellungen.verstecken = "betraege";
+  pruefe(pct(12.5) === "+12,50 %" && kursE(10) !== ZU, "Verstecken 'nur Beträge' zeigt keine Prozente/Kurse");
+  S.einstellungen.verstecken = "kurse"; pruefe(kursE(10) === ZU && pct(1) !== "•• %", "Verstecken '+ Kurse'");
+  S.einstellungen.verstecken = "alles"; pruefe(pct(1) === "•• %", "Verstecken 'alles'");
+  delete S.einstellungen.verstecken; ui.verdeckt = false;
+
+  // --- KI-Daten: nie Euro-Betraege
+  pruefe(!/\d[\d.,]*\s?€/.test(kiDaten("watchlist")), "KI-Daten enthalten Euro");
+  for (const n of Object.values(D.instrumente)) pruefe(!kiDaten("watchlist").includes(n.name) || (S.watchlist || []).some((w) => w.name === n.name), `KI-Daten enthalten Depotwert ${n.name}`);
+  // 11.11.: Portfolio-Fragen - nur Prozente, nie Euro, Stueckzahlen, Konten oder Personen; Anteile + Cash = 100 %
+  {
+    const { liste } = positionen(), konten = [...new Set(D.buchungen.map((b) => b.konto).filter(Boolean))];
+    for (const [r, mitP] of ["check", "minus", "plus", "aufloesen", "frei"].flatMap((r) => [[r, false], [r, true]])) {
+      S.einstellungen.kiProzente = mitP;
+      const txt = kiDaten(r, { wert: liste[0]?.id }).replace(/Einstiegskurs [\d.,]+/g, "");
+      pruefe(!/€|EUR\b/.test(txt), `KI ${r}: Euro im Text`);
+      for (const p of liste) {
+        const st = String(rund(p.stueck, 4)).replace(".", ",");
+        pruefe(!(p.stueck >= 2 && new RegExp("(^|[^\\d,])" + st.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "(?![\\d,%])").test(txt.replace(/\d+,\d+ %|[+-]?\d+(,\d+)? %/g, ""))), `KI ${r}: Stückzahl ${st} von ${p.name}`);
+      }
+      for (const k of konten) pruefe(!txt.includes(k) || liste.some((p) => p.name.includes(k)), `KI ${r}: Kontoname ${k}`);
+    }
+    S.einstellungen.kiProzente = false;
+    pruefe(!/%/.test(kiDaten("check")) && /Long, Einstiegskurs/.test(kiDaten("check")), "KI ab Werk: Prozente gesendet oder Einstieg fehlt");
+    S.einstellungen.kiProzente = true;
+    const chk = kiDaten("check"), anteile = [...chk.matchAll(/(?<![\w-])Anteil (-?\d+(?:,\d+)?) %/g)].map((m) => +m[1].replace(",", "."));
+    const cashA = +(chk.match(/Cash-Anteil (-?\d+(?:,\d+)?) %/) || [0, "0"])[1].replace(",", ".");
+    pruefe(liste.length <= 40 ? Math.abs(anteile.reduce((a, b) => a + b, 0) + cashA - 100) < 0.1 * (liste.length + 1) : true, `KI check: Anteile + Cash = ${anteile.reduce((a, b) => a + b, 0) + cashA} statt 100`);
+    delete S.einstellungen.kiProzente;
+  }
+
+  // --- Jede Seite zeichnet; Betraege aus = kein Euro im DOM
+  ui.verdeckt = true;
+  for (const s of ["uebersicht", "positionen", "watchlist", "kalender", "mehr", "buchungen", "notizen", "ki", "hinweise", "unterstuetzen", "schluessel",
+                   "datenschutz", "depots", "daten", "news", "sicherheit", "sachwerte", "kalender", "einstellungen"]) {
+    try { zeige(s); } catch (e) { f.push(`Seite ${s}: ${e.message}`); continue; }
+    if (["uebersicht", "positionen", "buchungen", "depots", "sachwerte", "kalender"].includes(s) && /\d[\d.]*,\d\d\s?€/.test(document.getElementById("inhalt").innerHTML))
+      f.push(`Beträge aus: Euro sichtbar auf ${s}`);
+  }
+  ui.posAnsicht = "heatmap"; zeige("positionen"); ui.posAnsicht = "liste";
+  ui.kalArt = "gv"; ui.gvMonat = "2026-01"; zeige("kalender");
+  pruefe(document.querySelectorAll(".gvtag.plus").length === 2, "G/V-Kalender: 2 grüne Tage erwartet");
+  ui.kalArt = null; ui.verdeckt = false;
+  return f;
+}
+
+/** Grosser Test: 750.000 EUR auf 6 Broker, 2 Jahre (tests/grosstest.py). */
+async function grossTest() {
+  const soll = await (await fetch("grosstest/erwartet.json")).json();
+  const f = [];
+  const pruefe = (ok, text) => { if (!ok) f.push(text); };
+  localStorage.clear();
+  S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1");
+  const G = "grosstest/";
+  await importiere(await datei("1_kraken_krypto_halten_ledgers.csv", G), "ledgers.csv");
+  await importiere(await datei("2_bitvavo_krypto_sparplan.csv", G), "bitvavo.csv");
+  await importiere(await datei("3_okx_krypto_handel.csv", G), "okx.csv");
+  await importiere(await datei("4_scalable_etf_sparplan.csv", G), "Broker-Transactions.csv");
+  await importiere(await datei("5_smartbroker_einzelwerte.csv", G), "transaktionen.csv");
+  await importiere(await datei("6_traderepublic_daytrading.csv", G), "Transaktionsexport.csv");
+  // Offline, VOR der Kursliste: Verlauf nur aus den eigenen Ausfuehrungskursen (Python: soll.ohne_kurse)
+  const ok = wertverlauf(Object.keys(S.depots)), so = soll.ohne_kurse;
+  if (!ok || !ok.ausBuchungen) pruefe(false, "Ohne Kurse: kein Verlauf aus Buchungen");
+  else {
+    const n = so.index.length;
+    pruefe(new Date(ok.raster[0] * 1000).toISOString().slice(0, 10) === so.raster[0], `Ohne Kurse: Start ${new Date(ok.raster[0] * 1000).toISOString()} statt ${so.raster[0]}`);
+    const k1 = ok.gesamt.index.slice(0, n).findIndex((x, i) => Math.abs(x - so.index[i]) > 0.002);
+    pruefe(k1 < 0, `Ohne Kurse: Index Woche ${k1}: ${ok.gesamt.index[k1]} statt ${so.index[k1]}`);
+    const k2 = ok.gesamt.wert.slice(0, n).findIndex((x, i) => Math.abs(x - so.wert[i]) > 0.02);
+    pruefe(k2 < 0, `Ohne Kurse: Wert Woche ${k2}: ${ok.gesamt.wert[k2]} statt ${so.wert[k2]}`);
+    const k3 = ok.gesamt.einsatz.slice(0, n).findIndex((x, i) => Math.abs(x - so.einsatz[i]) > 0.05);
+    pruefe(k3 < 0, `Ohne Kurse: Eingesetzt Woche ${k3}: ${ok.gesamt.einsatz[k3]} statt ${so.einsatz[k3]}`);
+    const gOff = gesamtDaten().gesamt;
+    pruefe(Math.abs(gOff - so.wert.at(-1)) < 0.05, `Ohne Kurse: Gesamtvermögen ${gOff} passt nicht zum Chart ${so.wert.at(-1)}`);
+    pruefe(Math.abs(ok.gesamt.index.at(-1) - so.index.at(-1)) < 0.002, `Ohne Kurse: Endstand ${ok.gesamt.index.at(-1)} statt ${so.index.at(-1)}`);
+  }
+  if (new URLSearchParams(location.search).get("offline")) { ui.alle = true; zeige("uebersicht"); return f; }
+  const kl = erkennen(await datei("7_kursliste_wochenkurse.csv", G), "kurse.csv");
+  const [n, fremd] = kurslisteUebernehmen(kl.kursliste);
+  pruefe(!fremd.length, `Kursliste: unbekannt ${fremd}`);
+  const ids = {};
+  for (const [id, d] of Object.entries(S.depots)) ids[d.name] = id;
+  pruefe(Object.keys(ids).sort().join() === Object.keys(soll.depots).sort().join(), `Depots: ${Object.keys(ids)}`);
+  const nahR = (a, b, rel = 1e-6, abs = 0.02) => Math.abs(a - b) <= Math.max(abs, Math.abs(b) * rel);
+  for (const [name, x] of Object.entries(soll.depots)) {
+    if (!ids[name]) continue;
+    oeffnen(ids[name]);
+    const b = bestand();
+    const offen = Object.values(b).filter((p) => p.stueck > 1e-9);
+    pruefe(offen.length === Object.keys(x.positionen).length, `${name}: ${offen.length} Positionen statt ${Object.keys(x.positionen).length}`);
+    for (const [iid, [st, ein]] of Object.entries(x.positionen)) {
+      const p = offen.find((q) => q.instrument === iid);
+      pruefe(p && nahR(p.stueck, st, 1e-9, 1e-7) && nahR(p.einstand, ein), `${name} ${iid}: ${p && [p.stueck, p.einstand]} statt ${[st, ein]}`);
+    }
+    const real = Object.values(b).reduce((s, p) => s + p.realisiert, 0), div = Object.values(b).reduce((s, p) => s + p.dividenden, 0);
+    pruefe(nahR(real, x.realisiert), `${name}: realisiert ${real} statt ${x.realisiert}`);
+    pruefe(nahR(div, x.dividenden), `${name}: Dividenden ${div} statt ${x.dividenden}`);
+    const k = kontoStand();
+    pruefe(x.konto == null ? !k : k && nahR(k.stand, x.konto), `${name}: Konto ${k && k.stand} statt ${x.konto}`);
+    pruefe(D.buchungen.length === x.buchungen, `${name}: ${D.buchungen.length} Buchungen statt ${x.buchungen}`);
+    const v = wertverlauf([ids[name]]).gesamt, s = x.verlauf;
+    vergleicheVerlauf(name, v, s, pruefe);
+    if (name === "Smartbroker") {
+      const etc = Object.values(D.instrumente).filter((i) => i.art === "ETC").length;
+      pruefe(etc === 2, `Smartbroker: ${etc} ETC statt 2 (Gold, Silber)`);
+    }
+    if (name === "Smartbroker") {
+      const dv = kalenderEreignisse([ids[name]]).filter((e) => e.sicher);
+      pruefe(dv.length > 10 && dv.every((e) => /auf deinen Einsatz/.test(e.info)), `Kalender: ${dv.length} Dividenden, ohne %: ${dv.filter((e) => !/auf deinen Einsatz/.test(e.info)).map((e) => e.datum + " " + e.titel + " " + e.info).slice(0, 3).join(" / ")}`);
+      pruefe(nahR(dv.reduce((a2, e) => a2 + e.eur, 0), x.dividenden), "Kalender: Summe Dividenden");
+    }
+    if (name === "Scalable") pruefe(Object.values(D.instrumente).every((i) => i.art === "ETF"), "Scalable: nicht alles ETF");
+  }
+  const alle = Object.values(ids);
+  vergleicheVerlauf("GESAMT", wertverlauf(alle).gesamt, soll.gesamt, pruefe);
+  // Steuer je Jahr = Python (Krypto FIFO mit Haltefrist, Aktien-Topf, sonstige, Ertraege, Steuer)
+  { const st = steuerJahre(Object.values(ids));
+    for (const [jahr, x] of Object.entries(soll.steuer))
+      for (const [k, w] of Object.entries(x)) pruefe(st[jahr] && Math.abs(st[jahr][k] - w) < 0.05, `Steuer ${jahr} ${k}: ${st[jahr]?.[k]} statt ${w}`);
+    pruefe(Object.keys(st).sort().join() === Object.keys(soll.steuer).sort().join(), `Steuer-Jahre ${Object.keys(st)}`);
+  }
+  // Uebersicht = alle Depots zusammen (Vorgabe 07.11.)
+  ui.alle = true; ui.chartArt = null; zeige("uebersicht");
+  // Gesamt = genau EINE Linie (Vorgabe 07.11.: keine zweite/gestrichelte Linie); einzeln = eine je Depot
+  pruefe(document.querySelectorAll("#inhalt .wertchart svg polyline").length === 1, "Gesamt-Chart hat nicht genau eine Linie");
+  ui.chartArt = "einzeln"; zeige("uebersicht");
+  pruefe(document.querySelectorAll("#inhalt .wertchart svg polyline").length === 6, "Depots einzeln: nicht 6 Linien");
+  for (const zr of ["1w", "1m", "3m", "6m", "1j", "3j", "5j", "alle"]) {
+    ui.wertZeitraum = zr; zeige("uebersicht");
+    if (!document.querySelector("#inhalt .wertchart svg polyline")) pruefe(false, `Zeitraum ${zr}: kein Chart`);
+  }
+  ui.wertZeitraum = null;
+  ui.chartArt = null; zeige("uebersicht");
+  const gd = gesamtDaten();
+  pruefe(nahR(gd.gesamt, soll.gesamt.wert.at(-1), 1e-6, 0.05), `Gesamtübersicht ${gd.gesamt} statt ${soll.gesamt.wert.at(-1)}`);
+  pruefe(document.getElementById("titel").textContent === "Alle Depots", "Titel nicht 'Alle Depots'");
+  pruefe(document.querySelectorAll("#inhalt [data-sicht]").length === 2 && sichten().length === 7, `Sicht-Leiste fehlt (${sichten().length} Sichten)`);
+  // ‹ › blaettert reihum durch alle Depots und zurueck zu "Alle"; auf der Positionen-Seite genauso
+  {
+    const namen = [];
+    for (let k = 0; k < 7; k++) { namen.push(gesamtAnsicht() ? "alle" : S.aktiv); document.querySelector('#inhalt [data-sicht="1"]').click(); }
+    pruefe(new Set(namen).size === 7 && gesamtAnsicht(), `Sicht-Leiste blättert nicht durch alle (${namen.join(",")})`);
+    zeige("positionen"); document.querySelector('#inhalt [data-sicht="1"]').click();
+    pruefe(ui.seite === "positionen" && !gesamtAnsicht() && document.querySelector("#inhalt .sichtleiste b").textContent === D.name, "Sicht-Leiste auf Positionen");
+    document.querySelector('#inhalt [data-sicht="-1"]').click(); pruefe(gesamtAnsicht(), "Sicht zurück auf Alle");
+    document.querySelector("#inhalt [data-sicht-wahl]").click();
+    pruefe(document.querySelectorAll("#inhalt [data-sicht-nr]").length === 7, "Sicht-Auswahl (antippen) fehlt");
+    document.querySelector('#inhalt [data-sicht-nr="3"]').click(); pruefe(!gesamtAnsicht() && sichtIndex() === 3, "Sicht-Auswahl springt nicht");
+    sichtSetzen(sichten()[0]); zeige("uebersicht");
+  }
+  // Familie: Kraken, Bitvavo, OKX gehoeren "Partner" -> getrennte Summen, Haushalt = alles
+  for (const n of ["Kraken", "Bitvavo", "OKX"]) S.depots[ids[n]].person = "Partner";
+  ui.person = "Partner"; ui.alle = true; zeige("uebersicht");
+  const gP = gesamtDaten(), sollP = ["Kraken", "Bitvavo", "OKX"].reduce((a2, n) => a2 + soll.depots[n].wert_heute, 0);
+  pruefe(nahR(gP.gesamt, sollP, 1e-6, 0.05) && gP.ids.length === 3, `Person Partner: ${gP.gesamt} statt ${sollP}`);
+  pruefe(document.getElementById("titel").textContent.startsWith("Partner"), "Titel Person fehlt");
+  ui.person = "Ich"; const gI = gesamtDaten();
+  pruefe(nahR(gI.gesamt + gP.gesamt, gd.gesamt, 1e-6, 0.05), "Ich + Partner ≠ Haushalt");
+  ui.person = null; zeige("uebersicht");
+  pruefe(sichten().length === 9 && sichtName(sichten()[0]) === "👪 Haushalt" && sichten().some((s) => sichtName(s) === "Alle von Partner") && nahR(gesamtDaten().gesamt, gd.gesamt, 1e-6, 0.05),
+         `Haushalt-Sichten/-Summe: ${sichten().map(sichtName).join(" | ")}`);
+  sichtSetzen(sichten().find((s) => s.alle && s.person === "Partner")); pruefe(ui.person === "Partner" && gesamtAnsicht() && nahR(gesamtDaten().gesamt, sollP, 1e-6, 0.05), "Sicht 'Alle von Partner'");
+  sichtSetzen(sichten()[0]);
+  for (const n of ["Kraken", "Bitvavo", "OKX"]) delete S.depots[ids[n]].person;
+
+  // Depot bearbeiten: eines als "beobachtet" markieren -> zaehlt nicht mehr zum Gesamtvermoegen
+  document.querySelector(`#inhalt [data-depot-edit="${ids.OKX}"]`).click();
+  const fo = document.getElementById("depot-bearbeiten-form");
+  pruefe(!!fo, "Bearbeiten-Formular fehlt");
+  if (fo) {
+    fo.querySelector('[name="rolle"]').value = "beobachtet"; fo.querySelector('[name="name"]').value = "OKX (Freund)";
+    fo.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    const g2 = gesamtDaten();
+    pruefe(S.depots[ids.OKX].name === "OKX (Freund)" && nahR(g2.gesamt, gd.gesamt - soll.depots.OKX.wert_heute, 1e-6, 0.05), `Beobachtet: Gesamt ${g2.gesamt}`);
+    S.depots[ids.OKX].rolle = "eigen"; S.depots[ids.OKX].name = "OKX";
+  }
+  document.querySelector('#inhalt [data-ansicht]:not([data-ansicht="alle"])').click();
+  pruefe(!gesamtAnsicht() && document.getElementById("titel").textContent !== "Alle Depots", "Reiter öffnet kein Einzeldepot");
+  ui.alle = true;
+  const t = gvJeTag([ids["Trade Republic"]]), tw = Object.values(t);
+  pruefe(tw.length === soll.daytrading.tage, `Daytrading: ${tw.length} Tage statt ${soll.daytrading.tage}`);
+  pruefe(tw.filter((x) => x.gv > 0).length === soll.daytrading.gewinntage, "Daytrading: Gewinntage");
+  pruefe(tw.reduce((s, x) => s + x.trades, 0) === soll.daytrading.trades, "Daytrading: Anzahl Verkäufe");
+  pruefe(nahR(tw.reduce((s, x) => s + x.gv, 0), soll.daytrading.summe), "Daytrading: Summe");
+  // Seiten mit grossem Stand zeichnen ohne Absturz
+  if (new URLSearchParams(location.search).get("einzeln")) ui.chartArt = "einzeln";
+  if (new URLSearchParams(location.search).get("zeigen")) { oeffnen(ids[new URLSearchParams(location.search).get("depot") || "Smartbroker"]); ui.kalMonat = "2025-05"; zeige(new URLSearchParams(location.search).get("zeigen")); return f; }
+  for (const sn of ["uebersicht", "positionen", "depots", "kalender"]) try { zeige(sn); } catch (e) { f.push(`Seite ${sn}: ${e.message}`); }
+  return f;
+}
+
+function vergleicheVerlauf(name, v, s, pruefe) {
+  if (!v) return pruefe(false, `${name}: kein Verlauf`);
+  const n = (a, b, t = 1e-3) => Math.abs(a - b) <= t;
+  pruefe(v.index.length === s.index.length, `${name}: ${v.index.length} Wochen statt ${s.index.length}`);
+  const k = v.index.findIndex((x, i) => !n(x, s.index[i], 0.002));
+  pruefe(k < 0, `${name}: Index Woche ${k}: ${v.index[k]} statt ${s.index[k]}`);
+  const kw = v.wert.findIndex((x, i) => !n(x, s.wert[i], 0.02));
+  const ke = v.einsatz.findIndex((x, i) => !n(x, s.einsatz[i], 0.05));
+  pruefe(ke < 0, `${name}: Eingesetzt Woche ${ke}: ${v.einsatz[ke]} statt ${s.einsatz[ke]}`);
+  pruefe(kw < 0, `${name}: Wert Woche ${kw}: ${v.wert[kw]} statt ${s.wert[kw]}`);
+  pruefe(n(v.rendite * 100, s.rendite), `${name}: Rendite ${v.rendite * 100} statt ${s.rendite}`);
+  pruefe(n(v.drawdown * 100, s.drawdown), `${name}: Drawdown ${v.drawdown * 100} statt ${s.drawdown}`);
+  pruefe(n(v.hoch.wert, s.hoch[0], 0.02) && v.hoch.datum === s.hoch[1], `${name}: Hoch ${v.hoch.wert} ${v.hoch.datum} statt ${s.hoch}`);
+  pruefe(n(v.tief.wert, s.tief[0], 0.02) && v.tief.datum === s.tief[1], `${name}: Tief ${v.tief.wert} ${v.tief.datum} statt ${s.tief}`);
+  pruefe(n(v.indexHoch, s.indexHoch, 0.002) && n(v.indexTief, s.indexTief, 0.002), `${name}: Index-Hoch/Tief`);
+}
+
+/** Mehrere Dateien auf einmal, absichtlich in verdrehter Reihenfolge: Kursliste muss
+ *  zuletzt laufen, jede Vorschau wird uebernommen, am Ende stimmt GESAMT. */
+async function mehrfachTest() {
+  const soll = await (await fetch("grosstest/erwartet.json")).json(), f = [];
+  localStorage.clear();
+  S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+  const namen = ["7_kursliste_wochenkurse.csv", "6_traderepublic_daytrading.csv", "1_kraken_krypto_halten_ledgers.csv", "3_okx_krypto_handel.csv",
+                 "5_smartbroker_einzelwerte.csv", "2_bitvavo_krypto_sparplan.csv", "4_scalable_etf_sparplan.csv"];
+  // wie File-Objekte (name + text()), aber ohne Blob-Lesen - das laeuft im Testbrowser ausserhalb der Zeitsteuerung
+  const dateien = await Promise.all(namen.map(async (n) => { const t = await datei(n, "grosstest/"); return { name: "Test_" + n, text: async () => t }; }));
+  await dateienEinlesen(dateien);
+  let runden = 0;
+  while (ui.vorschau && runden++ < 20) {
+    if (document.querySelector('[data-umfang="alles"]')) document.querySelector('[data-umfang="alles"]').click();
+    vorschauUebernehmen();
+  }
+  if (ui.importSchlange) f.push("Schlange nicht leer");
+  const n = Object.keys(S.depots).length;
+  if (n !== 6) f.push(`${n} Depots statt 6 (${Object.values(S.depots).map((d) => d.name + ":" + d.buchungen.length)}) Fehler ${(ui.importFehler || []).join(" | ")}`);
+  ui.alle = true;
+  const t0 = performance.now(); zeige("uebersicht"); const msUeb = performance.now() - t0;
+  const t1 = performance.now(); wertverlauf(Object.keys(S.depots)); const msVerl = performance.now() - t1;
+  if (msUeb > 3000) f.push(`Übersicht zu langsam: ${Math.round(msUeb)} ms (Wertverlauf ${Math.round(msVerl)} ms)`);
+  ui.messung = `Übersicht ${Math.round(msUeb)} ms, Wertverlauf ${Math.round(msVerl)} ms`;
+  const g = gesamtDaten();
+  if (Math.abs(g.gesamt - soll.gesamt.wert.at(-1)) > 0.05) f.push(`Mehrfach-Import: Gesamt ${g.gesamt} statt ${soll.gesamt.wert.at(-1)}`);
+  return f;
+}
+
+/** 10 Testfaelle (tests/testfaelle.py): Robustheit und Rechnung. */
+async function faelleTest() {
+  const soll = await (await fetch("testfaelle/erwartet.json")).json();
+  const f = [], T = "testfaelle/";
+  const pruefe = (ok, text) => { if (!ok) f.push(text); };
+  localStorage.clear();
+  S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1");
+  const summe = (feld) => Object.values(bestand()).reduce((a, p) => a + p[feld], 0);
+  const offen = () => Object.values(bestand()).filter((p) => p.stueck > 1e-9);
+  const fall = async (nr, datei, konto = "Test " + nr) => {
+    const r = await importiere(await datei_(datei), datei, true, konto);
+    oeffnen(Object.entries(S.depots).find(([, d]) => d.name === konto)?.[0] || S.aktiv);
+    return r;
+  };
+  const datei_ = (n) => datei(n, n.startsWith("grosstest/") ? "" : T);
+  // 1 doppelt
+  await importiere(await datei("6_traderepublic_daytrading.csv", "grosstest/"), "x.csv");
+  const r1 = await importiere(await datei("6_traderepublic_daytrading.csv", "grosstest/"), "x.csv");
+  pruefe(r1.n === 0, `Fall 1: ${r1.n} neue statt 0`);
+  // 11 Kraken-App "Activities": Transfers an Challenge = Verlust (ab Werk), wahlweise Aus-/Einzahlung
+  {
+    const v11 = erkennen(await datei("11_kraken_app_aktivitaeten.csv", T), "krak-activities.csv");
+    pruefe(v11.format.startsWith("Kraken – Aktivitäten"), `Fall 11: Format ${v11.format}`);
+    await fall(11, "11_kraken_app_aktivitaeten.csv");
+    const k11 = kontoStand();
+    pruefe(k11 && nah(k11.stand, soll["11"].konto) && nah(k11.verluste, soll["11"].verluste) && nah(k11.bonus, soll["11"].bonus),
+           `Fall 11: Konto ${k11?.stand} Verluste ${k11?.verluste} Bonus ${k11?.bonus}`);
+    const r11 = Object.values(bestand()).reduce((a2, x) => a2 + x.realisiert, 0);
+    pruefe(nah(r11, soll["11"].realisiert) && !Object.values(bestand()).some((x) => x.stueck > 1e-9), `Fall 11: Challenge in $ realisiert ${r11} statt ${soll["11"].realisiert}`);
+    const e11 = einsatzVerlauf([S.aktiv]);
+    pruefe(e11 && nah(e11.einsatz.at(-1), soll["11"].einsatz), `Fall 11: eingesetzt ${e11?.einsatz.at(-1)} statt ${soll["11"].einsatz}`);
+    ui.vorschau = v11; v11.transferAls = "auszahlung"; v11.ziel = "neu"; vorschauPruefen(v11);
+    pruefe(v11.buchungen.filter((b) => b.typ === "auszahlung").length === 3 && v11.buchungen.filter((b) => b.typ === "einzahlung").length === 4 && v11.buchungen.some((b) => /Challenge/.test(b.notiz || "") && b.typ === "verkauf"), "Fall 11: Umschalten auf Aus-/Einzahlung");
+    ui.vorschau = null;
+  }
+  // 2 Excel
+  await fall(2, "02_excel_umgespeichert.csv");
+  // Chart auch OHNE Kursverlauf (Vorgabe 07.11.: "sehe keinen Chart"): eingesetzt laut Buchungen
+  ui.alle = false; zeige("uebersicht");
+  pruefe(!!document.querySelector("#inhalt .wertchart svg"), "Kein Chart ohne Kursverlauf");
+  const ev = einsatzVerlauf([S.aktiv]);
+  pruefe(ev && nah(ev.einsatz.at(-1), 1000), `Eingesetzt ohne Kurse ${ev?.einsatz.at(-1)} statt 1000`);
+  pruefe(nah(summe("realisiert"), soll["2"].realisiert), `Fall 2: realisiert ${summe("realisiert")}`);
+  pruefe(kontoStand() && nah(kontoStand().stand, soll["2"].konto), `Fall 2: Konto ${kontoStand()?.stand}`);
+  pruefe(offen().length === 1 && nah(offen()[0].stueck, 0.0125, 1e-9), `Fall 2: BTC ${offen()[0]?.stueck}`);
+  // 3 Angriff im Namen
+  await fall(3, "03_sonderzeichen_und_angriff.csv");
+  zeige("positionen");
+  const inh = document.getElementById("inhalt");
+  pruefe(!inh.querySelector("img") && document.title.indexOf("XSS") < 0, "Fall 3: HTML im Namen wurde ausgeführt");
+  pruefe(inh.textContent.includes("Müller & Söhne"), "Fall 3: Name nicht als Text sichtbar");
+  pruefe(nah(summe("einstand"), soll["3"].einstand), "Fall 3: Einstand");
+  // 4 Ueberverkauf
+  await fall(4, "04_mehr_verkauft_als_gekauft.csv");
+  pruefe(nah(summe("realisiert"), soll["4"].realisiert), `Fall 4: realisiert ${summe("realisiert")}`);
+  pruefe(Object.values(bestand()).every((p) => p.stueck >= 0) && offen().length === 0, "Fall 4: Minus-Bestand");
+  zeige("uebersicht");
+  pruefe(/über dem Bestand/.test(document.getElementById("inhalt").textContent), "Fall 4: keine Warnung");
+  // 5 neu gekauft
+  await fall(5, "05_verkauft_und_neu_gekauft.csv");
+  const p5 = offen()[0];
+  pruefe(p5 && p5.stueck === 8 && nah(p5.einstand, 381) && nah(summe("realisiert"), soll["5"].realisiert), `Fall 5: ${p5 && [p5.stueck, p5.einstand]}`);
+  // 6 Smartbroker
+  const r6 = await fall(6, "06_storno_steuer_dividende.csv");
+  const p6 = offen()[0];
+  pruefe(r6.n === 3 && p6 && p6.stueck === 25 && nah(p6.einstand, soll["6"].einstand) && nah(summe("realisiert"), soll["6"].realisiert)
+         && nah(summe("dividenden"), soll["6"].dividenden), `Fall 6: ${r6.n} ${p6 && [p6.stueck, p6.einstand]} ${summe("realisiert")} ${summe("dividenden")}`);
+  // 7 + 8: Meldung statt Absturz
+  // 8 Kontoauszug + 12 unbekannter Broker: Spalten zuordnen (Vorschlag), gemerkte Zuordnung beim zweiten Mal
+  {
+    const r8 = erkennen(await datei("08_falsches_format_kontoauszug.csv", T), "konto.csv");
+    pruefe(!!r8.zuordnen, "Fall 8: keine Zuordnungs-Seite");
+    if (r8.zuordnen) {
+      const v8 = zuordnungAnwenden(r8.zuordnen, r8.zuordnen.z);
+      pruefe(v8.format.startsWith("Kontoauszug") && nah(v8.buchungen.reduce((a2, b) => a2 + b.betrag, 0), soll["8"].konto), `Fall 8: ${v8.format} ${v8.buchungen.map((b) => b.betrag)}`);
+    }
+    const t12 = await datei("12_unbekannter_broker.csv", T), r12 = erkennen(t12, "fremd.csv");
+    pruefe(!!r12.zuordnen, "Fall 12: keine Zuordnungs-Seite");
+    if (r12.zuordnen) {
+      const z = r12.zuordnen.z;
+      pruefe(z.spalten.datum === 0 && z.spalten.isin === 3 && z.spalten.stueck === 4 && z.spalten.betrag === 6 && z.spalten.gebuehr === 7 && z.spalten.steuer === 8,
+             `Fall 12: Vorschlag ${JSON.stringify(z.spalten)}`);
+      z.typen.Depotentgelt = "gebuehr"; z.konto = "Test 12";
+      ui.seite = "daten"; ui.zuordnung = r12.zuordnen; zeichnen();
+      document.getElementById("zuordnung-merken").checked = true;
+      document.querySelector('[data-los="zuordnung-ok"]').click();
+      pruefe(!!ui.vorschau, "Fall 12: keine Vorschau nach Zuordnung");
+      if (ui.vorschau) { ui.vorschau.ziel = "neu"; vorschauUebernehmen(); }
+      oeffnen(Object.entries(S.depots).find(([, d]) => d.name === "Test 12")?.[0] || S.aktiv);
+      const p12 = offen()[0];
+      pruefe(p12 && p12.stueck === 18 && nah(p12.einstand, soll["12"].einstand) && nah(summe("realisiert"), soll["12"].realisiert) && nah(summe("dividenden"), soll["12"].dividenden),
+             `Fall 12: ${p12 && [p12.stueck, p12.einstand]} real ${summe("realisiert")} div ${summe("dividenden")}`);
+      pruefe(kontoStand()?.gebuehren === 2, "Fall 12: Depotentgelt nicht als Gebühr");
+      const nochmal = erkennen(t12, "fremd.csv");
+      pruefe(!nochmal.zuordnen && nochmal.buchungen?.every((b) => b.ueberspringen), "Fall 12: zweites Mal nicht automatisch erkannt / doppelt");
+    }
+  }
+  // 14-16 PDF-Import (ab 0.31): Kraken-Kontoauszug, Bank-Tabelle in zwei Bauarten, Scan und Passwort
+  {
+    const pdfDatei = async (n) => new File([await (await fetch(T + n)).arrayBuffer()], n);
+    const kontoSetzen = (name) => { ui.einfuehrung = null; ui.seite = "daten"; zeichnen();
+      const f = document.getElementById("vorschau-konto"); f.value = name; f.dispatchEvent(new Event("change", { bubbles: true })); };
+    await dateienEinlesen([await pdfDatei("14_kraken_kontoauszug.pdf")]);
+    const v14 = ui.vorschau, s14 = soll["14"];
+    pruefe(v14 && v14.format === "Kraken – Kontoauszug (PDF)" && v14.buchungen.length === s14.buchungen && v14.buchungen.every((b) => !b.ueberspringen),
+           `Fall 14: ${v14 ? v14.format + " " + v14.buchungen.length + " Buchungen" : "keine Vorschau – " + document.getElementById("meldung").textContent}`);
+    if (v14) {
+      pruefe(v14.buchungen.filter((b) => b.startbestand).length === 3 && v14.buchungen.every((b) => b.datum >= "2026-02-28" && b.datum <= "2026-03-31"), "Fall 14: Anfangsbestand/Datum");
+      kontoSetzen("Test 14");
+      pruefe(!!document.querySelector("[data-transfer]"), "Fall 14: Transfer-Schalter fehlt");
+      vorschauUebernehmen();
+      oeffnen(Object.entries(S.depots).find(([, d]) => d.name === "Test 14")?.[0] || S.aktiv);
+      const st = (id) => Object.values(bestand()).find((p) => p.instrument === id)?.stueck;
+      pruefe(nah(st("BTC"), s14.btc, 1e-9) && nah(st("ETH"), s14.eth, 1e-9) && nah(st("USD"), 0, 1e-9), `Fall 14: BTC ${st("BTC")} ETH ${st("ETH")} USD ${st("USD")}`);
+      pruefe(nah(summe("einstand"), s14.einstand) && nah(summe("realisiert"), s14.realisiert), `Fall 14: Einstand ${summe("einstand")} realisiert ${summe("realisiert")}`);
+      const k14 = kontoStand();
+      pruefe(k14 && nah(k14.stand, s14.konto) && nah(k14.verluste, s14.verluste) && nah(k14.bonus, s14.bonus), `Fall 14: Konto ${k14?.stand} Verluste ${k14?.verluste} Bonus ${k14?.bonus}`);
+      // dieselbe PDF noch einmal: nichts Neues
+      await dateienEinlesen([await pdfDatei("14_kraken_kontoauszug.pdf")]);
+      if (ui.vorschau) kontoSetzen("Test 14");
+      pruefe(ui.vorschau && ui.vorschau.buchungen.every((b) => b.ueberspringen), "Fall 14: zweiter Import nicht als doppelt erkannt");
+      // Transfers als Aus-/Einzahlung: Dollar-Transfer wird Ausbuchung statt Verlust
+      const pdf14 = await pdfLesen(new Uint8Array(await (await fetch(T + "14_kraken_kontoauszug.pdf")).arrayBuffer()));
+      const w14 = erkennenPdf(pdf14, "x.pdf"); w14.ziel = "neu"; w14.transferAls = "auszahlung"; vorschauPruefen(w14);
+      pruefe(w14.buchungen.filter((b) => b.typ === "ausbuchung").length === 1 && w14.buchungen.filter((b) => b.typ === "auszahlung").length === 1
+             && w14.buchungen.filter((b) => b.typ === "einzahlung").length === 2 && !w14.buchungen.some((b) => b.typ === "verlust"), "Fall 14: Umschalten auf Aus-/Einzahlung");
+    }
+    ui.vorschau = null; ui.importSchlange = null;
+    const lesePdf = async (n) => erkennenPdf(await pdfLesen(new Uint8Array(await (await fetch(T + n)).arrayBuffer())), n);
+    const uebernehmen = (v, konto) => { ui.vorschau = v; kontoSetzen(konto); const n = ui.vorschau.buchungen.filter((b) => !b.ueberspringen).length; vorschauUebernehmen();
+      oeffnen(Object.entries(S.depots).find(([, d]) => d.name === konto)?.[0] || S.aktiv); return n; };
+    for (const n of ["15a_bank_kontoauszug_einfach.pdf", "15b_bank_kontoauszug_gepackt.pdf"]) {
+      let v15;
+      try { v15 = await lesePdf(n); } catch (e) { pruefe(false, `Fall 15 ${n}: ${e.message}`); continue; }
+      pruefe(!v15.zuordnen && /Kontoauszug \(PDF\)$/.test(v15.format || ""), `Fall 15 ${n}: nicht als Kontoauszug erkannt (${v15.format})`);
+      if (v15.zuordnen) continue;
+      const n15 = v15.buchungen.map((b) => b.notiz);
+      pruefe(v15.buchungen.length === soll["15"].buchungen && nah(v15.buchungen.reduce((a2, b) => a2 + b.betrag, 0), soll["15"].konto), `Fall 15 ${n}: ${v15.buchungen.map((b) => b.betrag)}`);
+      pruefe(n15[0] === "Gehalt März Müller GmbH" && n15[1] === "Miete Wohnung Dauerauftrag 0815" && n15[2] === "Übertrag Sparkonto (Rücklage)", `Fall 15 ${n}: Texte ${n15.join(" / ")}`);
+      pruefe(v15.buchungen.map((b) => b.datum).join() === "2026-03-02,2026-03-05,2026-03-17", `Fall 15 ${n}: Datum ${v15.buchungen.map((b) => b.datum)}`);
+    }
+    try {   // 17 zweizeiliger Kopf, Euro-Zeichen, Gegenprobe
+      const v17 = await lesePdf("17_bank_zweizeiliger_kopf.pdf"), s17 = soll["17"];
+      pruefe(v17.format === "Revolut – Kontoauszug (PDF)" && v17.buchungen.length === s17.buchungen && /stimmt/.test(v17.hinweis || ""), `Fall 17: ${v17.format} ${v17.buchungen.length} „${v17.hinweis}“`);
+      uebernehmen(v17, "Test 17");
+      const k17 = kontoStand();
+      pruefe(k17 && nah(k17.stand, s17.konto) && nah(k17.karte, s17.karte) && nah(k17.gebuehren, s17.gebuehren), `Fall 17: Konto ${k17?.stand} Karte ${k17?.karte} Gebühren ${k17?.gebuehren}`);
+      const w17 = await lesePdf("17_bank_zweizeiliger_kopf.pdf"); w17.ziel = S.aktiv; vorschauPruefen(w17);
+      pruefe(w17.buchungen.every((b) => b.ueberspringen), "Fall 17: zweiter Import nicht als doppelt erkannt");
+    } catch (e) { pruefe(false, "Fall 17: " + e.message); }
+    try {   // 18 Broker-Verrechnungskonto: Kauf/Verkauf/Ausschuettung aus dem Auszug
+      const v18 = await lesePdf("18_broker_verrechnungskonto.pdf"), s18 = soll["18"];
+      pruefe(v18.buchungen.length === s18.buchungen && /stimmt/.test(v18.hinweis || ""), `Fall 18: ${v18.buchungen.length} Buchungen „${v18.hinweis}“ ${v18.buchungen.map((b) => b.typ)}`);
+      uebernehmen(v18, "Test 18");
+      const p18 = offen()[0], k18 = kontoStand();
+      pruefe(p18 && nah(p18.stueck, s18.stueck, 1e-9) && D.instrumente[p18.instrument]?.name === "Test AG" && nah(summe("realisiert"), s18.realisiert) && nah(summe("dividenden"), s18.dividenden),
+             `Fall 18: ${p18 && [p18.stueck, D.instrumente[p18.instrument]?.name]} real ${summe("realisiert")} div ${summe("dividenden")}`);
+      pruefe(k18 && nah(k18.stand, s18.konto), `Fall 18: Konto ${k18?.stand}`);
+    } catch (e) { pruefe(false, "Fall 18: " + e.message); }
+    try {   // 19 Kraken: Ledger-PDF, danach der Kaufbeleg desselben Kaufs
+      const v19 = await lesePdf("19a_kraken_ledger.pdf"), s19 = soll["19"];
+      pruefe(v19.format === "Kraken – Ledger (PDF)" && v19.buchungen.length === s19.buchungen, `Fall 19: ${v19.format} ${v19.buchungen.length} ${v19.buchungen.map((b) => b.typ)}`);
+      uebernehmen(v19, "Test 19");
+      const st19 = () => Object.values(bestand()).find((p) => p.instrument === "ADA")?.stueck;
+      pruefe(nah(st19(), s19.ada, 1e-9) && nah(kontoStand()?.stand, s19.konto), `Fall 19: ADA ${st19()} Konto ${kontoStand()?.stand}`);
+      const b19 = await lesePdf("19b_kraken_kaufbeleg.pdf");
+      pruefe(b19.format === "Kraken – Kaufbeleg (PDF)" && b19.buchungen.length === 1 && nah(b19.buchungen[0].stueck, 5.755063, 1e-9) && b19.buchungen[0].kasse === -1 && b19.buchungen[0].datum === "2026-08-20",
+             `Fall 19: Beleg ${JSON.stringify(b19.buchungen[0])}`);
+      b19.ziel = S.aktiv; vorschauPruefen(b19);
+      pruefe(b19.buchungen[0].ueberspringen && /schon da/.test(b19.buchungen[0].grund), `Fall 19: Beleg nicht als doppelt erkannt (${b19.buchungen[0].grund})`);
+      b19.ziel = "neu"; vorschauPruefen(b19);
+      pruefe(!b19.buchungen[0].ueberspringen, "Fall 19: Beleg im leeren Depot übersprungen");
+    } catch (e) { pruefe(false, "Fall 19: " + e.message); }
+    try {   // 20 Trade Republic: Datum ueber 3 Zeilen, Beschreibung vor dem Tag, quantity unter dem Jahr, Seitenwechsel
+      const v20 = await lesePdf("20_traderepublic_kontoauszug.pdf"), s20 = soll["20"];
+      pruefe(v20.format === "Trade Republic – Kontoauszug (PDF)" && v20.buchungen.length === s20.buchungen && /stimmt/.test(v20.hinweis || ""),
+             `Fall 20: ${v20.format} ${v20.buchungen.length} „${v20.hinweis}“ ${v20.buchungen.map((b) => b.datum + " " + b.typ + " " + (b.stueck || b.betrag)).join(", ")}`);
+      uebernehmen(v20, "Test 20");
+      const st = (isin) => Object.values(bestand()).find((p) => p.instrument === isin)?.stueck;
+      pruefe(nah(st("DE000TEST020"), s20.test_ag, 1e-9) && nah(st("IE000TEST203"), s20.etf, 1e-9) && nah(summe("realisiert"), s20.realisiert) && nah(summe("dividenden"), s20.dividenden),
+             `Fall 20: Test AG ${st("DE000TEST020")} ETF ${st("IE000TEST203")} real ${summe("realisiert")} div ${summe("dividenden")}`);
+      pruefe(nah(kontoStand()?.stand, s20.konto) && D.instrumente["DE000TEST020"]?.name === "TEST AG", `Fall 20: Konto ${kontoStand()?.stand} Name ${D.instrumente["DE000TEST020"]?.name}`);
+    } catch (e) { pruefe(false, "Fall 20: " + e.message); }
+    // 23 Einzel-Abrechnungen je Broker (ab 0.49): Typ, Stueck, Kurs, Endbetrag, Konto, Gegenprobe
+    for (const [n, konto, typ, st, kurs, kasse, steuer] of [
+      ["23a_scalable_kauf.pdf", "Scalable", "kauf", 12, 25.5, -306.99, 0], ["23b_smartbroker_verkauf.pdf", "Smartbroker", "verkauf", 20, 50, 969.63, 26.37],
+      ["23c_baader_kauf.pdf", "Scalable", "kauf", 5, 80, -400.99, 0], ["23d_traderepublic_verkauf.pdf", "Trade Republic", "verkauf", 10, 120, 1146.25, 52.75],
+      ["23e_revolut_kauf.pdf", "Revolut", "kauf", 4.5, 20, -90, 0]]) {
+      try {
+        const v = await lesePdf(n), b = v.buchungen[0];
+        pruefe(v.konto === konto && b.typ === typ && nah(b.stueck, st, 1e-9) && nah(b.kurs, kurs, 1e-9) && nah(b.kasse, kasse) && nah(b.steuer, steuer) && /stimmt/.test(v.hinweis || "") && /TEST23/.test(b.isin),
+               `Fall 23 ${n}: ${v.konto} ${b.typ} ${b.stueck} × ${b.kurs} = ${b.kasse} Steuer ${b.steuer} ${b.isin} „${v.hinweis}“`);
+      } catch (e) { pruefe(false, `Fall 23 ${n}: ` + e.message); }
+    }
+    ui.vorschau = null; ui.importSchlange = null;
+    for (const [n, wort] of [["16a_scan_ohne_text.pdf", "keinen lesbaren Text"], ["16b_passwort.pdf", "passwortgeschützt"]]) {
+      ui.vorschau = null;
+      await dateienEinlesen([await pdfDatei(n)]);
+      pruefe(!ui.vorschau && !ui.zuordnung && document.getElementById("meldung").textContent.includes(wort), `Fall 16 ${n}: Meldung „${document.getElementById("meldung").textContent}“`);
+    }
+    ui.vorschau = null; ui.zuordnung = null; ui.importSchlange = null;
+  }
+  // 13 Bestand + aeltere Transaktionen -> Startbestand zurueckrechnen
+  {
+    await fall(13, "13a_bestand_stichtag.csv");
+    const id13 = S.aktiv;
+    ui.einfuehrung = null; ui.seite = "daten";
+    ui.vorschau = erkennen(await datei("13b_aeltere_transaktionen.csv", T), "Transaktionsexport.csv"); ui.vorschau.ziel = id13; vorschauPruefen(ui.vorschau); zeichnen();
+    pruefe(ui.vorschau.rueck === 3 && ui.vorschau.buchungen.every((b) => !b.ueberspringen), `Fall 13: ${ui.vorschau.rueck} zum Zurückrechnen, übersprungen ${ui.vorschau.buchungen.filter((b) => b.ueberspringen).length}`);
+    vorschauUebernehmen(); oeffnen(id13);
+    const e13 = D.buchungen.find((b) => b.typ === "einbuchung"), p13 = offen()[0];
+    pruefe(e13 && nah(e13.stueck, soll["13"].anfang) && e13.datum === soll["13"]["anfang_datum"], `Fall 13: Anfang ${e13 && [e13.stueck, e13.datum]}`);
+    pruefe(p13 && nah(p13.stueck, soll["13"].stueck) && nah(p13.einstand, soll["13"].einstand) && nah(summe("realisiert"), soll["13"].realisiert),
+           `Fall 13: ${p13 && [p13.stueck, p13.einstand]} real ${summe("realisiert")}`);
+  }
+  for (const [nr, d, muster] of [[7, "07_leer_nur_kopfzeile.csv", /keine Buchungen/i]]) {
+    let msg = "";
+    try { erkennen(await datei(d, T), d); } catch (e) { msg = e.message; }
+    pruefe(muster.test(msg), `Fall ${nr}: Meldung „${msg}“`);
+  }
+  // 9 Riesendatei
+  const t0 = performance.now();
+  const r9 = await fall(9, "09_riesendatei_20000_zeilen.csv");
+  zeige("uebersicht"); ui.kalArt = "gv"; zeige("kalender"); ui.kalArt = null;
+  const ms = performance.now() - t0;
+  pruefe(D.buchungen.length === soll["9"].buchungen && nah(summe("realisiert"), soll["9"].realisiert, 0.05), `Fall 9: ${D.buchungen.length} Buchungen, ${summe("realisiert")}`);
+  pruefe(ms < 20000, `Fall 9: zu langsam (${Math.round(ms)} ms)`);
+  // 10 Kraken doppelt
+  await fall(10, "10a_kraken_ledgers.csv");
+  const r10 = await fall(10, "10b_kraken_trades.csv");
+  const p10 = offen()[0];
+  pruefe(r10.n === 0, `Fall 10: ${r10.n} doppelte Trades`);
+  pruefe(p10 && nah(p10.stueck, 0.2, 1e-9) && nah(p10.einstand, soll["10"].einstand) && nah(summe("realisiert"), soll["10"].realisiert)
+         && nah(kontoStand().stand, soll["10"].konto) && D.buchungen.length === soll["10"].buchungen, `Fall 10: ${p10 && [p10.stueck, p10.einstand]} ${summe("realisiert")} ${kontoStand()?.stand}`);
+  // 21 Import ins falsche Depot (0.41): ganzen Import verschieben, einzelne Buchung zurueck, Import zuruecknehmen
+  {
+    const confirmAlt = window.confirm; window.confirm = () => true;
+    const vorher = Object.keys(S.depots).length;
+    await fall(21, "05_verkauft_und_neu_gekauft.csv");                       // landet in "Test 21"
+    const a = S.aktiv, nA = D.buchungen.length, stA = offen()[0]?.stueck;
+    const b = neueId("d"); S.depots[b] = neuesDepot("Test 21 richtig", "eigen");
+    ui.seite = "buchungen"; ui.importWahl = null; zeichnen();
+    const g = importGruppen();
+    pruefe(g.length === 1 && g[0].n === nA && !!D.importe?.length, `Fall 21: Import-Gruppe ${g.length} / ${g[0]?.n} statt ${nA}`);
+    document.querySelector(`#inhalt [data-import-wahl="${g[0].key}"]`).click();
+    document.getElementById("import-ziel").value = b;
+    document.querySelector(`#inhalt [data-import-verschieben="${g[0].key}"]`).click();
+    pruefe(S.depots[a].buchungen.length === 0 && Object.keys(S.depots[a].instrumente).length === 0 && S.depots[b].buchungen.length === nA, `Fall 21: verschieben ${S.depots[a].buchungen.length} / ${S.depots[b].buchungen.length}`);
+    oeffnen(b);
+    pruefe(nah(offen()[0]?.stueck, stA, 1e-9) && nah(summe("realisiert"), soll["5"].realisiert), `Fall 21: Bestand nach Verschieben ${offen()[0]?.stueck} statt ${stA}`);
+    // eine Buchung einzeln zurueck
+    const eine = D.buchungen[0];
+    ui.formular = { nr: eine.nr }; ui.seite = "buchungen"; zeichnen();
+    document.getElementById("buchung-ziel").value = a;
+    document.querySelector(`#inhalt [data-buchung-verschieben="${eine.nr}"]`).click();
+    pruefe(S.depots[b].buchungen.length === nA - 1 && S.depots[a].buchungen.length === 1 && !!S.depots[a].instrumente[S.depots[a].buchungen[0].instrument], "Fall 21: Einzelbuchung verschieben");
+    // Import zuruecknehmen
+    ui.formular = null; ui.importWahl = null; zeichnen();
+    const g2 = importGruppen();
+    document.querySelector(`#inhalt [data-import-wahl="${g2[0].key}"]`).click();
+    document.querySelector(`#inhalt [data-import-loeschen="${g2[0].key}"]`).click();
+    pruefe(D.buchungen.length === 0 && Object.keys(D.instrumente).length === 0 && !(D.importe || []).length, `Fall 21: zurücknehmen ${D.buchungen.length} Buchungen übrig`);
+    pruefe(Object.keys(S.depots).length === vorher + 2, "Fall 21: Depot-Anzahl");
+    window.confirm = confirmAlt;
+  }
+  return f;
+}
+
+/** Klick-Test: jede Seite, jeden Knopf, jedes Formular, jeden Schalter - Fehler sammeln. */
+async function klickTest(gross = false) {
+  if (gross) {
+    // grosser Stand: 6 Depots, 2 Jahre, Kursliste - wie beim Beta-Test
+    localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+    const namen = ["1_kraken_krypto_halten_ledgers.csv", "2_bitvavo_krypto_sparplan.csv", "3_okx_krypto_handel.csv", "4_scalable_etf_sparplan.csv",
+                   "5_smartbroker_einzelwerte.csv", "6_traderepublic_daytrading.csv", "7_kursliste_wochenkurse.csv"];
+    await dateienEinlesen(await Promise.all(namen.map(async (n) => { const t = await datei(n, "grosstest/"); return { name: n, text: async () => t }; })));
+    for (let k = 0; ui.vorschau && k < 20; k++) vorschauUebernehmen();
+  } else await beispielStand();
+  S.sachwerte = [{ id: "s1", name: "Laptop", art: "Technik", kaufdatum: "2025-01-01", kaufpreis: 1200, verlust: 25, wert: null }];
+  S.watchlist = [{ id: "w1", name: "Testwert", kennung: "TEST", art: "Aktie", kurs: 10, kaufMarke: 9, verkaufMarke: 12, aufgenommen: "2026-01-01" }];
+  S.notizen = [{ id: "n1", titel: "Plan", text: "x", datum: "2026-01-02T10:00:00Z", bezug: "",
+                 rechner: { richtung: "short", einstieg: "93", hebel: "10", stop: "102,3", ziel: "77" } }];
+  S.eigeneTermine = [{ id: "t1", datum: "2026-12-01", art: "Erinnerung", titel: "Test", depot: S.aktiv }];
+  Object.values(S.depots)[1].person = "Partner";
+  window.confirm = () => false; window.prompt = () => null; window.alert = () => {};
+  const fehler = [];
+  let wo = "";
+  const fang = (e) => fehler.push(`${wo}: ${e.message || e.reason || e}`);
+  window.addEventListener("error", fang); window.addEventListener("unhandledrejection", fang);
+  const seiten = ["uebersicht", "positionen", "watchlist", "kalender", "news", "notizen", "mehr", "daten", "depots", "buchungen", "sicherheit",
+                  "datenschutz", "einstellungen", "schluessel", "ki", "hinweise", "unterstuetzen", "sachwerte", "steuer", "feedback"];
+  const SEL = "[data-ziel],[data-los],[data-ansicht],[data-person],[data-plus],[data-depot-edit],[data-kaltag],[data-kalmonat],[data-wertzeitraum]," +
+              "[data-chartart],[data-aufteilung],[data-posansicht],[data-position],[data-notiz],[data-notiz-neu],[data-watch],[data-termin],[data-sachwert]," +
+              "[data-einst],[data-steuerjahr],[data-rechner-auf],[data-kal],[data-kalart],[data-gvmonat],[data-newsfilter],[data-neu],[data-bearbeiten]," +
+              "[data-rechner-richtung],[data-rechner-stop],[data-rechner-laden],[data-rechner-notiz],[data-depot],[data-chartart],[data-depot-leeren],[data-depot-weg]";
+  const frisch = (sn) => { Object.assign(ui, { plus: null, depotEdit: null, sachwert: null, zuordnung: null, vorschau: null, einfuehrung: null }); zeige(sn); };
+  const zurueckTaste = () => { for (let k = 0; k < 6 && window.zurueck(); k++); };
+  let klicks = 0;
+  for (const sn of seiten) {
+    try { frisch(sn); } catch (e) { fehler.push(`Seite ${sn}: ${e.message}`); continue; }
+    const n = document.querySelectorAll("#inhalt " + SEL.split(",").join(",#inhalt ")).length;
+    for (let i = 0; i < n; i++) {
+      try {
+        frisch(sn);
+        const el = document.querySelectorAll("#inhalt " + SEL.split(",").join(",#inhalt "))[i];
+        if (!el) continue;
+        wo = `${sn} › ${(el.textContent || el.outerHTML).trim().replace(/\s+/g, " ").slice(0, 40)}`;
+        el.click(); klicks++;
+        if (!document.getElementById("inhalt").innerHTML.trim()) fehler.push(`${wo}: leere Seite`);
+        zeichnen(); zurueckTaste();
+      } catch (e) { fehler.push(`${wo}: ${e.message}`); }
+    }
+    // Schalter/Auswahl umschalten und Formulare abschicken
+    frisch(sn);
+    for (const el of [...document.querySelectorAll("#inhalt select, #inhalt input[type=checkbox]")]) {
+      try { wo = `${sn} › Schalter ${el.id || el.name || Object.keys(el.dataset)[0] || ""}`;
+            if (el.tagName === "SELECT" && el.options.length > 1) el.selectedIndex = el.options.length - 1; else if (el.type === "checkbox") el.checked = !el.checked;
+            el.dispatchEvent(new Event("change", { bubbles: true })); }
+      catch (e) { fehler.push(`${wo}: ${e.message}`); }
+    }
+    frisch(sn);
+    for (const id of [...document.querySelectorAll("#inhalt form")].map((f) => f.id).filter((x) => x && !/pin|pw-form|wiederherstellen/.test(x))) {
+      try { frisch(sn); const f = document.getElementById(id); if (!f) continue; wo = `${sn} › Formular ${id}`;
+            f.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true })); zeichnen(); zurueckTaste(); }
+      catch (e) { fehler.push(`${wo}: ${e.message}`); }
+    }
+  }
+  await new Promise((r) => setTimeout(r, 300));
+  if (klicks < 60) fehler.push(`nur ${klicks} Klicks – Test unvollständig?`);
+  ui.klicks = klicks;
+  return fehler;
+}
+
+/** Kalender: jeden Monat der 2 Jahre blaettern, jeden Tag mit Eintrag antippen, Summen pruefen. */
+async function kalenderTest() {
+  const soll = await (await fetch("grosstest/erwartet.json")).json(), f = [];
+  localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+  const namen = ["1_kraken_krypto_halten_ledgers.csv", "2_bitvavo_krypto_sparplan.csv", "3_okx_krypto_handel.csv", "4_scalable_etf_sparplan.csv",
+                 "5_smartbroker_einzelwerte.csv", "6_traderepublic_daytrading.csv", "7_kursliste_wochenkurse.csv"];
+  await dateienEinlesen(await Promise.all(namen.map(async (n) => { const t = await datei(n, "grosstest/"); return { name: n, text: async () => t }; })));
+  for (let k = 0; ui.vorschau && k < 20; k++) vorschauUebernehmen();
+  ui.alle = true; ui.kalenderAlle = true; ui.kalArt = null;
+  const alleIds = Object.keys(S.depots), ev = kalenderEreignisse(alleIds);
+  // Kaeufe/Verkaeufe (0.38): je Tag+Wert+Richtung ein Eintrag, Stueck-Summe = Buchungen
+  {
+    const gruppen = new Set(), stSoll = {}, stIst = {};
+    for (const id of alleIds) for (const b of S.depots[id].buchungen) if ((b.typ === "kauf" || b.typ === "verkauf") && b.datum) {
+      gruppen.add(id + "|" + b.datum + "|" + b.instrument + "|" + b.typ); stSoll[b.typ] = (stSoll[b.typ] || 0) + (+b.stueck || 0); }
+    const h = ev.filter((x) => x.art === "Kauf" || x.art === "Verkauf");
+    if (h.length !== gruppen.size) f.push(`Kalender Käufe/Verkäufe: ${h.length} Einträge statt ${gruppen.size}`);
+    for (const x of h) { const m = x.info.match(/([\d.,]+) Stück/); stIst[x.art === "Kauf" ? "kauf" : "verkauf"] = (stIst[x.art === "Kauf" ? "kauf" : "verkauf"] || 0) + (m ? zahl(m[1]) : 0); }
+    for (const k of ["kauf", "verkauf"]) if (Math.abs((stIst[k] || 0) - (stSoll[k] || 0)) > 0.01 * Math.max(1, h.length)) f.push(`Kalender ${k}: ${stIst[k]} Stück statt ${stSoll[k]}`);
+    if (ev.some((x) => x.art === "Ex-Dividende" && /nicht im Bestand/.test(x.info || ""))) f.push("Kommender Ex-Tag für verkauften Wert");
+  }
+  let divSumme = 0, tageGeklickt = 0, monate = 0;
+  for (let m = new Date(Date.UTC(2024, 10, 1)); m <= new Date(Date.UTC(2026, 10, 1)); m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
+    const mon = m.toISOString().slice(0, 7);
+    ui.kalMonat = mon; ui.kalTag = null; zeige("kalender"); ui.kalenderAlle = true; ui.kalMonat = mon; zeichnen(); monate++;
+    const imMonat = ev.filter((x) => x.datum.startsWith(mon));
+    const zeilen = document.querySelectorAll("#inhalt .karte.liste .zeile").length;
+    if (zeilen !== imMonat.length) f.push(`${mon}: ${zeilen} Zeilen statt ${imMonat.length}`);
+    const sollDiv = imMonat.filter((x) => x.sicher).reduce((a, x) => a + x.eur, 0);
+    divSumme += sollDiv;
+    const angezeigt = zahl(document.querySelector("#inhalt .kennzahlen b").textContent);
+    if (Math.abs((angezeigt || 0) - sollDiv) > 0.01) f.push(`${mon}: Dividenden angezeigt ${angezeigt} statt ${sollDiv.toFixed(2)}`);
+    // jeden Tag mit Eintrag antippen: Liste = Eintraege dieses Tages
+    for (const tag of [...new Set(imMonat.map((x) => x.datum))]) {
+      const knopf = document.querySelector(`#inhalt [data-kaltag="${tag}"]`);
+      if (!knopf) { f.push(`${tag}: Tag fehlt im Raster`); continue; }
+      knopf.click(); tageGeklickt++;
+      const n = document.querySelectorAll("#inhalt .karte.liste .zeile").length, sollN = imMonat.filter((x) => x.datum === tag).length;
+      if (n !== sollN) f.push(`${tag}: ${n} Einträge statt ${sollN}`);
+      knopf.isConnected || document.querySelector(`#inhalt [data-kaltag="${tag}"]`)?.click();   // Auswahl wieder aufheben
+      ui.kalTag = null; zeichnen();
+    }
+  }
+  const sollGesamt = Object.values(soll.depots).reduce((a, d) => a + d.dividenden, 0);
+  if (Math.abs(divSumme - sollGesamt) > 0.05) f.push(`Dividenden im Kalender ${divSumme.toFixed(2)} statt ${sollGesamt.toFixed(2)} (Python)`);
+  // Gewinn/Verlust je Tag: alle Monate blaettern, Summe = realisiert TR (Python)
+  ui.kalArt = "gv"; ui.kalenderAlle = false; oeffnen(Object.keys(S.depots).find((k) => S.depots[k].name === "Trade Republic"));
+  let gvSumme = 0;
+  for (let m = new Date(Date.UTC(2024, 10, 1)); m <= new Date(Date.UTC(2026, 10, 1)); m = new Date(Date.UTC(m.getUTCFullYear(), m.getUTCMonth() + 1, 1))) {
+    ui.gvMonat = m.toISOString().slice(0, 7); zeige("kalender"); ui.kalArt = "gv"; ui.gvMonat = m.toISOString().slice(0, 7); zeichnen();
+    gvSumme += Object.entries(gvJeTag([S.aktiv])).filter(([d]) => d.startsWith(ui.gvMonat)).reduce((a, [, x]) => a + x.gv, 0);
+    if (!document.querySelector("#inhalt .gvraster")) f.push(`G/V ${ui.gvMonat}: kein Raster`);
+  }
+  if (Math.abs(gvSumme - soll.daytrading.summe) > 0.05) f.push(`G/V-Kalender Summe ${gvSumme.toFixed(2)} statt ${soll.daytrading.summe}`);
+  ui.kalArt = null;
+  if (tageGeklickt < 30) f.push(`nur ${tageGeklickt} Tage geklickt`);
+  ui.kalBericht = `${monate} Monate, ${tageGeklickt} Tage, ${ev.length} Einträge`;
+  return f;
+}
+
+/** Englisch (0.38): jede Seite in kleinen und grossen Daten, Leiste/Kopf/Mehr uebersetzt, kein deutscher Text uebrig
+ *  (ausser eigenen Namen: Depots, Wertpapiere, Notizen, Sachwerte, Importtexte). */
+const SPRACHE_ORIGINAL = window.sprache;
+async function englischTest() {
+  const f = [];
+  window.sprache = () => "en";
+  window.__fehlend = new Set();
+  const seiten = ["uebersicht", "positionen", "watchlist", "kalender", "news", "notizen", "mehr", "daten", "depots", "buchungen", "sicherheit",
+                  "datenschutz", "einstellungen", "schluessel", "ki", "hinweise", "unterstuetzen", "sachwerte", "steuer", "feedback"];
+  const namen = new Set(["Google News", "Yahoo Finance", "Depot-Kompass", KONTAKT, "https://…/rss", "Finnhub", "Twelve Data", "Financial Modeling Prep", "Alpha Vantage", ".dksafe"]);
+  const namenMerken = () => {
+    for (const d of Object.values(S.depots)) { namen.add(d.name); for (const i of Object.values(d.instrumente)) namen.add(i.name);
+      for (const b of d.buchungen) { if (b.notiz) namen.add(b.notiz); } }
+    for (const x of [...(S.notizen || []), ...(S.sachwerte || []), ...(S.watchlist || [])]) for (const v of Object.values(x)) if (typeof v === "string") namen.add(v);
+  };
+  for (const gross of [false, true]) {
+    if (gross) {
+      localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+      const namen = ["1_kraken_krypto_halten_ledgers.csv", "2_bitvavo_krypto_sparplan.csv", "3_okx_krypto_handel.csv", "4_scalable_etf_sparplan.csv",
+                     "5_smartbroker_einzelwerte.csv", "6_traderepublic_daytrading.csv", "7_kursliste_wochenkurse.csv"];
+      await dateienEinlesen(await Promise.all(namen.map(async (n) => { const t = await datei(n, "grosstest/"); return { name: n, text: async () => t }; })));
+      for (let k = 0; ui.vorschau && k < 20; k++) vorschauUebernehmen();
+    } else await beispielStand();
+    S.sachwerte = [{ id: "s1", name: "Laptop", art: "Technik", kaufdatum: "2025-01-01", kaufpreis: 1200, verlust: 25, wert: null }];
+    S.watchlist = [{ id: "w1", name: "Testwert", kennung: "TEST", art: "Aktie", kurs: 10, kaufMarke: 9, verkaufMarke: 12, aufgenommen: "2026-01-01" }];
+    S.notizen = [{ id: "n1", titel: "Plan", text: "x", datum: "2026-01-02T10:00:00Z", bezug: "", rechner: { richtung: "short", einstieg: "93", hebel: "10", stop: "102,3", ziel: "77" } }];
+    S.notizen.push({ id: "n2", titel: "Plan", text: "x", datum: "2026-01-03T10:00:00Z", bezug: "", plan: { typ: "gewinn", daten: { art: "aktie", modus: "betrag", bestand: "3", einstand: "600", k1: "1.022", b1: "500" } } });
+    localStorage.setItem("test-schluessel-openai", "sk-or-v1-abcdefabcdef1234"); (S.einstellungen.schluesselStatus ||= {}).openai = schluesselFormat("openai", "sk-or-v1-abcdefabcdef1234");
+    ui.notiz = { id: "n2" }; try { zeichnen(); } catch (e) { f.push("Plan-Notiz: " + e.message); } ui.notiz = null;
+    ui.nachkaufOffen = true; ui.nachkauf = { name: "Bitcoin", bestand: "0,005062", einstand: "98.972,23", kurs: "59.000", kursDatum: "2026-11-16", art: "krypto", budget: "500", ziel: "80.000", ausstieg: "85000", trigger: "80000", gebuehrAn: true, gebuehr: "0,25" };
+    ui.posgrOffen = true; ui.posgr = { art: "krypto", richtung: "long", einstieg: "59.000", stop: "56.050", maxverlust: "50", kapital: "5.000", ziel: "65.000", gebuehrAn: true, gebuehr: "0,25" }; ui.gewinnOffen = true; ui.gewinn = { name: "Bitcoin", art: "krypto", modus: "pct", bestand: "0,01353658", einstand: "73.947,61", k1: "80.000", a1: "50", k2: "90.000", a2: "25", gebuehrAn: true, gebuehr: "0,25" };
+    S.einstellungen.eurUsd = { kurs: 1.0842, datum: "2026-11-16" }; ui.rechnerOffen = true; ui.rechner = { richtung: "long", einstieg: "100", hebel: "5" };
+    for (const k of ["posgr", "gewinn", "nachkauf"]) { try { ui[k].waehrung = "usd"; zeige("notizen"); ui[k].waehrung = "eur"; } catch (e) { f.push("Dollar " + k + ": " + e.message); } }
+    ui.watch = "neu"; try { zeichnen(); } catch (e) { f.push("Watch-Formular: " + e.message); } ui.watch = null;
+    for (const s of seiten) { ui.alle = undefined; try { zeige(s); } catch (e) { f.push(`${s}: ${e.message}`); } }
+    ui.einfuehrung = 1; zeichnen(); ui.einfuehrung = 2; zeichnen(); ui.einfuehrung = 3; zeichnen(); ui.einfuehrung = null;
+    ui.gesperrt = true; ui.pinBereit = true; ui.pinMeldung = "Falsche PIN – noch 3 Versuche bis zur Wartezeit."; try { zeichnen(); } catch (e) { f.push("PIN-Seite: " + e.message); }
+    ui.gesperrt = false; ui.pinMeldung = ""; ui.pinBereit = false;
+    namenMerken();
+  }
+  const leiste = [...document.querySelectorAll("#leiste .l")].map((x) => x.textContent).join(",");
+  if (leiste !== "Overview,Positions,Calendar,News,Notes,AI") f.push("Leiste: " + leiste);
+  zeige("mehr"); if (!/Settings/.test(document.getElementById("inhalt").textContent)) f.push("Mehr nicht englisch");
+  // Umschalten per Antippen (0.39): auf der Mehr-Seite und in den Einstellungen, echte Einstellung statt Test-Ueberschreibung
+  window.sprache = SPRACHE_ORIGINAL;
+  // Sprachwahl NUR in den Einstellungen (Vorgabe 13.11.): nicht auf der Mehr-Seite, nicht in der Einfuehrung
+  zeige("mehr"); if (document.querySelector('#inhalt [data-einst="sprache"]')) f.push("Sprachwahl steht noch auf der Mehr-Seite");
+  ui.einfuehrung = 1; zeichnen(); if (document.querySelector('#inhalt [data-einst="sprache"]')) f.push("Sprachwahl steht noch in der Einführung"); ui.einfuehrung = null;
+  for (const seite of ["einstellungen"]) {
+    S.einstellungen.sprache = "de"; zeige(seite);
+    document.querySelector('#inhalt [data-einst="sprache"][data-wert="en"]')?.click();
+    const l1 = [...document.querySelectorAll("#leiste .l")].map((x) => x.textContent).join(",");
+    if (S.einstellungen.sprache !== "en" || l1 !== "Overview,Positions,Calendar,News,Notes,AI") f.push(`${seite}: English antippen wirkt nicht (${l1})`);
+    document.querySelector('#inhalt [data-einst="sprache"][data-wert="de"]')?.click();
+    const l2 = [...document.querySelectorAll("#leiste .l")].map((x) => x.textContent).join(",");
+    if (S.einstellungen.sprache !== "de" || l2 !== "Übersicht,Positionen,Kalender,News,Notizen,KI") f.push(`${seite}: zurück auf Deutsch wirkt nicht (${l2})`);
+  }
+  window.sprache = () => "en";
+  const rest = [...window.__fehlend].filter((s) => /[a-zäöüß]{3}/.test(s) && ![...namen].some((n) => n && (s.includes(n) || n.includes(s))));
+  window.sprache = () => "de";
+  if (rest.length) f.push(`${rest.length} unübersetzt: ` + rest.slice(0, 8).map((s) => "„" + s.slice(0, 40) + "“").join(", "));
+  return f;
+}
+
+/** Zertifikate (0.42): Eintragen von Hand mit WKN bzw. ISIN, dann "Kurse & Daten aktualisieren" -> Onvista (Attrappe). */
+async function zertifikatTest() {
+  const f = [], pruefe = (ok, text) => { if (!ok) f.push(text); };
+  if (!APP?.onvistaSuche) return ["Attrappe fehlt"];
+  localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+  const eintragen = (name, kennung, art) => {
+    ui.formular = {}; ui.seite = "buchungen"; zeichnen();
+    const form = document.getElementById("buchung-form"), setz = (n, w) => { form.elements[n].value = w; };
+    setz("typ", "kauf"); setz("datum", "2026-11-10"); setz("instrument", name); setz("kennung", kennung); setz("wertart", art);
+    setz("stueck", "100"); setz("kurs", "4,50"); setz("gebuehr", "1");
+    form.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+  };
+  eintragen("Nvidia Turbo Long", "BE0F1P", "Zertifikat");              // nur WKN
+  await new Promise((r) => setTimeout(r, 50));
+  const i = Object.values(D.instrumente)[0];
+  pruefe(i?.art === "Zertifikat" && i?.wkn === "BE0F1P", `Zertifikat angelegt: ${JSON.stringify(i)}`);
+  await kurseAktualisieren();
+  pruefe(i?.kurs === 5.57 && i?.isin === "DE000BE0F1P5" && i?.onvistaArt === "BOND" && /Onvista/.test(i?.kursQuelle || "") && i?.kursDatum === "2026-11-12",
+         `Zertifikat-Kurs: ${JSON.stringify(i)}`);
+  pruefe(!window.__aufrufe.some((a) => a.startsWith("suche:")), "Yahoo-Tickersuche für Zertifikat sollte ausbleiben: " + window.__aufrufe.join(","));
+  const p = positionen().liste[0];
+  pruefe(p && nah(p.wert, 557) && nah(p.gv, 557 - 451), `Position: Wert ${p?.wert} G/V ${p?.gv}`);
+  // Earnings (0.43): vergangener Termin mit Auswertung, kommender Termin, Aktualisieren ueber die Attrappe
+  {
+    const iid = "US0000TEST01"; D.instrumente[iid] = { name: "Earnings AG", isin: iid, art: "Aktie", ticker: "EARN" };
+    D.buchungen.push({ nr: 99, typ: "kauf", datum: "2025-01-02", instrument: iid, konto: "", stueck: 10, kurs: 100, gebuehr: 0, steuer: 0, quelle: "von Hand" });
+    D.instrumente[iid].termine = { earnings: ["2099-02-10"], earningsGewesen: ["2026-10-29"], quartale: [], finanzen: [], stand: "2026-10-01" };
+    let ev = kalenderEreignisse([S.aktiv]).filter((x) => x.art === "Earnings");
+    pruefe(ev.length === 2 && ev.some((x) => x.datum === "2026-10-29" && /noch nicht geladen/.test(x.info)), "Earnings: vergangener Termin fehlt: " + JSON.stringify(ev));
+    ui.detail = null; ui.formular = null; ui.seite = "kalender"; ui.kalArt = null; ui.kalMonat = "2026-10"; ui.kalTag = null; zeichnen();
+    const knopf = document.querySelector(`#inhalt [data-earnings="${S.aktiv}|${iid}|2026-10-29"]`);
+    pruefe(!!knopf, "Earnings-Knopf fehlt: " + [...document.querySelectorAll("#inhalt [data-earnings]")].map((k) => k.dataset.earnings).join(",") + " Seite " + ui.seite + " Monat " + ui.kalMonat + " " + document.querySelector("#inhalt h2")?.textContent);
+    knopf?.click();
+    pruefe(/Noch keine Auswertung/.test(document.getElementById("inhalt").textContent), "Earnings-Karte ohne Hinweis: " + JSON.stringify(ui.earnings));
+    window.__earnings = { quartale: [{ quarter: { fmt: "2026-09-30" }, epsActual: { raw: 1.25 }, epsEstimate: { raw: 1.1 }, surprisePercent: { raw: 0.1364 } }] };
+    document.querySelector("#inhalt [data-earnings-neu]")?.click();
+    await new Promise((r) => setTimeout(r, 300));
+    const txt = document.getElementById("inhalt").textContent;
+    pruefe(/1,25/.test(txt) && /1,1/.test(txt) && /13,64/.test(txt), "Earnings nach Aktualisieren: " + txt.slice(txt.indexOf("Earnings"), txt.indexOf("Earnings") + 200));
+    ev = kalenderEreignisse([S.aktiv]).filter((x) => x.art === "Earnings" && x.datum === "2026-10-29");
+    pruefe(/Ergebnis je Aktie 1,25 \(erwartet 1,1\)/.test(ev[0]?.info || ""), "Earnings-Info im Kalender: " + ev[0]?.info);
+    ui.earnings = null;
+    delete D.instrumente[iid]; D.buchungen = D.buchungen.filter((b) => b.nr !== 99);
+  }
+  // zweites Aktualisieren: keine neue Suche mehr (Art + ISIN gemerkt)
+  const vorher = window.__aufrufe.filter((a) => a.startsWith("onvistaSuche")).length;
+  await kurseAktualisieren();
+  pruefe(window.__aufrufe.filter((a) => a.startsWith("onvistaSuche")).length === vorher, "Zweites Aktualisieren sucht erneut");
+  return f;
+}
+
+/** Originale + ZIP-Export (0.44): Import legt Original ab, neu einlesen ohne Doppel, Export-Verzeichnis, Zuruecknehmen raeumt auf,
+ *  Wiederherstellen aus ZIP (Attrappe statt Java). */
+async function originaleTest() {
+  const f = [], pruefe = (ok, text) => { if (!ok) f.push(text); };
+  if (!APP?.originalAblegen) return ["Attrappe fehlt"];
+  localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+  window.confirm = () => true;
+  const datei_ = async (n, als) => new File([await (await fetch("testfaelle/" + n)).arrayBuffer()], als || n);
+  await dateienEinlesen([await datei_("05_verkauft_und_neu_gekauft.csv", "TR Export März.csv")]);
+  const k = document.getElementById("vorschau-konto"); if (k) { k.value = "Test 23"; k.dispatchEvent(new Event("change", { bubbles: true })); }
+  ui.seite = "daten"; zeichnen(); vorschauUebernehmen();
+  oeffnen(Object.entries(S.depots).find(([, d]) => d.name === "Test 23")?.[0] || S.aktiv);
+  const n0 = D.buchungen.length, o0 = S.originale?.[0], altImp = o0?.importId;
+  pruefe(S.originale?.length === 1 && o0.name === "TR Export März.csv" && o0.typ === "CSV" && o0.depot === S.aktiv && Object.keys(window.__ablage).length === 1, "Original nicht abgelegt: " + JSON.stringify(S.originale));
+  pruefe(D.buchungen.every((b) => b.importId === o0.importId), "Original nicht dem Import zugeordnet");
+  // PDF und Screenshot ebenfalls
+  await dateienEinlesen([await datei_("17_bank_zweizeiliger_kopf.pdf")]); if (ui.vorschau) { ui.vorschau.ziel = S.aktiv; ui.vorschau.zielGewaehlt = true; vorschauPruefen(ui.vorschau); ui.seite = "daten"; zeichnen(); vorschauUebernehmen(); }
+  pruefe(S.originale.length === 2 && S.originale[1].typ === "PDF", "PDF-Original fehlt");
+  // neu einlesen: gleiche Buchungen, kein zweites Original
+  ui.seite = "buchungen"; ui.importWahl = altImp; zeichnen();
+  const neuKnopf = document.querySelector(`#inhalt [data-import-neu="${altImp}"]`);
+  pruefe(!!neuKnopf, "Neu-einlesen-Knopf fehlt: seite " + ui.seite + " detail " + ui.detail + " formular " + JSON.stringify(ui.formular) + " vorschau " + !!ui.vorschau + " | " + document.querySelector("#inhalt h2")?.textContent + " | Gruppen " + importGruppen().map((g) => g.key).join(",") + " wahl " + ui.importWahl);
+  neuKnopf?.click();
+  await new Promise((r) => setTimeout(r, 300));
+  if (ui.vorschau) { ui.vorschau.ziel = S.aktiv; ui.vorschau.zielGewaehlt = true; vorschauPruefen(ui.vorschau); ui.seite = "daten"; zeichnen(); vorschauUebernehmen(); }
+  const o1 = S.originale.find((o) => o.id === o0.id);
+  pruefe(S.originale.length === 2 && Object.keys(window.__ablage).length === 2 && o1 && o1.importId !== altImp && !D.buchungen.some((b) => b.importId === altImp) && D.buchungen.filter((b) => b.importId === o1.importId).length === n0,
+         `Neu einlesen: ${S.originale.length} Originale, Ablage ${Object.keys(window.__ablage).length}, Buchungen ${D.buchungen.filter((b) => b.importId === o1?.importId).length} statt ${n0}`);
+  // Export: Pfade nach Depot sortiert, alle Kennungen
+  zipExportieren();
+  const ix = window.__zip?.index || [];
+  pruefe(ix.length === 2 && ix.every((x) => x.pfad.startsWith("originale/Test 23/") && window.__ablage[x.id]) && /TR Export März\.csv$/.test(ix[0].pfad) && /LIESMICH|Wiederherstellen/.test(window.__zip.liesmich),
+         "ZIP-Verzeichnis: " + JSON.stringify(ix.map((x) => x.pfad)));
+  // Zuruecknehmen loescht das Original
+  const imp = o1.importId;
+  ui.seite = "buchungen"; ui.importWahl = imp; zeichnen();
+  document.querySelector(`#inhalt [data-import-loeschen="${imp}"]`)?.click();
+  pruefe(S.originale.length === 1 && !window.__ablage[o0.id] && !D.buchungen.some((b) => b.importId === imp), "Zurücknehmen räumt Original nicht auf");
+  // Wiederherstellen aus ZIP: falsches Passwort, dann richtiges
+  window.__zipDaten = JSON.stringify({ depots: { d9: neuesDepot("Aus ZIP", "eigen") }, aktiv: "d9", einstellungen: { einfuehrung: 99 }, originale: [{ id: "o1abcdef12", name: "a.pdf" }] });
+  ui.wiederherstellen = { zip: "UEsDBA==", name: "export.zip" }; zeichnen();
+  const form = () => document.getElementById("wiederherstellen-form");
+  form().elements.pw.value = "falsch"; form().dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+  pruefe(!!ui.wiederherstellen && /Falsches Passwort/.test(document.getElementById("meldung").textContent), "Falsches ZIP-Passwort nicht gemeldet");
+  form().elements.pw.value = "richtig"; form().dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }));
+  pruefe(!ui.wiederherstellen && S.depots.d9?.name === "Aus ZIP" && S.originale?.length === 1, "ZIP-Wiederherstellen: " + Object.keys(S.depots));
+  // ZIP-Datei im Import wird erkannt
+  ui.wiederherstellen = null;
+  await dateienEinlesen([new File([new Uint8Array([0x50, 0x4b, 3, 4, 1, 2, 3])], "Depot-Kompass-Export-2026-11-13.zip")]);
+  pruefe(ui.wiederherstellen?.zip && /Verschlüsselte ZIP/.test(document.getElementById("inhalt").textContent), "ZIP-Datei im Import nicht erkannt: wh " + JSON.stringify(ui.wiederherstellen) + " | " + document.getElementById("meldung").textContent + " | " + document.querySelector("#inhalt h2")?.textContent);
+  ui.wiederherstellen = null;
+  return f;
+}
+
+/** Screenshots (0.42): erfundene TR-Screenshots per Texterkennung, danach Wochen-Export ersetzt sie. Echte Zeit noetig (cdp_lauf.py). */
+async function screenshotTest() {
+  const f = [], soll = (await (await fetch("testfaelle/erwartet.json")).json())["22"];
+  const pruefe = (ok, text) => { if (!ok) f.push(text); };
+  localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+  const bild = async (n) => new File([await (await fetch("testfaelle/" + n)).blob()], n.replace(/^\d+[a-z]_/, ""), { type: "image/png" });
+  const vorschau = [];
+  for (const n of ["22a_Screenshot_20260315-123506_Trade Republic.png", "22b_Screenshot_20260320-201113_Trade Republic.png"]) {
+    await dateienEinlesen([await bild(n)]);
+    const v = ui.vorschau;
+    pruefe(!!v, `Fall 22 ${n}: keine Vorschau – ${document.getElementById("meldung").textContent}`);
+    if (!v) continue;
+    vorschau.push(v.buchungen[0]);
+    pruefe(/stimmt/.test(v.hinweis || ""), `Fall 22 ${n}: Gegenprobe „${v.hinweis}“`);
+    const k = document.getElementById("vorschau-konto"); if (k) { k.value = "Test 22"; k.dispatchEvent(new Event("change", { bubbles: true })); }
+    ui.seite = "daten"; zeichnen(); vorschauUebernehmen();
+  }
+  const [k1, k2] = vorschau;
+  pruefe(k1?.typ === "kauf" && k1?.datum === soll.datum_kauf && nah(k1?.stueck, 4, 1e-9) && nah(k1?.kurs, 125) && nah(k1?.gebuehr, 1) && nah(k1?.kasse, -501), `Fall 22 Kauf: ${JSON.stringify(k1)}`);
+  pruefe(k2?.typ === "verkauf" && k2?.datum === soll.datum_verkauf && nah(k2?.stueck, 1.5, 1e-9) && nah(k2?.kurs, 130) && nah(k2?.kasse, 194), `Fall 22 Verkauf: ${JSON.stringify(k2)}`);
+  pruefe(k2?.isin === instrumentId(k1?.isin, k1?.name, false) || namePasst(k1?.name, k2?.name), "Fall 22: Verkauf nicht dem gekauften Wert zugeordnet");
+  oeffnen(Object.entries(S.depots).find(([, d]) => d.name === "Test 22")?.[0] || S.aktiv);
+  const pos = () => Object.values(bestand()).filter((p) => p.stueck > 1e-9);
+  const real = () => Object.values(bestand()).reduce((a, p) => a + p.realisiert, 0);
+  pruefe(pos().length === 1 && nah(pos()[0].stueck, soll.stueck, 1e-9) && nah(pos()[0].einstand, soll.einstand) && nah(real(), soll.realisiert),
+         `Fall 22 nach Screenshots: ${pos().map((p) => p.stueck + "/" + p.einstand)} real ${real()}`);
+  // Wochen-Export mit denselben Trades (ISIN) ins selbe Depot
+  const csv = await (await fetch("testfaelle/22c_traderepublic_export.csv")).text();
+  ui.vorschau = erkennen(csv, "export.csv"); ui.vorschau.ziel = S.aktiv; ui.vorschau.zielGewaehlt = true; vorschauPruefen(ui.vorschau);
+  ui.seite = "daten"; zeichnen(); vorschauUebernehmen();
+  pruefe(D.buchungen.length === 2 && !D.buchungen.some((b) => b.screenshot) && pos().length === 1 && pos()[0].instrument === "DE000TEST221" && nah(pos()[0].stueck, soll.stueck, 1e-9),
+         `Fall 22 nach Export: ${D.buchungen.length} Buchungen, Screenshot übrig ${D.buchungen.filter((b) => b.screenshot).length}, Positionen ${pos().map((p) => p.instrument + " " + p.stueck)}`);
+  // 24 Screenshots anderer Broker (ab 0.49): Scalable (hell), Smartbroker+ (dunkel, Aktivität), Revolut (englisch)
+  for (const [n, typ, name, st, kurs, kasse, datum, isin] of [
+    ["24a_Screenshot_20261108-101800_Scalable.png", "kauf", "Test Industrie AG", 15, 42, -630.99, "2026-11-08", "DE000TEST241"],
+    ["24b_Screenshot_20261109-140500_Smartbroker.png", "verkauf", "Test Pharma SE", 40, 18.5, 736, "2026-11-09", "DE000TEST242"],
+    ["24c_Screenshot_20261110-091200_Revolut.png", "kauf", "Test Robotics Inc", 3, 150, -450, "2026-11-10", ""],
+    ["24d_Screenshot_20261111-080000_Kraken.png", "kauf", "Bitcoin", 0.01, 60000, -601.5, "2026-11-11", ""],
+    ["24e_Screenshot_20261112-190000_Bitvavo.png", "kauf", "Cardano", 500, 0.4, -200.5, "2026-11-12", ""]]) {
+    ui.vorschau = null;
+    await dateienEinlesen([await bild(n)]);
+    const v = ui.vorschau, b = v?.buchungen?.[0];
+    pruefe(b && b.typ === typ && namePasst(name, b.name) && nah(b.stueck, st, 1e-9) && nah(b.kurs, kurs) && nah(b.kasse, kasse) && b.datum === datum && (!isin || b.isin === isin) && /stimmt/.test(v.hinweis || ""),
+           `Fall 24 ${n}: ${JSON.stringify(b)} „${v?.hinweis}“ ${document.getElementById("meldung").textContent}`);
+  }
+  ui.vorschau = null;
+  // Short-Zertifikat per Screenshot (0.43): Art Zertifikat, Richtung short, KI sagt "Short"
+  await dateienEinlesen([await bild("22d_Screenshot_20260321-101500_Trade Republic.png")]);
+  const vs = ui.vorschau, bs = vs?.buchungen?.[0];
+  pruefe(bs && bs.art === "Zertifikat" && bs.richtung === "short" && nah(bs.stueck, 50, 1e-9) && nah(bs.kasse, -251) && /Short/.test(vs.hinweis || ""), `Fall 22 Short: ${JSON.stringify(bs)} „${vs?.hinweis}“`);
+  if (vs) { vs.ziel = S.aktiv; vs.zielGewaehlt = true; vorschauPruefen(vs); ui.seite = "daten"; zeichnen(); vorschauUebernehmen(); }
+  const inst = Object.values(D.instrumente).find((i) => /Turbo Short/i.test(i.name));
+  pruefe(inst?.richtung === "short" && inst?.art === "Zertifikat", `Fall 22 Short-Wert: ${JSON.stringify(inst)}`);
+  pruefe(/Test Turbo Short \(Zertifikat\): Short, Einstiegskurs/.test(kiDaten("check")), "KI kennt Short nicht: " + kiDaten("check").split("\n").find((z) => /Turbo/.test(z)));
+  // Namensbeispiele
+  for (const [n, r] of [["NVIDIA Turbo Short", "short"], ["VONTOBEL TURBOP O.END NVIDIA 224,83", "short"], ["DAX Mini Long", "long"], ["Call Optionsschein SAP", "long"],
+                        ["Put auf Tesla", "short"], ["Siemens Energy", null], ["Faktor 5x Short Gold", "short"], ["Longevity AG", null]])
+    pruefe(richtungAusName(n) === r, `Richtung „${n}“: ${richtungAusName(n)} statt ${r}`);
+  return f;
+}
+
+/** Nur zum Durchlesen: sichtbarer Text aller Seiten (tests/texte.sh). */
+async function texteSammeln() {
+  await beispielStand();
+  S.sachwerte = [{ id: "s1", name: "Laptop", art: "Technik", kaufdatum: "2025-01-01", kaufpreis: 1200, verlust: 25, wert: null }];
+  const aus = [];
+  const seiten = ["uebersicht", "positionen", "watchlist", "kalender", "news", "notizen", "mehr", "daten", "depots", "buchungen", "sicherheit",
+                  "datenschutz", "einstellungen", "schluessel", "ki", "hinweise", "unterstuetzen", "sachwerte", "steuer", "feedback"];
+  for (const sn of seiten) { ui.alle = undefined; zeige(sn); aus.push("=== " + sn + "\n" + document.getElementById("inhalt").innerText); }
+  ui.einfuehrung = 1; zeichnen(); aus.push("=== einfuehrung 1\n" + document.getElementById("inhalt").innerText);
+  ui.einfuehrung = 2; zeichnen(); aus.push("=== einfuehrung 2\n" + document.getElementById("inhalt").innerText);
+  ui.einfuehrung = 3; zeichnen(); aus.push("=== einfuehrung 3\n" + document.getElementById("inhalt").innerText);
+  ui.einfuehrung = null; ui.plus = "depot"; zeige("uebersicht"); ui.plus = "depot"; zeichnen(); aus.push("=== plus\n" + document.getElementById("inhalt").innerText);
+  ui.depotEdit = S.aktiv; zeichnen(); aus.push("=== bearbeiten\n" + document.getElementById("inhalt").innerText);
+  const pre = document.createElement("pre"); pre.id = "texte"; pre.textContent = aus.join("\n\n"); document.body.appendChild(pre);
+  return [];
+}
+
+/** Seitenmodus fuer den Rahmen: Seite zeigen, Ueberlauf messen. */
+async function seitePruefen(q) {
+  if (q.get("gross")) {                 // grosser erfundener Bestand (6 Depots) - fuer Bildschirmfotos der Webseite
+    localStorage.clear(); S = leererGesamtstand(); S.einstellungen.einfuehrung = 99; oeffnen("d1"); ui.einfuehrung = null;
+    const namen = ["1_kraken_krypto_halten_ledgers.csv", "2_bitvavo_krypto_sparplan.csv", "3_okx_krypto_handel.csv", "4_scalable_etf_sparplan.csv",
+                   "5_smartbroker_einzelwerte.csv", "6_traderepublic_daytrading.csv", "7_kursliste_wochenkurse.csv"];
+    await dateienEinlesen(await Promise.all(namen.map(async (n) => { const t = await datei(n, "grosstest/"); return { name: n, text: async () => t }; })));
+    for (let k = 0; ui.vorschau && k < 20; k++) vorschauUebernehmen();
+    ui.alle = true;
+  } else await beispielStand();
+  if (q.get("ki")) { S.einstellungen.ki = true; S.einstellungen.kiModelle = ["meta-llama/llama-3.3-70b-instruct:free"]; S.einstellungen.kiModell = S.einstellungen.kiModelle[0]; }
+  // KI-Chat (ab 0.46): erfundenes Beispiel-Gespraech fuer die Layout-Pruefung (Chat, Beispiele, Verlauf)
+  if (q.get("kichat")) { S.einstellungen.ki = true; S.kiChats = [{ id: "k1", titel: "Earnings auswerten · Alpha AG", anbieter: "anthropic", modell: "beispiel-modell-mit-sehr-langem-namen-2026",
+    erstellt: "2026-11-15T10:00:00Z", nachrichten: [{ rolle: "nutzer", daten: true, text: "Die neuesten Quartalszahlen sind draußen …\n\nWert: Alpha AG (Aktie)" },
+    { rolle: "ki", text: "## Kurzfazit\nDas Ergebnis je Aktie lag **12 % über der Erwartung**. Umsatz und Gewinn wachsen seit vier Quartalen.\n\n- Chance: Margen steigen\n- Risiko: hohe Bewertung\n\nKeine Anlageberatung – die Entscheidung liegt bei dir." },
+    { rolle: "nutzer", text: "Was bedeutet das für meinen Einstieg bei 52,70?" },
+    { rolle: "fehler", text: "Zu viele Anfragen oder Kontingent aufgebraucht. Bitte kurz warten oder ein anderes Modell wählen." }] }]; ui.kiChatId = "k1"; }
+  if (q.get("kireiter")) ui.kiReiter = q.get("kireiter");
+  // Depot teilen / geteiltes Depot empfangen (ab 0.47)
+  if (q.get("teilen")) ui.depotTeilen = S.aktiv;
+  if (q.get("empfang")) ui.depotEmpfang = { depot: { name: "Depot einer anderen Person mit langem Namen", instrumente: D.instrumente, buchungen: D.buchungen }, erstellt: "2026-11-15T10:00:00Z" };
+  // Analysten-Karte (ab 0.46): erfundene Werte an der ersten Aktie, Detailansicht offen
+  if (q.get("analysten")) { const [id, i] = Object.entries(D.instrumente).find(([, x]) => (x.art || "Aktie") === "Aktie") || [];
+    if (i) { i.kurs = 100; i.termine = { ...(i.termine || {}), stand: "2026-11-15", analysten: { mittel: 125.5, median: 120, hoch: 180, tief: 80, anzahl: 31, empfehlung: "buy", wert: 1.8,
+      verteilung: { starkKaufen: 8, kaufen: 15, halten: 6, verkaufen: 1, starkVerkaufen: 1 },
+      historie: [{ datum: "2026-11-12", haus: "Beispielbank Research International", von: "Hold", zu: "Buy", ziel: 130, zielVorher: 95 }, { datum: "2026-11-02", haus: "Musterhaus", von: "Buy", zu: "Buy", ziel: 110, zielVorher: 110 }] } };
+      window.__analystenId = id; } }
+  S.sachwerte = [{ id: "s1", name: "Spiegelreflexkamera mit Objektiv und Zubehör", art: "Technik", kaufdatum: "2024-03-01", kaufpreis: 2899.99, verlust: 25, wert: null },
+                 { id: "s2", name: "Goldbarren 100 g", art: "Edelmetall (physisch)", kaufdatum: "2023-05-01", kaufpreis: 6100, verlust: 0, wert: 11250 }];
+  if (q.get("heat")) ui.posAnsicht = "heatmap";
+  if (q.get("rechner")) { ui.rechnerOffen = true; ui.rechner = { einstieg: "18.540,25", hebel: "12,5", stop: "17.900", ziel: "19.800", einsatz: "2500", richtung: "long" }; }
+  if (q.get("nachkauf")) { ui.nachkaufOffen = true; ui.nachkauf = { name: "Bitcoin", bestand: "0,005062", einstand: "98.972,23", kurs: "59.000", kursDatum: "2026-11-16", art: "krypto", budget: "500", ziel: "80.000", ausstieg: "85000", trigger: "80000", gebuehrAn: true, gebuehr: "0,25" }; }
+  if (q.get("rechner3")) { ui.posgrOffen = true; ui.posgr = { art: "krypto", richtung: "long", einstieg: "59.000", stop: "56.050", maxverlust: "50", kapital: "5.000", ziel: "65.000", gebuehrAn: !!q.get("gebuehr"), gebuehr: "0,25" }; ui.gewinnOffen = true; ui.gewinn = { name: "Bitcoin", art: "krypto", modus: "pct", bestand: "0,01353658", einstand: "73.947,61", k1: "80.000", a1: "50", k2: "90.000", a2: "25", gebuehrAn: true, gebuehr: "0,25" }; }
+  if (q.get("betrag")) { ui.gewinnOffen = true; ui.gewinn = { name: "Rheinmetall", art: "aktie", modus: "betrag", bestand: "3", einstand: "600", k1: "1.022", b1: "500", k2: "1.200", b2: "800", gebuehrAn: !!q.get("gebuehr"), gebuehr: "0,25" }; }
+  if (q.get("ampel")) { for (const [d, k] of [["openai", "sk-or-v1-abcdefabcdef1234"], ["anthropic", "sk-ant-api03-abcdefabcdef1234"], ["finnhub", "abcdefabcdef1234abcdef"]]) {
+      localStorage.setItem("test-schluessel-" + d, k); (S.einstellungen.schluesselStatus ||= {})[d] = schluesselFormat(d, k); }
+    S.einstellungen.schluesselStatus.finnhub = { s: "ok", t: "Gültig – vom Dienst bestätigt." }; }
+  if (q.get("plannotiz")) { S.notizen = [{ id: "n9", titel: "Rheinmetall Gewinnmitnahme", text: "Einstand 600", datum: "2026-11-16T10:00:00Z", bezug: "",
+      plan: { typ: "gewinn", daten: { art: "aktie", modus: "betrag", bestand: "3", einstand: "600", k1: "1.022", b1: "500", k2: "1.200", b2: "800" } } }]; }
+  if (q.get("dollar")) { S.einstellungen.eurUsd = { kurs: 1.0842, datum: "2026-11-16" }; for (const k of ["posgr", "gewinn", "nachkauf"]) if (ui[k]) ui[k].waehrung = "usd"; }
+  if (q.get("einzeln")) ui.alle = false;
+  if (q.get("plus")) ui.plus = q.get("plus");
+  if (q.get("bearbeiten")) ui.depotEdit = S.aktiv;
+  if (q.get("dunkel")) { S.einstellungen.design = "schwarz"; designAnwenden(); }
+  if (q.get("kal")) { ui.kalArt = "gv"; ui.gvMonat = "2026-01"; }
+  zeige(q.get("seite"));
+  if (q.get("plannotiz")) { ui.notiz = { id: "n9" }; zeichnen(); }
+  // Bildschirmfotos: Inhalt nach oben schieben statt rollen (Rollen wird im Aufnahme-Modus nicht gezeichnet); Kopf und Leiste bleiben stehen
+  if (q.get("zu")) { const el = document.getElementById(q.get("zu")), inh = document.getElementById("inhalt");
+    if (el && inh) inh.style.marginTop = -(el.getBoundingClientRect().top - inh.getBoundingClientRect().top - (+q.get("hoch") || 20)) + "px"; }
+  if (window.__analystenId) { ui.detail = window.__analystenId; zeichnen(); }
+  if (q.get("schrift")) document.body.style.zoom = q.get("schrift") / 100;
+  await new Promise((r) => setTimeout(r, 200));
+  const breit = innerWidth, zu = [];
+  for (const el of document.querySelectorAll("body *")) {
+    const r = el.getBoundingClientRect();
+    if (r.width && (r.right > breit + 1 || r.left < -1) && getComputedStyle(el).position !== "fixed")
+      zu.push((el.className || el.tagName) + "=" + (el.textContent || "").trim().slice(0, 20));
+  }
+  // Abgeschnittener Text (… oder Zeilen-Begrenzung) - ausser News-Titeln nirgends erlaubt
+  for (const el of document.querySelectorAll("#inhalt *")) {
+    const cs = getComputedStyle(el);
+    if (el.closest(".zeile.news") || !el.childNodes.length) continue;
+    const kurz = (cs.textOverflow === "ellipsis" && el.scrollWidth > el.clientWidth + 1) ||
+                 (cs.webkitLineClamp && cs.webkitLineClamp !== "none" && el.scrollHeight > el.clientHeight + 1);
+    if (kurz) zu.push("ABGESCHNITTEN " + (el.className || el.tagName) + "=" + (el.textContent || "").trim().slice(0, 30));
+  }
+  return { scroll: document.documentElement.scrollWidth - breit, zu: zu.slice(0, 3) };
+}
+
+(async () => {
+  const q = new URLSearchParams(location.search);
+  let text;
+  if (q.get("sammeln")) { window.__textSammler = new Set(); window.__fehlend = new Set(); }
+  if (q.get("sprache")) { const l = q.get("sprache"); window.sprache = () => l; }
+  try {
+    if (q.get("modus") === "kalender") {
+      const f = await kalenderTest();
+      text = f.length ? "FEHLER " + f.slice(0, 12).join(" ; ") : "OK";
+      if (q.get("zahl")) text += " · " + ui.kalBericht;
+    } else if (q.get("modus") === "klicken") {
+      const f = await klickTest(!!q.get("gross"));
+      text = f.length ? "FEHLER " + [...new Set(f)].slice(0, 15).join(" ; ") : "OK";
+      if (q.get("zahl")) text += " · " + ui.klicks + " Klicks";
+    } else if (q.get("modus") === "originale") {
+      const f = await originaleTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    } else if (q.get("modus") === "zertifikat") {
+      const f = await zertifikatTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    } else if (q.get("modus") === "screenshot") {
+      const f = await screenshotTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    } else if (q.get("modus") === "englisch") {
+      const f = await englischTest();
+      text = f.length ? "FEHLER " + f.slice(0, 12).join(" ; ") : "OK";
+    } else if (q.get("modus") === "texte") {
+      await texteSammeln(); text = "OK";
+    } else if (q.get("modus") === "mehrfach") {
+      const f = await mehrfachTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+      if (q.get("zeit")) text += " · " + ui.messung;
+    } else if (q.get("modus") === "faelle") {
+      const f = await faelleTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    } else if (q.get("modus") === "gross") {
+      const f = await grossTest();
+      text = f.length ? "FEHLER " + f.slice(0, 12).join(" ; ") : "OK";
+    } else if (q.get("modus") === "seite") {
+      const r = await seitePruefen(q);
+      text = r.scroll > 0 || r.zu.length ? `FEHLER ueberlauf ${r.scroll}px ${r.zu.join(" | ")}` : "OK";
+    } else {
+      const f = await rechnen();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    }
+  } catch (e) { text = "FEHLER Absturz: " + e.message; }
+  if (window.__textSammler) { const pre = document.createElement("pre"); pre.id = "sammlung"; pre.textContent = JSON.stringify({ texte: [...window.__textSammler], fehlend: [...window.__fehlend] }); document.body.append(pre); }
+  document.title = "TEST " + text;
+  if (parent !== window) parent.postMessage("TEST " + text, "*");
+})();

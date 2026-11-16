@@ -1,0 +1,4 @@
+"datetime","date","account_type","category","type","asset_class","name","symbol","shares","price","amount","fee","tax","currency","original_amount","original_currency","fx_rate","description","transaction_id","counterparty_name","counterparty_iban","payment_reference","mcc_code"
+"2025-01-10T10:00:00.000Z","2025-01-10","DEFAULT","TRADING","BUY","STOCK","Wieder AG","DE000TEST0005","20","40.00","-800.00","-1.00","","EUR","","","","","fall-5a","","","",""
+"2025-06-10T10:00:00.000Z","2025-06-10","DEFAULT","TRADING","SELL","STOCK","Wieder AG","DE000TEST0005","-20","55.00","1100.00","-1.00","-52.00","EUR","","","","","fall-5b","","","",""
+"2025-09-01T10:00:00.000Z","2025-09-01","DEFAULT","TRADING","BUY","STOCK","Wieder AG","DE000TEST0005","8","47.50","-380.00","-1.00","","EUR","","","","","fall-5c","","","",""

@@ -1,0 +1,32 @@
+<p><b>Depot-Kompass</b> brings your portfolios, crypto accounts, cash and assets together in one place – on your phone, without an account, without ads, without tracking.</p>
+
+<p>Load the CSV or PDF exports from your brokers and banks. The app calculates your total wealth, profit/loss, value history, diversification, dividends and a tax overview. Your data never leaves the phone.</p>
+
+<p><b>Import</b></p>
+<ul>
+<li>Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX, Sparkasse and other banks (CSV or PDF)</li>
+<li>Any other CSV via a one-time column mapping</li>
+<li>Screenshots of executed orders (Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX) – text recognition on the phone, no internet needed</li>
+<li>Duplicate bookings are detected, imports can be undone or moved</li>
+</ul>
+
+<p><b>Analysis</b></p>
+<ul>
+<li>Value history from 1 week to 5 years, time-weighted return, drawdown</li>
+<li>Positions as a list and heatmap, watchlist</li>
+<li>Calendar with daily profit/loss, dividends, ex-dates and earnings</li>
+<li>Tax overview per year (German rules: stocks, ETFs, dividends, crypto FIFO)</li>
+<li>Four calculators in euros or dollars: position size from a fixed loss, take profit by amount, averaging down with break-even, leverage with knock-out – every plan can be saved as a note with a chart</li>
+<li>Notes, physical assets, household with several people</li>
+<li>AI chat with your own key (OpenRouter, Claude, ChatGPT, Gemini) and notifications – both optional, off by default</li>
+</ul>
+
+<p><b>Privacy</b></p>
+<ul>
+<li>Only two permissions: internet (can be switched off completely) and notifications (off by default)</li>
+<li>No Google services, no trackers, no advertising ID</li>
+<li>App PIN with AES-256 encryption, backups are always encrypted</li>
+<li>Prices (Yahoo Finance, Onvista), headlines (Google News) and AI (OpenRouter, your own free key) only at the push of a button</li>
+</ul>
+
+<p>Not investment advice. The app only calculates with your own data.</p>

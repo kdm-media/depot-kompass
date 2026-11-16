@@ -1,0 +1,2 @@
+Neuer Name: Depot-Kompass, neue Paket-Kennung app.depotkompass – bitte einmal neu installieren und Daten über die .dksafe-Sicherung mitnehmen.
+Neu: Credits mit allen genutzten Bausteinen und Datenquellen, Bereich „Unterstützen“ mit Kopier-Knöpfen.

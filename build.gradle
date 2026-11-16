@@ -1,0 +1,26 @@
+// ENTWURF fuer F-Droid/Android Studio - noch NICHT getestet. Der gepruefte Bau ist bauen.sh (Termux, ohne Gradle).
+// Keine Abhaengigkeiten: nur android.*, java.*, org.json (wie in bauen.sh).
+plugins { id 'com.android.application' version '8.5.2' }
+
+android {
+    namespace 'app.depotkompass'
+    compileSdk 34
+    defaultConfig {
+        applicationId 'app.depotkompass'
+        minSdk 26
+        targetSdk 34
+        versionCode 54
+        versionName '0.54'
+    }
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDirs = ['src']
+            res.srcDirs = ['res']
+            assets.srcDirs = ['assets']
+        }
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+    buildTypes { release { minifyEnabled false } }
+    lint { abortOnError false }
+}

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="app.depotkompass"
+    android:versionCode="54"
+    android:versionName="0.54">
+
+    <!-- Nur fuer "Kurse aktualisieren" (Yahoo). Ohne Netz laeuft alles andere. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Nur fuer Benachrichtigungen (ab 0.46, ab Werk aus, nur mit Internet). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:label="Depot-Kompass"
+        android:icon="@drawable/icon"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/datenregeln"
+        android:networkSecurityConfig="@xml/netz"
+        android:usesCleartextTraffic="false"
+        android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|keyboardHidden|uiMode"
+            android:windowSoftInputMode="adjustResize"
+            android:launchMode="singleTask">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Teilen -> Depot-Kompass (ab 0.47): Sicherungen, Screenshots, PDFs, CSV aus anderen Apps -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <action android:name="android.intent.action.SEND_MULTIPLE" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="image/*" />
+                <data android:mimeType="application/pdf" />
+                <data android:mimeType="application/octet-stream" />
+                <data android:mimeType="text/*" />
+                <data android:mimeType="application/zip" />
+                <data android:mimeType="application/vnd.ms-excel" />
+            </intent-filter>
+        </activity>
+        <!-- Teilen aus der App: gibt nur die gerade erzeugte Datei frei, nur lesend -->
+        <provider
+            android:name=".Teilen"
+            android:authorities="app.depotkompass.teilen"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+        <!-- Hintergrund-Pruefung fuer Benachrichtigungen: startet nur Android selbst (JobScheduler), nicht von aussen erreichbar. -->
+        <service
+            android:name=".Wachter"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+    </application>
+</manifest>

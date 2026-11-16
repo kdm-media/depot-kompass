@@ -1,0 +1,18 @@
+# Depot-Kompass Desktop (ab 0.46) - dieselbe Oberflaeche wie die Android-App, lokal im Browser.
+#
+#   docker compose up -d --build      ->  http://127.0.0.1:8098
+#
+# Port NUR an 127.0.0.1 (nicht im Netz erreichbar). Daten verschluesselt in ./daten (gehoert nie ins Repository).
+services:
+  depot-kompass:
+    build: .
+    container_name: depot-kompass-desktop
+    ports:
+      - "127.0.0.1:8098:8098"
+    volumes:
+      - ../assets:/app/assets:ro
+      - ./daten:/daten
+    environment:
+      - TZ=Europe/Berlin
+      - VERSION=0.46 Desktop
+    restart: unless-stopped

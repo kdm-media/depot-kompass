@@ -1,0 +1,4 @@
+// ENTWURF fuer F-Droid/Android Studio - noch NICHT getestet. Der gepruefte Bau ist bauen.sh (Termux, ohne Gradle).
+pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+dependencyResolutionManagement { repositories { google(); mavenCentral() } }
+rootProject.name = "depot-kompass"
