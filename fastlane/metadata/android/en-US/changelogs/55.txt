@@ -1,0 +1,1 @@
+New: break-even always visible (to break-even / buffer, after fees) with a worked example. Better search: ISIN and WKN resolve to Xetra in euros, including ETCs and Xetra-Gold. Crypto without a euro pair (NEAR, HYPE, SUI) gets a price.

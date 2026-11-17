@@ -69,22 +69,49 @@ public class Wachter extends JobService {
             datei(c).delete();
             return true;
         }
+        letzterFehler = "";
         try {
             JSONObject k = new JSONObject(json);
-            schreiben(datei(c), json);
+            try {
+                schreiben(datei(c), json);
+            } catch (Exception e1) {
+                Protokoll.fehler(c, "Wächter: Schreiben (1. Versuch)", e1);
+                // 0.58: Schluessel im Android-Keystore kaputt/ungueltig (z. B. nach Wiederherstellung) -> einmal neu anlegen
+                KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+                ks.load(null);
+                ks.deleteEntry(ALIAS);
+                schreiben(datei(c), json);
+            }
             long stunden = Math.max(3, Math.min(24, k.optInt("stunden", 12)));
             if (js != null) {
-                JobInfo info = new JobInfo.Builder(JOB_ID, new ComponentName(c, Wachter.class))
-                        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                        .setPeriodic(stunden * 3600000L)
-                        .build();
-                js.schedule(info);
+                // 0.59: nur neu einplanen, wenn noch nicht (oder mit anderem Abstand) geplant - Android begrenzt,
+                // wie oft eine App schedule() aufrufen darf; nach "Aktualisieren" wurde bei jedem Speichern neu geplant.
+                long ms = stunden * 3600000L;
+                JobInfo da = null;
+                for (JobInfo j : js.getAllPendingJobs()) if (j.getId() == JOB_ID) da = j;
+                if (da == null || da.getIntervalMillis() != ms) {
+                    JobInfo info = new JobInfo.Builder(JOB_ID, new ComponentName(c, Wachter.class))
+                            .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                            .setPeriodic(ms)
+                            .build();
+                    int r = js.schedule(info);
+                    if (r != JobScheduler.RESULT_SUCCESS) {
+                        letzterFehler = "JobScheduler hat die Hintergrund-Prüfung abgelehnt (RESULT_FAILURE)";
+                        Protokoll.schreiben(c, "Wächter", letzterFehler + " · " + Protokoll.geraet());
+                        return false;
+                    }
+                }
             }
             return true;
         } catch (Exception e) {
+            letzterFehler = e.getClass().getSimpleName() + (e.getMessage() != null ? ": " + e.getMessage() : "");
+            Protokoll.fehler(c, "Wächter: Einrichten fehlgeschlagen", e);
             return false;
         }
     }
+
+    /** 0.58: Grund des letzten Fehlschlags (fuer die Meldung in der App). */
+    static volatile String letzterFehler = "";
 
     static boolean geplant(Context c) {
         JobScheduler js = (JobScheduler) c.getSystemService(Context.JOB_SCHEDULER_SERVICE);
@@ -120,7 +147,7 @@ public class Wachter extends JobService {
         lauf = new Thread(new Runnable() {
             @Override
             public void run() {
-                try { pruefen(); } catch (Exception ignored) { }
+                try { pruefen(); } catch (Exception e) { Protokoll.fehler(Wachter.this, "Wächter: Hintergrund-Prüfung", e); }
                 jobFinished(p, false);
             }
         });

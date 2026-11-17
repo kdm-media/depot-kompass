@@ -258,3 +258,7 @@ input[type="range"] { accent-color: var(--akzent); }
 .legende summary { cursor: pointer; padding: 4px 0; }
 .legende ul { margin: 4px 0 0; padding-left: 18px; } .legende li { margin: 4px 0; overflow-wrap: anywhere; } .legende b { color: var(--text); }
 .nk-euro { background: var(--karte-2); border-radius: 10px; padding: 6px 10px; overflow-wrap: anywhere; }
+/* Break-even (0.55) */
+.be-zeile { display: block; color: var(--leise); white-space: normal; overflow-wrap: anywhere; font-size: 12px; text-align: right; }
+.be-karte { margin-top: 12px; background: var(--karte-2); border-radius: 12px; padding: 10px 12px; }
+.be-karte tr.be-hier { background: var(--akzent-weich); font-weight: 650; }

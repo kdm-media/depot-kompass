@@ -16,7 +16,7 @@
 <li>Positionen als Liste und Heatmap, Watchlist</li>
 <li>Kalender mit Gewinn/Verlust je Tag, Dividenden, Ex-Tagen und Earnings</li>
 <li>Steuer-Übersicht je Jahr (Aktien, ETF, Dividenden, Krypto nach FIFO)</li>
-<li>Vier Rechner in Euro oder Dollar: Positionsgröße nach festem Verlust, Gewinnmitnahme nach Betrag, Nachkauf mit Break-even, Hebel mit Knock-out – jeder Plan als Notiz mit Chart speicherbar</li>
+<li>Vier Rechner in Euro oder Dollar: Positionsgröße nach festem Verlust, Gewinnmitnahme nach Betrag, Kauf in Tranchen mit Break-even, Hebel mit Knock-out – jeder Plan als Notiz mit Chart speicherbar</li>
 <li>Notizen, Sachwerte, Haushalt mit mehreren Personen</li>
 <li>KI-Chat mit eigenem Schlüssel (OpenRouter, Claude, ChatGPT, Gemini) und Benachrichtigungen – beides freiwillig, ab Werk aus</li>
 </ul>

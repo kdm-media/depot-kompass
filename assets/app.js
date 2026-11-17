@@ -275,11 +275,28 @@ function kalenderEreignisse(depotIds) {
                    info: `${stk(rund(x.stueck, 8))} Stück, gekauft ${datum(x.kauf)} – danach steuerfrei` });
     } finally { D = vorher; }
   }
+  aus.push(...steuerTermine());
   for (const x of S.eigeneTermine || []) if (depotIds.includes(x.depot))
     aus.push({ datum: x.datum, art: x.art, titel: x.titel, eigen: x.id, eur: x.betrag ?? undefined, info: esc(x.notiz || ""),
                depot: viele ? (S.depots[x.depot] || {}).name : "" });
   const weg = EIN().kalAus || {};
   return aus.filter((x) => x.datum && !weg[x.eigen ? "eigen" : x.art]).sort((a, b) => a.datum.localeCompare(b.datum));
+}
+
+/** 0.58: deutsche Steuertermine (Vorgabe 17.11.) - ohne Gewaehr, in den Einstellungen abschaltbar (Kalender → 🧾 Steuertermine).
+ *  Feste Tage; faellt eine Frist aufs Wochenende, gilt der naechste Werktag (steht im Hinweis). Vorjahr bis naechstes Jahr. */
+function steuerTermine() {
+  const j = +heute().slice(0, 4), aus = [];
+  for (const y of [j - 1, j, j + 1]) aus.push(
+    { datum: `${y}-01-02`, art: "Steuertermin", titel: "Vorabpauschale für ETFs und Fonds", steuer: true,
+      info: "Für thesaurierende ETFs zieht die Bank Anfang Januar ggf. Steuer ab – etwas Geld auf dem Verrechnungskonto lassen. Ohne Gewähr." },
+    { datum: `${y}-07-31`, art: "Steuertermin", titel: "Abgabefrist Steuererklärung (Vorjahr)", steuer: true,
+      info: "Gilt, wenn du abgeben musst; mit Steuerberater später. Fällt die Frist aufs Wochenende, gilt der nächste Werktag. Ohne Gewähr." },
+    { datum: `${y}-12-01`, art: "Steuertermin", titel: "Freistellungsauftrag prüfen", steuer: true,
+      info: "1.000 € je Person (2.000 € bei Zusammenveranlagung) – fürs neue Jahr sinnvoll auf deine Banken verteilen. Ohne Gewähr." },
+    { datum: `${y}-12-15`, art: "Steuertermin", titel: "Verlustbescheinigung beantragen", steuer: true,
+      info: "Bis 15.12. bei der Bank beantragen, wenn du Verluste mit Gewinnen bei einer anderen Bank verrechnen willst. Ohne Gewähr." });
+  return aus;
 }
 
 /** Kommende Termine (fuer die KI und die Liste "Demnaechst"). */
@@ -350,7 +367,7 @@ function analystenKarte(i) {
     <p class="klein" style="margin-bottom:0">Quelle Yahoo Finance · Stand ${esc(datum(i.termine.stand))} · keine Anlageberatung</p></section>`;
 }
 
-const KAL_SYMBOL = { Dividende: "💶", "Ex-Dividende": "✂️", Earnings: "📊", "Haltefrist endet": "⏳", Kauf: "🛒", Verkauf: "🏷️" };
+const KAL_SYMBOL = { Steuertermin: "🧾", Dividende: "💶", "Ex-Dividende": "✂️", Earnings: "📊", "Haltefrist endet": "⏳", Kauf: "🛒", Verkauf: "🏷️" };
 
 /** Auswertung zu einem Earnings-Termin: das Quartal, das zuletzt VOR dem Termin endete (Yahoo earningsHistory). */
 function earningsErgebnis(i, tag) {
@@ -429,7 +446,7 @@ function monatsKalender() {
     </section>
     <h2>${ui.kalTag && ui.kalTag.startsWith(m) ? datum(ui.kalTag) : mon}<span>${liste.length}</span></h2>
     <section class="karte liste">${liste.length ? liste.map((x) => `
-      <button class="zeile" ${x.eigen ? `data-termin="${esc(x.eigen)}"` : x.art === "Earnings" ? `data-earnings="${esc(x.did + "|" + x.id + "|" + x.datum)}"` : `data-position="${esc(x.id)}" ${alle ? "disabled" : ""}`}>
+      <button class="zeile" ${x.eigen ? `data-termin="${esc(x.eigen)}"` : x.art === "Earnings" ? `data-earnings="${esc(x.did + "|" + x.id + "|" + x.datum)}"` : x.steuer ? "disabled" : `data-position="${esc(x.id)}" ${alle ? "disabled" : ""}`}>
         <span class="mono">${x.eigen ? "📌" : KAL_SYMBOL[x.art] || "•"}</span>
         <span style="min-width:0"><span class="titel">${esc(x.titel)}</span>
           <span class="unter">${esc(x.art)}${x.depot ? " · " + esc(x.depot) : ""}${x.info ? "<br>" + (ui.verdeckt ? x.info.replace(/[\d.,]+\s?Stück/g, "••• Stück") : x.info) : ""}</span></span>
@@ -1199,6 +1216,8 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const kuerzel = (n) => String(n).replace(/[.,]/g, " ").split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase();
 
 function meldung(text) {
+  // 0.59: Fehler-Meldungen ins Fehlerprotokoll (Zahlen maskiert - keine Betraege im Protokoll)
+  if (typeof protokoll === "function" && /fehlgeschlagen|nicht |konnte|Fehler|ungültig|abgelehnt|ging nicht/i.test(String(text))) protokoll("Meldung", String(text).replace(/\d[\d.,]*/g, "#"));
   const m = document.getElementById("meldung");
   m.innerHTML = `<span>${esc(tr(text))}</span>`;
   clearTimeout(meldung.t);
@@ -1514,8 +1533,22 @@ function torte(e) {
       <span>${esc(x.name)}</span><b>${ant(x.anteil)}</b></li>`).join("")}</ul></div>`;
 }
 
+/** Break-even nach Gebuehren (0.55, Wunsch 17.11.): Kaufgebuehren stecken im Einstand, die Verkaufsgebuehr kommt aus dem
+ *  Gebuehren-Standard der Rechner (Einstellung nachkaufGebuehr, % je Order; leer = 0).
+ *  noetig  = so viel % muss der Kurs steigen, bis die Position nach Verkauf wieder bei null ist (> 0 = im Minus)
+ *  puffer  = so viel % darf der Kurs fallen, bis die Position bei null ist (> 0 = im Plus)
+ *  kursBE  = Kurs je Stueck, bei dem die Position genau bei null ist. Rechnet nur, keine Empfehlung. */
+function breakEven(p) {
+  if (!p || p.ohneKurs || !(p.wert > 0) || !(p.einstand > 0)) return null;
+  const f = Math.min(0.5, Math.max(0, (zahl(EIN().nachkaufGebuehr) || 0) / 100)), faktor = p.einstand / (p.wert * (1 - f));
+  return { noetig: (faktor - 1) * 100, puffer: (1 - faktor) * 100, kursBE: p.stueck > 0 ? p.einstand / (p.stueck * (1 - f)) : null, gebuehr: f * 100 };
+}
+/** "Verlust → nötiger Anstieg": je tiefer im Minus, desto steiler wird der Weg zurück. */
+const VERLUST_HINWEIS_AB = 35;   // 0.59: ab -35 % (Vorgabe 17.11.: "ab ungefaehr 35 %" - darunter eher Position aufloesen und neu eroeffnen, um den Verlust zu begrenzen)
+const ANSTIEG_TABELLE = [10, 20, 30, 40, 50, 60, 75, 90];
+
 function zeile(p) {
-  const st = p.inst.status;
+  const st = p.inst.status, be = breakEven(p);
   const zielStrich = p.ziel != null ? `<s style="left:${Math.min(100, p.ziel * 4)}%"></s>` : "";
   const abw = p.abweichung != null && Math.abs(p.abweichung) >= 1
     ? ` · <span class="warn-t">Ziel ${ant(p.ziel)} (${pct(p.abweichung)})</span>` : "";
@@ -1529,7 +1562,8 @@ function zeile(p) {
       </span>
       <span class="rechts">${minichart(p.inst)}<b>${eur(p.wert)}</b>${p.ohneKurs
         ? `<span class="klein">seit Kauf: kein Kurs</span>`
-        : `<span class="${vz(p.gvPct)}-t seit-kauf">${pct(p.gvPct)}</span><span class="klein ${vz(p.gv)}-t">${eurVz(p.gv)}</span>`}</span>
+        : `<span class="${vz(p.gvPct)}-t seit-kauf">${pct(p.gvPct)}</span> <span class="klein ${vz(p.gv)}-t">${eurVz(p.gv)}</span>${be
+          ? `<span class="klein be-zeile">${be.noetig > 0.005 ? `Break-even ${pct(be.noetig)}` : `Puffer ${pct(-be.puffer)}`}</span>` : ""}`}</span>
     </button>`;
 }
 
@@ -1586,12 +1620,13 @@ function detailSeite(id) {
         <div><small>Einstand</small><b>${eur(p.einstand)}</b></div>
         <div><small>G/V</small><b class="${vz(p.gv)}-t">${eurVz(p.gv)}</b></div>
         <div><small>G/V %</small><b class="${vz(p.gvPct)}-t">${pct(p.gvPct)}</b></div>
+        ${(() => { const be = breakEven(p); return be ? `<div><small>${be.noetig > 0.005 ? "Bis Break-even" : "Puffer bis Break-even"}</small><b class="${be.noetig > 0.005 ? "minus" : "plus"}-t">${be.noetig > 0.005 ? pct(be.noetig) : pct(-be.puffer)}</b><small>nach Gebühren</small></div>` : ""; })()}
         <div><small>Ø Kaufkurs</small><b>${i.ohneStueck || !p.stueck ? "–" : kursE(p.einstand / p.stueck)}</b></div>
         <div><small>Kurs jetzt</small><b>${i.kurs != null ? kursE(i.kurs) : "–"}</b></div>
         <div><small>Seit Aktualisierung</small><b class="${vz(i.kursVorher ? i.kurs / i.kursVorher - 1 : null)}-t">${i.kursVorher ? pct((i.kurs / i.kursVorher - 1) * 100) : "–"}</b></div>
         ${i.termine?.kgv ? `<div><small>KGV</small><b>${fPct.format(i.termine.kgv)}</b></div>
         <div><small>KGV erwartet</small><b>${i.termine.kgvErwartet ? fPct.format(i.termine.kgvErwartet) : "–"}</b></div>` : ""}
-      </div>${haltefristListe(id)}` : `<p class="klein">Aktuell nicht im Bestand.</p>`}
+      </div>${haltefristListe(id)}${breakEvenKarte(p, i)}` : `<p class="klein">Aktuell nicht im Bestand.</p>`}
       <div style="margin-top:14px">${minichart(i, 300, 90, true)}</div>
     </section>
     ${quartalsTabelle(i)}
@@ -1627,7 +1662,7 @@ function detailSeite(id) {
       <div class="knoepfe"><button class="knopf haupt" type="submit">Speichern</button>
         <button class="knopf" type="button" data-neu="buchung" data-instrument="${esc(id)}">+ Buchung</button>
         <button class="knopf" type="button" data-notiz-neu="${esc(id)}">+ Notiz</button>
-        ${p && p.stueck > 0 && !i.ohneStueck ? `<button class="knopf" type="button" data-nachkauf-aus="${esc(id)}">📉 Nachkauf rechnen</button>
+        ${p && p.stueck > 0 && !i.ohneStueck ? `<button class="knopf" type="button" data-nachkauf-aus="${esc(id)}">📉 In Tranchen kaufen</button>
         <button class="knopf" type="button" data-gewinn-aus="${esc(id)}">💰 Gewinnmitnahme</button>
         <button class="knopf" type="button" data-posgr-aus="${esc(id)}">⚖️ Positionsgröße</button>` : ""}</div>
     </form>
@@ -1637,6 +1672,27 @@ function detailSeite(id) {
       .map((b) => `<option value="${esc(b)}">`).join("")}</datalist>
     <h2>Buchungen</h2>
     <section class="karte">${buchungsTabelle(buch)}</section>`;
+}
+
+/** Rechenbeispiel in der Position: was es braucht, um wieder bei null zu sein – und was ein Rücksetzer bedeutet. */
+function breakEvenKarte(p, i) {
+  const be = breakEven(p);
+  if (!be) return "";
+  const k = i.kurs, minus = be.noetig > 0.005, gv = (x) => (x > 0 ? "+" : "") + fPct.format(x) + " %";
+  const rueck = 20, wertNach = p.wert * (1 - rueck / 100), gvNach = (wertNach / p.einstand - 1) * 100;
+  const zeilen = ANSTIEG_TABELLE.map((v) => `<tr class="${minus && Math.abs(p.gvPct) >= v - 5 && Math.abs(p.gvPct) < v + 5 ? "be-hier" : ""}"><td>−${v} %</td><td>${gv(100 / (1 - v / 100) - 100)}</td></tr>`).join("");
+  return `<div class="be-karte">
+    <p style="margin:0"><b>🧮 ${minus ? "Was es braucht, um wieder bei null zu sein" : "Was ein Rücksetzer für dich bedeutet"}</b></p>
+    ${minus
+      ? `<p class="klein" style="margin:4px 0 0">Du liegst bei <b class="minus-t">${pct(p.gvPct)}</b>. Damit die Position nach Gebühren wieder bei null ist, muss der Kurs um <b>${pct(be.noetig)}</b> steigen${be.kursBE && k ? ` – von ${kursE(k)} auf ${kursE(be.kursBE)}` : ""}.</p>`
+      : `<p class="klein" style="margin:4px 0 0">Du liegst bei <b class="plus-t">${pct(p.gvPct)}</b>. Fällt der Kurs um ${rueck} %, liegst du noch bei <b class="${vz(gvNach)}-t">${pct(gvNach)}</b> (${eurVz(wertNach - p.einstand)}). Bis zum Break-even darf er um <b>${pct(be.puffer).replace("+", "")}</b> fallen${be.kursBE ? ` – bis ${kursE(be.kursBE)}` : ""}.</p>`}
+    ${minus && p.gvPct <= -VERLUST_HINWEIS_AB ? `<p class="klein" style="margin:6px 0 0">💡 Ab etwa −${VERLUST_HINWEIS_AB} % braucht es schon ${pct(100 / (1 - VERLUST_HINWEIS_AB / 100) - 100)} Anstieg, um wieder bei null zu sein – du brauchst gerade ${pct(be.noetig)}. Manche lösen eine Position ab hier auf und eröffnen bei Bedarf eine neue, um den Verlust zu begrenzen. Realisierte Verluste lassen sich steuerlich mit Gewinnen verrechnen (Aktienverluste nur mit Aktiengewinnen). Ohne Gewähr, keine Anlageberatung.</p>` : ""}
+    <details class="legende" style="margin-top:6px"><summary>ℹ️ Verlust und nötiger Anstieg</summary>
+      <table class="tabelle nk-tabelle"><tr><th>Verlust</th><th>nötiger Anstieg</th></tr>${zeilen}</table>
+      <p class="klein">Je tiefer eine Position im Minus ist, desto größer muss der Anstieg sein, um wieder bei null zu sein. Ob Halten, Nachkaufen oder Verkaufen sinnvoll ist, entscheidest du – das ist nur Rechnung, keine Anlageberatung.</p>
+    </details>
+    <p class="klein" style="margin:4px 0 0">${be.gebuehr > 0 ? `Mit ${fPct.format(be.gebuehr)} % Verkaufsgebühr (Standard aus den Rechnern) und den Kaufgebühren im Einstand.` : "Kaufgebühren sind im Einstand enthalten. Eine Verkaufsgebühr lässt sich in den Rechnern als Standard hinterlegen."}</p>
+  </div>`;
 }
 
 function buchungsTabelle(liste) {
@@ -3312,12 +3368,53 @@ function kursHolen(ticker, art = "kurs") {
  *  zum Einstand aus der Abrechnung. Krypto: "<Kuerzel>-EUR". */
 const EURO_BOERSEN = [".DE", ".F", ".SG", ".PA", ".AS", ".MI", ".VI", ".BR"];
 async function tickerSuchen(i) {
-  if (i.art === "Krypto" && /^[A-Z0-9]{2,6}$/.test(i.isin || "")) return `${i.isin}-EUR`;
+  if (i.art === "Krypto" && /^[A-Z0-9]{2,10}$/.test(i.isin || "")) return await kryptoTicker(i.isin);
   if (!i.isin) return null;
-  const j = await kursHolen(i.isin, "suche");
-  const q = (j?.quotes || []).map((x) => x.symbol).filter(Boolean);
-  for (const b of EURO_BOERSEN) { const t = q.find((s) => s.endsWith(b)); if (t) return t; }
-  return q[0] || null;
+  return (await tickerFuerKennung(i.isin))?.ticker || null;
+}
+
+// ------------------------------------------------------------ Bessere Suche (0.55, Suchtest 17.11.2026 mit 53 echten Werten)
+// Yahoo per ISIN liefert bei ETFs oft London/Mailand in USD/GBp, per WKN fast nichts (und Fehltreffer an der
+// Taiwan-Boerse ".TWO"). Onvista kennt alle Testwerte per ISIN und WKN und liefert das deutsche Kuerzel ->
+// "<Kuerzel>.DE" (Xetra) bzw. ".F" (Frankfurt) in Euro: 45/53. Rest (vor allem ETCs) findet Yahoo per ISIN in
+// Stuttgart (".SG", Euro) - zusammen 53/53. Krypto ohne Euro-Paar bei Yahoo (NEAR, HYPE, SUI): Krypto-Suche,
+// dann "-EUR" bevorzugt, sonst "-USD" (die App rechnet in Euro um).
+const kursMeta = async (t) => { const j = await kursHolen(t, "kurs"); return j?.chart?.result?.[0]?.meta || null; };
+const kursInEuro = async (t) => { const m = await kursMeta(t); return !!(m && m.regularMarketPrice > 0 && m.currency === "EUR"); };
+const istWkn = (s) => /^[A-Z0-9]{6}$/.test(String(s || "")) && /\d/.test(String(s));
+async function onvistaTreffer(begriff) {
+  if (!APP?.onvistaSuche || !begriff || String(begriff).length > 80) return [];
+  const j = await kursHolen(String(begriff).trim(), "onvistaSuche");
+  return (j?.list || []).filter((e) => e && (e.isin || e.symbol));
+}
+/** Euro-Notierung aus einer Yahoo-Suche (nie ".TWO" o. Ae.). */
+async function euroTicker(q) {
+  const j = await kursHolen(q, "suche");
+  const s = (j?.quotes || []).map((x) => x.symbol).filter(Boolean);
+  for (const b of EURO_BOERSEN) { const t = s.find((x) => x.endsWith(b)); if (t) return { ticker: t, alle: s }; }
+  return { ticker: null, alle: s };
+}
+/** ISIN oder WKN -> { ticker, name, isin, wkn, art } (Euro-Boerse bevorzugt) oder null. */
+async function tickerFuerKennung(kennung) {
+  const k = String(kennung || "").trim().toUpperCase();
+  if (!k) return null;
+  const e = (await onvistaTreffer(k))[0] || null;
+  const sym = e?.symbol && /^[A-Z0-9]{1,8}$/.test(e.symbol) ? e.symbol : null;
+  const info = { name: e?.name || "", isin: e?.isin || (istIsin(k) ? k : ""), wkn: e?.wkn || (istWkn(k) ? k : ""), art: e?.entityType || "" };
+  for (const t of sym ? [sym + ".DE", sym + ".F"] : []) if (await kursInEuro(t)) return { ...info, ticker: t };
+  if (info.isin) { const r = await euroTicker(info.isin); if (r.ticker) return { ...info, ticker: r.ticker };
+    if (sym) { const r2 = await euroTicker(sym); if (r2.ticker) return { ...info, ticker: r2.ticker }; }
+    if (r.alle[0] && !/\.TWO$/.test(r.alle[0])) return { ...info, ticker: r.alle[0] }; }
+  return null;
+}
+/** Krypto: "<Kuerzel>-EUR", wenn Yahoo dafuer einen Kurs hat, sonst ueber die Krypto-Suche (z. B. HYPE32196-USD). */
+async function kryptoTicker(code) {
+  const c = String(code || "").toUpperCase(), std = `${c}-EUR`;
+  const m = await kursMeta(std);
+  if (m?.regularMarketPrice > 0) return std;
+  const j = await kursHolen(c, "suche");
+  const q = (j?.quotes || []).filter((x) => x.quoteType === "CRYPTOCURRENCY" && x.symbol && x.symbol.toUpperCase().startsWith(c)).map((x) => x.symbol);
+  return q.find((s) => s.endsWith("-EUR")) || q.find((s) => s.endsWith("-USD")) || std;
 }
 // ------------------------------------------------------------ Zertifikate (ab 0.42): Kurse ueber Onvista per ISIN/WKN
 const ZERT_ARTEN = new Set(["Zertifikat", "Optionsschein", "Anleihe"]);
@@ -3369,6 +3466,9 @@ async function kurseAktualisieren() {
   if (ohne.length) meldung(`Suche ${ohne.length} Ticker …`);
   for (const i of ohne) { const t = await tickerSuchen(i); if (t) i.ticker = t; }
   for (const w of (S.watchlist || []).filter((w) => !w.ticker && !w.kursHand)) { const t = await watchTicker(w); if (t) w.ticker = t; }
+  // Krypto mit "-EUR"-Ticker, den es bei Yahoo nicht gibt (NEAR, HYPE, SUI …): einmal pruefen und ggf. ersetzen (0.55)
+  for (const i of Object.values(S.depots).flatMap((d) => Object.values(d.instrumente)).filter((i) => i.art === "Krypto" && /-EUR$/.test(i.ticker || "") && !i.kryptoGeprueft)) {
+    const t = await kryptoTicker(i.ticker.replace(/-EUR$/, "")); i.kryptoGeprueft = true; if (t) i.ticker = t; }
   // Jeder Ticker nur einmal, auch wenn er in mehreren Depots oder der Watchlist steht.
   const jeTicker = {};
   for (const d of Object.values(S.depots))
@@ -3556,7 +3656,7 @@ function zeichnen() {
     : { uebersicht, positionen: positionenSeite, buchungen: buchungenSeite, daten: datenSeite, depots: depotsSeite,
         kalender: kalenderSeite, watchlist: watchlistSeite, mehr: mehrSeite, notizen: notizenSeite, ki: kiSeite,
         schluessel: schluesselSeite, datenschutz: datenschutzSeite, news: newsSeite, sicherheit: sicherheitSeite,
-        sachwerte: sachwerteSeite, einstellungen: einstellungenSeite, steuer: steuerSeite, feedback: feedbackSeite, hinweise: hinweiseSeite, unterstuetzen: unterstuetzenSeite }[ui.seite]());
+        sachwerte: sachwerteSeite, einstellungen: einstellungenSeite, steuer: steuerSeite, feedback: feedbackSeite, hinweise: hinweiseSeite, unterstuetzen: unterstuetzenSeite, fehlerprotokoll: fehlerprotokollSeite }[ui.seite]());
   if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.termin && !ui.vorschau && ui.seite === "uebersicht")
     inhalt.insertAdjacentHTML("beforeend", `<button class="fab" data-plus="auf" aria-label="Hinzufügen: Datei, Depot, Buchung, Sachwert">+</button>`);
   else if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.termin && !ui.vorschau && ["positionen", "buchungen"].includes(ui.seite) && D.buchungen.length)

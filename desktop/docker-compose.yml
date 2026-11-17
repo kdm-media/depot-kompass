@@ -11,8 +11,8 @@ services:
       - "127.0.0.1:8098:8098"
     volumes:
       - ../assets:/app/assets:ro
+      - ../AndroidManifest.xml:/app/AndroidManifest.xml:ro   # Versionsnummer = immer dieselbe wie die App
       - ./daten:/daten
     environment:
       - TZ=Europe/Berlin
-      - VERSION=0.46 Desktop
     restart: unless-stopped

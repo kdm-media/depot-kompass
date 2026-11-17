@@ -107,7 +107,25 @@ public class MainActivity extends Activity {
             @Override
             public void onPageFinished(WebView v, String url) { seiteGeladen = true; }
         });
+        final Thread.UncaughtExceptionHandler vorher = Thread.getDefaultUncaughtExceptionHandler();
+        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+            @Override
+            public void uncaughtException(Thread th, Throwable ex) {
+                Protokoll.fehler(getApplicationContext(), "Absturz", ex);      // 0.59: Abstuerze ins Fehlerprotokoll
+                if (vorher != null) vorher.uncaughtException(th, ex);
+            }
+        });
         web.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public boolean onConsoleMessage(android.webkit.ConsoleMessage cm) {
+                // 0.59: JavaScript-Fehler ins Fehlerprotokoll (nur Fehler-Stufe, Text + Datei:Zeile)
+                if (cm.messageLevel() == android.webkit.ConsoleMessage.MessageLevel.ERROR) {
+                    String q = cm.sourceId() == null ? "" : cm.sourceId().replaceAll("^.*/", "");
+                    Protokoll.schreiben(MainActivity.this, "JavaScript", cm.message() + " · " + q + ":" + cm.lineNumber());
+                }
+                return super.onConsoleMessage(cm);
+            }
+
             @Override
             public boolean onShowFileChooser(WebView v, ValueCallback<Uri[]> rueckruf, FileChooserParams p) {
                 if (dateiRueckruf != null) dateiRueckruf.onReceiveValue(null);
@@ -373,20 +391,60 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public boolean wachterSetzen(final String json) {
             boolean an = json != null && !json.trim().isEmpty();
-            if (an && netzAus()) return false;
+            if (an && netzAus()) { Wachter.letzterFehler = "netzAus"; Protokoll.schreiben(MainActivity.this, "Wächter", "abgelehnt: Internet in der App aus"); return false; }
             if (an && Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() { eigenerDialog = true; requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 77); }
                 });
             }
-            return Wachter.setzen(MainActivity.this, json);
+            boolean ok = Wachter.setzen(MainActivity.this, json);
+            if (!ok || an && !Wachter.erlaubt(MainActivity.this))
+                Protokoll.schreiben(MainActivity.this, "Wächter", "setzen=" + ok + " · Länge " + (json == null ? 0 : json.length()) + " · vom Handy erlaubt=" + Wachter.erlaubt(MainActivity.this)
+                        + " · geplant=" + Wachter.geplant(MainActivity.this) + " · Grund=" + Wachter.letzterFehler + " · " + Protokoll.geraet());
+            return ok;
         }
+
+        /** 0.59: Fehlerprotokoll - Eintrag aus der Oberflaeche (nur technische Texte). */
+        @JavascriptInterface
+        public void protokoll(String bereich, String text) {
+            Protokoll.schreiben(MainActivity.this, bereich == null ? "App" : bereich.length() > 60 ? bereich.substring(0, 60) : bereich,
+                    text == null ? "" : text.length() > 1500 ? text.substring(0, 1500) : text);
+        }
+
+        @JavascriptInterface
+        public String protokollLesen() { return Protokoll.lesen(MainActivity.this); }
+
+        @JavascriptInterface
+        public void protokollLeeren() { Protokoll.leeren(MainActivity.this); }
+
+        @JavascriptInterface
+        public String protokollGeraet() { return Protokoll.geraet(); }
 
         /** {"erlaubt": Benachrichtigungen vom System erlaubt, "geplant": Pruefung ist eingeplant} */
         @JavascriptInterface
         public String wachterStatus() {
             return "{\"erlaubt\":" + Wachter.erlaubt(MainActivity.this) + ",\"geplant\":" + Wachter.geplant(MainActivity.this) + "}";
+        }
+
+        /** 0.58: Grund, warum das Einrichten zuletzt fehlschlug ("" = kein Fehler, "netzAus" = Internet in der App aus). */
+        @JavascriptInterface
+        public String wachterFehler() { return Wachter.letzterFehler == null ? "" : Wachter.letzterFehler; }
+
+        /** 0.58: Android-Einstellungen der App fuer Benachrichtigungen oeffnen (wenn das Handy sie verbietet). */
+        @JavascriptInterface
+        public void benachrichtigungEinstellungen() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        Intent i = Build.VERSION.SDK_INT >= 26
+                                ? new Intent("android.settings.APP_NOTIFICATION_SETTINGS").putExtra("android.provider.extra.APP_PACKAGE", getPackageName())
+                                : new Intent("android.settings.APPLICATION_DETAILS_SETTINGS", android.net.Uri.parse("package:" + getPackageName()));
+                        startActivity(i);
+                    } catch (Exception e) { /* kein Einstellungs-Bildschirm vorhanden */ }
+                }
+            });
         }
 
         /** Beispiel-Benachrichtigung sofort zeigen. */

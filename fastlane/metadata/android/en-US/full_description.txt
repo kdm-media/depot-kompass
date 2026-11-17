@@ -16,7 +16,7 @@
 <li>Positions as a list and heatmap, watchlist</li>
 <li>Calendar with daily profit/loss, dividends, ex-dates and earnings</li>
 <li>Tax overview per year (German rules: stocks, ETFs, dividends, crypto FIFO)</li>
-<li>Four calculators in euros or dollars: position size from a fixed loss, take profit by amount, averaging down with break-even, leverage with knock-out – every plan can be saved as a note with a chart</li>
+<li>Four calculators in euros or dollars: position size from a fixed loss, take profit by amount, buying in tranches with break-even, leverage with knock-out – every plan can be saved as a note with a chart</li>
 <li>Notes, physical assets, household with several people</li>
 <li>AI chat with your own key (OpenRouter, Claude, ChatGPT, Gemini) and notifications – both optional, off by default</li>
 </ul>

@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="app.depotkompass"
-    android:versionCode="54"
-    android:versionName="0.54">
+    android:versionCode="60"
+    android:versionName="0.60">
 
     <!-- Nur fuer "Kurse aktualisieren" (Yahoo). Ohne Netz laeuft alles andere. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Nur fuer Benachrichtigungen (ab 0.46, ab Werk aus, nur mit Internet). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 0.59: Pflicht fuer die Hintergrund-Pruefung "nur mit Internet" (JobScheduler) - ohne sie SecurityException beim Einrichten
+         (gefunden ueber das Fehlerprotokoll, 17.11.). Normale Berechtigung, keine Rueckfrage, liest nur "Netz da ja/nein". -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:label="Depot-Kompass"

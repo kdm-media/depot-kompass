@@ -1,0 +1,1 @@
+The average-down calculator is now called "Buy in tranches". Plus from 0.55: break-even always visible, better search (ISIN/WKN → Xetra in euros), crypto without a euro pair.

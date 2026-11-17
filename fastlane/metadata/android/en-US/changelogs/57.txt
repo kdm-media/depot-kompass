@@ -1,0 +1,1 @@
+Leverage calculator shows the real knock-out after maintenance margin and fees (10× ≈ −7.6 % instead of −10 %), choose your broker: Kraken Futures, Hyperliquid, knock-out certificate or custom values.

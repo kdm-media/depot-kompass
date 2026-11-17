@@ -103,7 +103,7 @@ function nachkaufRechnen(r) {
       A = { budget: G(budget), gebuehr: G(dzMal(budget, f)), netto: G(dzMal(budget, rest)), stueck: Z(stueck), bestand: Z(nb),
             investiert: G(ninv), einstand: G(ne), wert: G(dzMal(nb, k)), aenderungPct: P(dzDurch(dzMal(ne - e, DZ_100), e)),
             _b: nb, _inv: ninv, _e: ne };
-      if (zuGross(budget)) warnungen.push("Nachkauf überproportional groß – Sunk-Cost-Risiko (Budget mehr als 10× der aktuellen Position).");
+      if (zuGross(budget)) warnungen.push("Tranche überproportional groß – Sunk-Cost-Risiko (Budget mehr als 10× der aktuellen Position).");
     }
   }
 
@@ -113,14 +113,14 @@ function nachkaufRechnen(r) {
   if (ziel != null) {
     const kEff = dzDurch(k, rest);
     if (!(ziel > 0n)) B = { fehler: "Ziel-Einstand muss größer als 0 sein." };
-    else if (e <= k) B = { fehler: "Der Kurs liegt über deinem Einstand – Nachkaufen hebt den Einstand, senken geht nicht." };
-    else if (ziel >= e) B = { fehler: "Das Ziel liegt nicht unter deinem Einstand – kein Nachkauf nötig." };
+    else if (e <= k) B = { fehler: "Der Kurs liegt über deinem Einstand – eine weitere Tranche hebt den Einstand, senken geht nicht." };
+    else if (ziel >= e) B = { fehler: "Das Ziel liegt nicht unter deinem Einstand – keine weitere Tranche nötig." };
     else if (ziel <= kEff) B = { fehler: f > 0n ? "Unmöglich: Der Ziel-Einstand muss über dem aktuellen Kurs inkl. Gebühr liegen." : "Unmöglich: Der Ziel-Einstand muss über dem aktuellen Kurs liegen." };
     else {
       const stueck = dzDurch(dzMal(b, e - ziel), ziel - kEff), brutto = dzMal(stueck, kEff), netto = dzMal(stueck, k), nb = b + stueck, ninv = inv + brutto;
       B = { stueck: Z(stueck), budget: G(brutto), netto: G(netto), gebuehr: G(brutto - netto), bestand: Z(nb), investiert: G(ninv),
             einstand: G(dzDurch(ninv, nb)), _b: nb, _inv: ninv, _e: dzDurch(ninv, nb) };
-      if (zuGross(brutto)) warnungen.push("Nachkauf überproportional groß – Sunk-Cost-Risiko (Budget mehr als 10× der aktuellen Position).");
+      if (zuGross(brutto)) warnungen.push("Tranche überproportional groß – Sunk-Cost-Risiko (Budget mehr als 10× der aktuellen Position).");
     }
   }
 
@@ -177,13 +177,13 @@ function nachkaufErgebnis(r = ui.nachkauf || {}) {
   const brutto = (m) => x.gebuehrPct > 0 ? `<div><small>davon Gebühr</small><b>${geld(m.gebuehr)}</b><small>netto ${geld(m.netto)}</small></div>` : "";
   return `
     <div class="kennzahlen nachkauf-haupt">
-      <div><small>Neuer Einstandskurs</small><b>${kursW(n.einstand)}</b><small>${n.grundlage ? "nach Nachkauf " + n.grundlage : "ohne Nachkauf"}</small></div>
+      <div><small>Neuer Einstandskurs</small><b>${kursW(n.einstand)}</b><small>${n.grundlage ? "nach Tranche " + n.grundlage : "ohne weitere Tranche"}</small></div>
       <div><small>Benötigtes Budget</small><b>${budgetHaupt != null ? geld(budgetHaupt) : "–"}</b></div>
       <div class="be"><small>Break-even-Kurs</small><b>${kursW(n.breakEven)}</b>${x.gebuehrPct > 0 ? "<small>inkl. Verkaufsgebühr</small>" : ""}</div>
     </div>
     ${inEuro(r, ["Budget", budgetHaupt], ["Investiert", n.investiert], ["Marktwert", n.wert])}
     ${x.warnungen.map((w) => `<p class="warn-t klein"><b>⚠ ${esc(w)}</b></p>`).join("")}
-    ${x.A ? `<h3 class="nk-titel">A · Mit Budget nachkaufen</h3>${fehlerZeile(x.A)}${x.A.fehler ? "" : `<div class="kennzahlen">
+    ${x.A ? `<h3 class="nk-titel">A · Tranche mit festem Budget</h3>${fehlerZeile(x.A)}${x.A.fehler ? "" : `<div class="kennzahlen">
       <div><small>Gekaufte Stück</small><b>${s(x.A.stueck)}</b></div>
       <div><small>Neuer Bestand</small><b>${s(x.A.bestand)}</b></div>
       <div><small>Neuer Einstand</small><b>${kursW(x.A.einstand)}</b><small class="${farbe(-x.A.aenderungPct)}">${pct(x.A.aenderungPct)}</small></div>
@@ -223,33 +223,33 @@ function nachkaufChart(x) {
 }
 
 function nachkaufRechner() {
-  if (!ui.nachkaufOffen) return `<section class="karte"><button class="knopf" data-nachkauf-auf="1" style="width:100%">📉 Nachkauf-Rechner (Einstand senken, Exit-Plan)</button></section>`;
+  if (!ui.nachkaufOffen) return `<section class="karte"><button class="knopf" data-nachkauf-auf="1" style="width:100%">📉 In Tranchen kaufen – für einen entspannten Durchschnittspreis</button></section>`;
   const r = ui.nachkauf ||= { art: "krypto", gebuehr: EIN().nachkaufGebuehr ?? "" }, W = nkW(r);
   const geheim = ui.verdeckt ? ' style="-webkit-text-security:disc"' : "";
   const f = (n, t, ph, g) => `<label>${t}<input data-nachkauf="${n}" inputmode="decimal" value="${esc(r[n] ?? "")}" placeholder="${ph}"${g ? geheim : ""}></label>`;
   const reiter = (feld, wert, text, std) => `<button type="button" data-nachkauf-wahl="${feld}" data-wert="${wert}" class="${(r[feld] || std) === wert ? "aktiv" : ""}">${text}</button>`;
   return `
     <section class="karte formular" id="nachkauf">
-      <div class="nk-kopf"><b>📉 Nachkauf-Rechner</b>
+      <div class="nk-kopf"><b>📉 In Tranchen kaufen</b>
         <button class="knopf klein" data-nachkauf-auf="0">schließen</button></div>
       <p class="klein nk-hinweis">Was-wäre-wenn: Hier wird nur gerechnet – deine gespeicherte Position bleibt unverändert.</p>
       ${legende(["<b>Ø Einstandskurs</b> = dein Durchschnittspreis je Stück.", "<b>Break-even</b> = ab diesem Kurs ist die Position im Plus.", "<b>A</b> = du hast ein festes Budget · <b>B</b> = du willst einen bestimmten Einstand erreichen.",
         "<b>C</b> = was bleibt bei welchem Verkaufskurs übrig.", "<b>D</b> = so viel verkaufen, dass dein ganzes eingesetztes Geld zurück ist. Der Rest („Runner“) läuft ohne eigenes Geld weiter.",
-        "Nachkaufen senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt."])}
+        "Jede weitere Tranche senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt."])}
       ${rechnerPosWahl("nachkauf", r)}
       <div class="reiter">${reiter("art", "krypto", "Krypto (8 Stellen)", "krypto")}${reiter("art", "aktie", "Aktie (4 Stellen)", "krypto")}</div>
       ${waehrungWahl("data-nachkauf-wahl", "data-nachkauf", r)}
       <div class="zwei">${f("bestand", "Bestand (Stück)", "z. B. 0,005062", 1)}${f("einstand", `Ø Einstandskurs ${W}`, "z. B. 98.972,23")}</div>
       <div class="zwei">${f("kurs", `Kurs jetzt ${W}`, "z. B. 59.000")}<label>Stand vom<input type="date" data-nachkauf="kursDatum" value="${esc(r.kursDatum || "")}"></label></div>
-      <div class="reiter">${reiter("grundlage", "A", "A · Budget nachkaufen", "A")}${reiter("grundlage", "B", "B · Ziel-Einstand", "A")}</div>
-      <div class="zwei">${f("budget", `Nachkauf-Budget ${W} (A)`, "z. B. 500", 1)}${f("ziel", `Ziel-Einstandskurs ${W} (B)`, "z. B. 80.000")}</div>
+      <div class="reiter">${reiter("grundlage", "A", "A · Festes Budget", "A")}${reiter("grundlage", "B", "B · Ziel-Einstand", "A")}</div>
+      <div class="zwei">${f("budget", `Budget der Tranche ${W} (A)`, "z. B. 500", 1)}${f("ziel", `Ziel-Einstandskurs ${W} (B)`, "z. B. 80.000")}</div>
       <div class="zwei">${f("ausstieg", `Ziel-Ausstiegskurs ${W} (C)`, "optional")}${f("trigger", `Trigger-Kurs ${W} (D)`, "Einstand rausnehmen")}</div>
       <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-nachkauf-gebuehr ${r.gebuehrAn ? "checked" : ""} style="width:22px;height:22px">Gebühren berücksichtigen</label>
       ${r.gebuehrAn ? f("gebuehr", "Gebühr % je Order (wird als Standard gemerkt)", "z. B. 0,25") : ""}
       <label><span>Spanne der Exit-Tabelle: ±<b id="nk-spanne">${esc(r.spanne || "20")}</b> % um Break-even</span><input type="range" min="5" max="50" step="5" data-nachkauf="spanne" value="${esc(r.spanne || "20")}" style="width:100%"></label>
       ${f("stufen", "Eigene Kurslevels (optional, mit ; trennen)", "z. B. 70.000; 85.000; 100.000")}
       <div id="nachkauf-ergebnis">${nachkaufErgebnis()}</div>
-      <label>Name des Plans (optional)<input data-nachkauf="titel" value="${esc(r.titel || "")}" placeholder="z. B. Nachkauf bei Rücksetzer"></label>
+      <label>Name des Plans (optional)<input data-nachkauf="titel" value="${esc(r.titel || "")}" placeholder="z. B. Zweite Tranche bei Rücksetzer"></label>
       <button class="knopf haupt" type="button" data-plan-notiz="nachkauf">Als Notiz speichern (mit Chart)</button>
       <p class="klein">Keine Anlageberatung. Rechner dient ausschließlich der Information.</p>
     </section>`;
@@ -444,7 +444,7 @@ function posgrRechner() {
       <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-posgr-gebuehr ${r.gebuehrAn ? "checked" : ""} style="width:22px;height:22px">Gebühren berücksichtigen</label>
       ${r.gebuehrAn ? f("gebuehr", "Gebühr % je Order (wird als Standard gemerkt)", "z. B. 0,25") : ""}
       <div id="posgr-ergebnis">${posgrErgebnis()}</div>
-      <label>Name des Plans (optional)<input data-posgr="titel" value="${esc(r.titel || "")}" placeholder="z. B. Nachkauf bei Rücksetzer"></label>
+      <label>Name des Plans (optional)<input data-posgr="titel" value="${esc(r.titel || "")}" placeholder="z. B. Zweite Tranche bei Rücksetzer"></label>
       <button class="knopf haupt" type="button" data-plan-notiz="posgr">Als Notiz speichern (mit Chart)</button>
       <p class="klein">Keine Anlageberatung. Rechner dient ausschließlich der Information.</p>
     </section>`;
@@ -496,7 +496,7 @@ function gewinnRechner() {
       <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" data-gewinn-gebuehr ${r.gebuehrAn ? "checked" : ""} style="width:22px;height:22px">Gebühren berücksichtigen</label>
       ${r.gebuehrAn ? f("gebuehr", "Gebühr % je Order (wird als Standard gemerkt)", "z. B. 0,25") : ""}
       <div id="gewinn-ergebnis">${gewinnErgebnis()}</div>
-      <label>Name des Plans (optional)<input data-gewinn="titel" value="${esc(r.titel || "")}" placeholder="z. B. Nachkauf bei Rücksetzer"></label>
+      <label>Name des Plans (optional)<input data-gewinn="titel" value="${esc(r.titel || "")}" placeholder="z. B. Zweite Tranche bei Rücksetzer"></label>
       <button class="knopf haupt" type="button" data-plan-notiz="gewinn">Als Notiz speichern (mit Chart)</button>
       <p class="klein">Keine Anlageberatung. Rechner dient ausschließlich der Information.</p>
     </section>`;
@@ -579,7 +579,7 @@ for (const [kurz, ergebnis] of [["posgr", posgrErgebnis], ["gewinn", gewinnErgeb
 // Der Notiz-TEXT nennt nur Kurse und Prozente - Betraege und Stueckzahlen stehen im Ergebnis-Block, den "Betraege aus" verbirgt.
 const PLAN_RECHNER = {
   posgr: { name: "Positionsgröße", symbol: "⚖️", rechnen: (d) => positionRechnen(d), ergebnis: (d) => posgrErgebnis(d) },
-  nachkauf: { name: "Nachkauf", symbol: "📉", rechnen: (d) => nachkaufRechnen(d), ergebnis: (d) => nachkaufErgebnis(d) },
+  nachkauf: { name: "In Tranchen kaufen", titel: "In Tranchen kaufen", symbol: "📉", rechnen: (d) => nachkaufRechnen(d), ergebnis: (d) => nachkaufErgebnis(d) },
   gewinn: { name: "Gewinnmitnahme", symbol: "💰", rechnen: (d) => gewinnmitnahmeRechnen(d), ergebnis: (d) => gewinnErgebnis(d) },
 };
 
@@ -605,7 +605,7 @@ function markenChart(marken, bezug, zonen = [], kurse = [], titel = "Chart mit M
 function planAnzeige(plan) {
   const p = plan && PLAN_RECHNER[plan.typ];
   if (!p) return "";
-  try { return `<div class="plan-block"><p class="klein" style="margin:0 0 4px">${p.symbol} ${p.name}-Rechner</p>${p.ergebnis(plan.daten || {})}</div>`; } catch { return ""; }
+  try { return `<div class="plan-block"><p class="klein" style="margin:0 0 4px">${p.symbol} ${p.titel || p.name + "-Rechner"}</p>${p.ergebnis(plan.daten || {})}</div>`; } catch { return ""; }
 }
 
 /** Kurzer Notiztext: nur Kurse und Prozente. */

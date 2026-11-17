@@ -332,6 +332,8 @@ Object.assign(UEB.en, {
   "Name für den Empfänger": "Name for the recipient", "Passwort (mind. # Zeichen)": "Password (at least # characters)", "Passwort wiederholen": "Repeat password",
   "Enthalten: Wertpapiere, Buchungen und Cash dieses Depots. Nicht enthalten: Notizen, Original-Dokumente, Schlüssel, andere Depots. Das Passwort am besten auf einem anderen Weg weitergeben (z. B. persönlich).":
     "Included: securities, transactions and cash of this portfolio. Not included: notes, original documents, keys, other portfolios. Best pass on the password another way (e.g. in person).",
+  "✉️ Fehlercodes per E-Mail senden": "✉️ Send error codes by e-mail", "📤 Ganzes Protokoll teilen": "📤 Share full log",
+  "Öffnet deine Mail-App mit den Fehlercodes – du siehst alles vorher und entscheidest selbst, ob du sendest.": "Opens your mail app with the error codes – you see everything first and decide yourself whether to send.",
   "📤 Teilen": "📤 Share", "💾 Speichern": "💾 Save", "Geteiltes Depot": "Shared portfolio", "# Buchungen · # Wertpapiere": "# transactions · # securities",
   "Wohin?": "Where to?", "als neues Depot hinzufügen": "add as new portfolio", "Person (Familie/Haushalt)": "Person (family/household)", "z. B. Partner, Kind, Freund": "e.g. partner, child, friend",
   "beobachtet – zählt nicht mit": "observed – does not count", "mein Depot – zählt zum Vermögen": "my portfolio – counts towards net worth", "Depot übernehmen": "Take over portfolio",
@@ -425,6 +427,54 @@ Object.assign(UEB.en, {
   "Knock-out ca.": "Knock-out approx.", "Risiko bei deinem Einsatz": "Risk with your stake", "Gewinn bei Ziel": "Profit at target", "Chance : Risiko": "Reward : risk",
   "Einsatz für deinen Max.-Verlust": "Stake for your max. loss", "Kursverlauf im Chart (optional)": "Price history in chart (optional)", "Hebel-Chart mit Marken": "Leverage chart with marks",
   "Einstieg und Hebel eintragen.": "Enter entry and leverage.", "Einstieg #": "Entry #", "KO # (# %)": "KO # (# %)", "Stop # (# %)": "Stop # (# %)", "Ziel # (# %)": "Target # (# %)", "Produkt # %": "Product # %",
+  "Broker / Produkt": "Broker / product", "Kraken Futures (EU)": "Kraken Futures (EU)", "Hyperliquid": "Hyperliquid", "Eigene Werte": "Custom values",
+  "Knock-out-Zertifikat (Trade Republic, Scalable, Smartbroker …)": "Knock-out certificate (Trade Republic, Scalable, Smartbroker …)",
+  "Beim Zertifikat legt der Emittent die Knock-out-Schwelle fest – meist etwas vor dem Basispreis. Den genauen Wert findest du im Produktblatt; die Ordergebühr ist ein fester Euro-Betrag.":
+    "For a certificate the issuer sets the knock-out barrier – usually a little before the strike. The exact value is in the product sheet; the order fee is a fixed euro amount.",
+  "Vorgabe: Liquidation bei # % Restmarge, Gebühr # % je Seite. Den genauen Liquidationspreis zeigt Kraken Futures beim Eröffnen. Andere Werte: „Eigene Werte“ wählen.":
+    "Default: liquidation at # % remaining margin, fee # % per side. Kraken Futures shows the exact liquidation price when you open the position. Other values: choose “Custom values”.",
+  "Vorgabe: Liquidation bei # % Restmarge, Gebühr # % je Seite. Den genauen Liquidationspreis zeigt Hyperliquid beim Eröffnen. Andere Werte: „Eigene Werte“ wählen.":
+    "Default: liquidation at # % remaining margin, fee # % per side. Hyperliquid shows the exact liquidation price when you open the position. Other values: choose “Custom values”.",
+  "Benachrichtigungen brauchen Internet – in der App ist es aus (⚙️ → Datenschutz).": "Notifications need internet – it is switched off in the app (⚙️ → Privacy).",
+  "Grund:": "Reason:",
+  "⚙️ Android-Einstellungen öffnen": "⚙️ Open Android settings",
+  "⚠️ Die Hintergrund-Prüfung ist nicht eingeplant. Schalte Benachrichtigungen einmal aus und wieder an – kommt dann eine Meldung mit „Grund“, schick sie uns.": "⚠️ The background check is not scheduled. Switch notifications off and on again – if a message with “Reason” appears, please send it to us.",
+  "💡 Inspiration": "💡 Inspiration", "r/mauerstrassenwetten": "r/mauerstrassenwetten", "Claude (Anthropic)": "Claude (Anthropic)",
+  "(Reddit) – danke für Ideen, Diskussionen und die Erinnerung, dass zu jedem Depot auch Verluste und Risiko gehören.": "(Reddit) – thanks for ideas, discussions and the reminder that every portfolio comes with losses and risk.",
+  "– Inspirationsquelle und Coding-Helfer bei der Entwicklung.": "– source of inspiration and coding helper during development.",
+  "💡 Ab etwa # % braucht es schon # % Anstieg, um wieder bei null zu sein – du brauchst gerade # %. Manche lösen eine Position ab hier auf und eröffnen bei Bedarf eine neue, um den Verlust zu begrenzen. Realisierte Verluste lassen sich steuerlich mit Gewinnen verrechnen (Aktienverluste nur mit Aktiengewinnen). Ohne Gewähr, keine Anlageberatung.":
+    "💡 From about # % it already takes # % to get back to zero – you currently need # %. Some people close a position from here and open a new one if needed, to limit the loss. Realised losses can be offset against gains for tax purposes (in Germany, stock losses only against stock gains). No guarantee, not investment advice.",
+  "Fehlerprotokoll": "Error log", "🐞 Fehlerprotokoll": "🐞 Error log", "technische Fehler sammeln, auswerten und teilen – ohne Beträge": "collect, analyse and share technical errors – no amounts",
+  "Die App sammelt hier technische Fehler (Benachrichtigungen, Abstürze, Skript-Fehler, Fehlermeldungen).": "The app collects technical errors here (notifications, crashes, script errors, error messages).",
+  "Keine Beträge, Stückzahlen, Konten oder Schlüssel": "No amounts, quantities, accounts or keys",
+  "– Zahlen in Meldungen werden durch # ersetzt. Das Protokoll bleibt auf dem Handy, bis du es selbst teilst.": "– numbers in messages are replaced by #. The log stays on your phone until you share it yourself.",
+  "📤 Teilen": "📤 Share", "📋 Kopieren": "📋 Copy", "🗑️ Protokoll leeren": "🗑️ Clear log", "Protokoll geleert.": "Log cleared.", "Auswertung": "Analysis", "Teilen ging nicht.": "Sharing failed.",
+  "Keine Fehler aufgezeichnet. Wenn etwas schiefgeht (z. B. beim Aktualisieren), hier nachsehen.": "No errors recorded. If something goes wrong (e.g. when refreshing), look here.",
+  "# Einträge": "# entries",
+  "Internet ist in der App ausgeschaltet (⚙️ → Datenschutz) – dann gibt es keine Benachrichtigungen.": "Internet is switched off in the app (⚙️ → Privacy) – then there are no notifications.",
+  "Android verbietet der App Benachrichtigungen – Mehr → 🔔 Benachrichtigungen → „Android-Einstellungen öffnen“.": "Android blocks notifications for the app – More → 🔔 Notifications → “Open Android settings”.",
+  "Android-Schlüsselspeicher (Keystore) hat den Schlüssel abgelehnt – ab 0.58 wird er automatisch neu angelegt; tritt es weiter auf: an uns schicken.": "Android key store rejected the key – since 0.58 it is recreated automatically; if it keeps happening, send it to us.",
+  "Android hat die Hintergrund-Prüfung (JobScheduler) abgelehnt – Akku-Optimierung für die App prüfen.": "Android rejected the background check (JobScheduler) – check battery optimisation for the app.",
+  "Die Hintergrund-Prüfung ist nicht eingeplant.": "The background check is not scheduled.",
+  "Die Liste für den Wächter war fehlerhaft (JSON) – bitte an uns schicken.": "The list for the background check was faulty (JSON) – please send it to us.",
+  "Datenquelle nicht erreichbar (Netz, Yahoo/Onvista) – meist vorübergehend.": "Data source not reachable (network, Yahoo/Onvista) – usually temporary.",
+  "Zu wenig Arbeitsspeicher – sehr große Daten oder viele Screenshots.": "Not enough memory – very large data or many screenshots.",
+  "Der App fehlt eine Android-Berechtigung – das ist ein Fehler der App (z. B. ACCESS_NETWORK_STATE, behoben in #). Bitte Fehlercode an uns schicken.": "The app is missing an Android permission – this is a bug in the app (e.g. ACCESS_NETWORK_STATE, fixed in #). Please send us the error code.",
+  "Steuertermin": "Tax date", "🧾 Steuertermine (ohne Gewähr)": "🧾 Tax dates (Germany, no guarantee)",
+  "Vorabpauschale für ETFs und Fonds": "Advance lump sum tax on ETFs and funds (Germany)", "Abgabefrist Steuererklärung (Vorjahr)": "Tax return deadline (previous year, Germany)",
+  "Freistellungsauftrag prüfen": "Check your tax exemption order (Germany)", "Verlustbescheinigung beantragen": "Request loss certificate (Germany)",
+  "Für thesaurierende ETFs zieht die Bank Anfang Januar ggf. Steuer ab – etwas Geld auf dem Verrechnungskonto lassen. Ohne Gewähr.": "For accumulating ETFs the bank may deduct tax in early January – keep some cash in the settlement account. No guarantee.",
+  "Gilt, wenn du abgeben musst; mit Steuerberater später. Fällt die Frist aufs Wochenende, gilt der nächste Werktag. Ohne Gewähr.": "Applies if you have to file; later with a tax advisor. If the deadline falls on a weekend, the next working day applies. No guarantee.",
+  "# € je Person (# € bei Zusammenveranlagung) – fürs neue Jahr sinnvoll auf deine Banken verteilen. Ohne Gewähr.": "# € per person (# € for joint assessment) – split it sensibly across your banks for the new year. No guarantee.",
+  "Bis # bei der Bank beantragen, wenn du Verluste mit Gewinnen bei einer anderen Bank verrechnen willst. Ohne Gewähr.": "Request it from your bank by 15 Dec if you want to offset losses against gains at another bank. No guarantee.",
+  "💡 Ab hier braucht es mindestens # % Anstieg. Realisierte Verluste lassen sich steuerlich mit Gewinnen verrechnen (Aktienverluste nur mit Aktiengewinnen) – manche entscheiden sich deshalb, einen Verlust zu realisieren und das Geld anders einzusetzen. Ohne Gewähr, keine Anlageberatung.":
+    "💡 From here it takes at least # % to recover. Realised losses can be offset against gains for tax purposes (in Germany, stock losses only against stock gains) – which is why some people choose to realise a loss and put the money to other use. No guarantee, not investment advice.",
+  "Wartungsmarge": "Maintenance margin", "Wartungsmarge %": "Maintenance margin %", "Gebühr % je Seite": "Fee % per side",
+  "= Rest, den die Börse behält – deshalb liegt der Knock-out bei #× nicht # %, sondern etwa #–# % entfernt.": "= the part the exchange keeps – that is why at #× the knock-out is not # % away, but roughly #–# %.",
+  "Leer = Vorgabe # % / # %. Die genauen Werte stehen bei deiner Börse (Margin- und Gebührenseite).": "Empty = default # % / # %. The exact values are on your exchange's margin and fee page.",
+  "Knock-out nach Wartungsmarge # % und Gebühr # % je Seite: # % statt # % (reine Rechnung #/Hebel). Finanzierungskosten, Aufgeld und Spread sind nicht enthalten – den echten Liquidations- bzw. Knock-out-Preis zeigt deine Börse oder der Emittent. Keine Anlageberatung.":
+    "Knock-out after maintenance margin # % and fee # % per side: # % instead of # % (plain #/leverage). Financing costs, premium and spread are not included – your exchange or the issuer shows the real liquidation / knock-out price. Not investment advice.",
+  "Bei diesem Hebel fressen Wartungsmarge und Gebühren den ganzen Einsatz – die Position wäre sofort weg.": "At this leverage, maintenance margin and fees eat the whole stake – the position would be gone immediately.",
   "Vereinfacht: KO ≈ Einstieg × (# − #/Hebel), ohne Aufgeld, Finanzierungskosten und Spread. Den echten KO zeigt der Emittent. Keine Anlageberatung.":
     "Simplified: KO ≈ entry × (# − #/leverage), without premium, financing costs and spread. The issuer shows the real KO. Not investment advice.",
   "Vereinfacht: KO ≈ Einstieg × (# + #/Hebel), ohne Aufgeld, Finanzierungskosten und Spread. Den echten KO zeigt der Emittent. Keine Anlageberatung.":
@@ -717,3 +767,35 @@ Object.assign(UEB.en, {
   UEB_MUSTER.en.push([/^Umgerechnet \(1 € = (.+?) \$\): (.+)$/, (m, k, rest) => `Converted (1 € = ${k} $): ` + rest.split(" · ").map((t) => { const [n, v] = t.split(" ≈ "); return (W[n] || n) + " ≈ " + v; }).join(" · ")]); }
 // Dollar-Zwillinge: jeder Text mit "€" gilt genauso mit "$" (Rechner in Dollar)
 for (const [k, v] of Object.entries(UEB.en)) if (k.includes("€") && v != null && !k.includes("$")) { const k2 = k.replace(/€/g, "$"); if (UEB.en[k2] == null) UEB.en[k2] = String(v).replace(/€/g, "$"); }
+
+// 0.55: Break-even, Rechenbeispiel, Suche
+Object.assign(UEB.en, {
+  "Bis Break-even": "To break-even", "Puffer bis Break-even": "Buffer to break-even", "nach Gebühren": "after fees",
+  "Break-even # %": "break-even # %", "Puffer # %": "buffer # %",
+  "🧮 Was es braucht, um wieder bei null zu sein": "🧮 What it takes to get back to zero", "🧮 Was ein Rücksetzer für dich bedeutet": "🧮 What a pullback means for you",
+  "Du liegst bei": "You are at", ". Damit die Position nach Gebühren wieder bei null ist, muss der Kurs um": ". For the position to be back at zero after fees, the price has to rise by",
+  "steigen.": ".", "steigen – von # € auf # €.": "– from # € to # €.",
+  ". Fällt der Kurs um # %, liegst du noch bei": ". If the price falls by # %, you are still at", "(# €). Bis zum Break-even darf er um": "(# €). It may fall by",
+  "fallen.": "before reaching break-even.", "fallen – bis # €.": "before reaching break-even – down to # €.",
+  "ℹ️ Verlust und nötiger Anstieg": "ℹ️ Loss and required rise", "Verlust": "Loss", "nötiger Anstieg": "required rise",
+  "Je tiefer eine Position im Minus ist, desto größer muss der Anstieg sein, um wieder bei null zu sein. Ob Halten, Nachkaufen oder Verkaufen sinnvoll ist, entscheidest du – das ist nur Rechnung, keine Anlageberatung.":
+    "The deeper a position is in the red, the larger the rise needed to get back to zero. Whether holding, buying more or selling makes sense is your decision – this is only arithmetic, not investment advice.",
+  "Kaufgebühren sind im Einstand enthalten. Eine Verkaufsgebühr lässt sich in den Rechnern als Standard hinterlegen.": "Purchase fees are included in the cost basis. A selling fee can be set as a default in the calculators.",
+  "Mit # % Verkaufsgebühr (Standard aus den Rechnern) und den Kaufgebühren im Einstand.": "With # % selling fee (default from the calculators) and the purchase fees in the cost basis.",
+  "Xetra · Euro": "Xetra · euro", "Frankfurt · Euro": "Frankfurt · euro", "ETF / Fonds": "ETF / fund", "ETC / Zertifikat": "ETC / certificate", "Edelmetall": "Precious metal", "Devise": "Currency",
+});
+
+// 0.56: "In Tranchen kaufen" (vorher Nachkauf-Rechner)
+Object.assign(UEB.en, {
+  "📉 In Tranchen kaufen – für einen entspannten Durchschnittspreis": "📉 Buy in tranches – for a relaxed average price", "📉 In Tranchen kaufen": "📉 Buy in tranches",
+  "In Tranchen kaufen": "Buy in tranches", "📉 In Tranchen kaufen-Rechner": "📉 Buy in tranches",
+  "⚠ Tranche überproportional groß – Sunk-Cost-Risiko (Budget mehr als #× der aktuellen Position).": "⚠ Tranche disproportionately large – sunk-cost risk (budget more than #× the current position).",
+  "Der Kurs liegt über deinem Einstand – eine weitere Tranche hebt den Einstand, senken geht nicht.": "The price is above your cost basis – another tranche raises it, lowering is not possible.",
+  "Das Ziel liegt nicht unter deinem Einstand – keine weitere Tranche nötig.": "The target is not below your cost basis – no further tranche needed.",
+  "nach Tranche A": "after tranche A", "nach Tranche B": "after tranche B", "ohne weitere Tranche": "without another tranche",
+  "A · Tranche mit festem Budget": "A · Tranche with a fixed budget", "A · Festes Budget": "A · Fixed budget", "Budget der Tranche # (A)": "Tranche budget # (A)",
+  "Budget der Tranche € (A)": "Tranche budget € (A)", "Budget der Tranche $ (A)": "Tranche budget $ (A)",
+  "Jede weitere Tranche senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt.": "Every further tranche lowers the cost basis but raises the stake – the loss grows if the price keeps falling.",
+  "z. B. Zweite Tranche bei Rücksetzer": "e.g. second tranche on a pullback",
+  "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.": "The four calculators: 🧮 leverage · ⚖️ position size · 📉 buy in tranches · 💰 take profit. Every plan can be saved as a note.",
+});

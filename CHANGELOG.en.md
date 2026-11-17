@@ -2,6 +2,35 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.60 – 17 Nov 2026
+- **Notifications work again:** the new error log showed the cause – Android requires the permission "view network state" (ACCESS_NETWORK_STATE) for the background check "only with internet". It was missing; now it is declared (normal permission, no prompt, only reads "network yes/no").
+- The error log recognises missing permissions as its own error code (DK-09).
+- Position list: percentage, amount and "break-even" are cleanly separated again (they ran together with large fonts).
+
+## 0.59 – 17 Nov 2026
+- **Note from −35 %:** from about −35 % it takes more than +54 % to get back to zero. The break-even card then explains that some people close the position and reopen if needed to limit the loss – with a note on offsetting losses. No recommendation.
+- **Credits: new section "💡 Inspiration"** – thanks to r/mauerstrassenwetten and Claude (Anthropic) as source of inspiration and coding helper.
+- **🐞 Error log** (More → Error log): collects technical errors – notifications, crashes, script errors, error messages –, groups identical errors, shows error codes (DK-01 … DK-99) with known causes and sends them by e-mail on request – you see the mail first. Runs fully locally, no amounts (numbers are replaced by #), stays on your phone until you share it.
+- **Notifications after "Refresh":** the background check was re-registered with Android on every save – Android limits that. Now only when something changes; a rejection by Android is detected and logged.
+- **Desktop version (Docker):** now shows the same version number as the app automatically; step-by-step guide for Windows and macOS.
+
+## 0.58 – 17 Nov 2026
+- **German tax dates in the calendar** (no guarantee, can be switched off in settings): advance lump sum in early January, tax return deadline 31 July, check tax exemption order 1 Dec, request loss certificate by 15 Dec.
+- **Note for large losses:** from −50 % the break-even card explains that realised losses can be offset against gains for tax purposes – calculation and note only, no recommendation.
+- **Notifications:** if setup fails, the app now shows the reason. A damaged key in Android's key store is recreated automatically. New button "Open Android settings" if the phone blocks notifications, and a note if the background check is not scheduled.
+
+## 0.57 – 17 Nov 2026
+- **Leverage calculator shows the real knock-out:** at 10× the liquidation is not 10 % away but closer because of maintenance margin and fees (about 7.6–7.7 % on Kraken Futures). The calculator deducts both and shows "−7.59 % instead of −10 %". Profit and loss at stop and target are now after fees.
+- **Choose your broker:** Kraken Futures (EU), Hyperliquid, knock-out certificate (Trade Republic, Scalable, Smartbroker …) or custom values for maintenance margin and fee. Warning if a leverage would eat the whole stake right away.
+
+## 0.56 – 17 Nov 2026
+- The average-down calculator is now called **"Buy in tranches"** – for a relaxed average price. All texts, buttons and explanations adjusted.
+
+## 0.55 – 17 Nov 2026
+- **Break-even always visible:** every position in the list shows "to break-even +X %" (in the red) or "buffer −X %" (in profit), after fees. Inside the position: its own figure plus a worked example – what it takes to get back to zero (with target price), or what a 20 % pullback means for you – and the table "loss and required rise" (−50 % needs +100 %). Only arithmetic, no recommendation.
+- **Better search:** ISIN and WKN are now resolved via Onvista and end up at the Xetra or Frankfurt listing in euros – previously often London/Milan in dollars or pounds. Xetra-Gold, iShares Core DAX, ETCs (via Stuttgart) and stocks by WKN are now found. The watchlist results show the euro listing first; wrong hits by WKN on foreign exchanges are excluded. Tested with 53 real ETFs, ETCs and stocks.
+- **Crypto without a euro pair** (e.g. NEAR, HYPE, SUI) now gets a price via the dollar listing, converted to euros.
+
 ## 0.54 – 16 Nov 2026
 - English: percentages in the calculator charts without a stray dot ("+100 %" instead of "+100. %").
 - Store images and store texts brought up to date.

@@ -80,16 +80,15 @@ function watchFormular() {
     ${!neu ? notizenZu("w:" + w.id) : ""}`;
 }
 
+const ONVISTA_ART = { STOCK: "Aktie", FUND: "ETF / Fonds", DERIVATIVE: "ETC / Zertifikat", BOND: "Anleihe", INDEX: "Index", CURRENCY: "Devise", PRECIOUS_METAL: "Edelmetall" };
 /** WKN/ISIN/Ticker in einen Yahoo-Ticker uebersetzen (beim Aktualisieren). */
 async function watchTicker(w) {
   const k = String(w.kennung || "").trim().toUpperCase();
   if (!k) return null;                                   // ohne Kennung: Ticker im Formular waehlen
-  if (w.art === "Krypto") return /-/.test(k) ? k : `${krakenName(k).code}-EUR`;
-  if (/^[A-Z]{2}[A-Z0-9]{9}\d$/.test(k)) return await tickerSuchen({ isin: k, art: w.art });      // ISIN
-  // WKN: Yahoo kennt sie meist nicht. NICHT ueber den Namen raten - "Siemens"
-  // ergab im Test Siemens Energy (ENR.DE) statt Siemens AG. Ohne Treffer bleibt
-  // der Ticker leer und die Zeile sagt "Ticker waehlen".
-  if (/^[A-Z0-9]{6}$/.test(k) && /\d/.test(k)) return await sucheErster(k);
+  if (w.art === "Krypto") return /-/.test(k) ? k : await kryptoTicker(krakenName(k).code);
+  // ISIN und WKN (0.55): ueber Onvista zum deutschen Kuerzel (Xetra/Frankfurt in Euro), sonst Yahoo per ISIN.
+  // NICHT ueber den Namen raten - "Siemens" ergab im Test Siemens Energy (ENR.DE) statt Siemens AG.
+  if (istIsin(k) || istWkn(k)) return (await tickerFuerKennung(k))?.ticker || null;
   return k;                                                                                         // schon ein Ticker
 }
 async function sucheErster(begriff) {
@@ -107,13 +106,23 @@ async function tickerTreffer() {
   const begriff = (f.kennung.value || f.name.value || "").trim();
   if (!begriff) return meldung("Erst Name, ISIN oder WKN eintragen.");
   meldung("Suche …");
-  const j = await kursHolen(begriff, "suche");
-  if (!j) return meldung("Keine Verbindung zu Yahoo.");
+  // 0.55: erst Onvista (findet ISIN, WKN und deutsche Namen; liefert das Xetra-Kuerzel), dann Yahoo.
+  // Eine WKN geht nie direkt an Yahoo (Fehltreffer an der Taiwan-Boerse) - Yahoo bekommt dann den Namen von Onvista.
+  const K = begriff.toUpperCase(), kennung = istIsin(K) || istWkn(K);
+  const ov = (await onvistaTreffer(kennung ? K : begriff)).slice(0, 3), vorne = [];
+  for (const e of ov.filter((e) => e.symbol && /^[A-Z0-9]{1,8}$/.test(e.symbol))) {
+    for (const t of [e.symbol + ".DE", e.symbol + ".F"]) if (await kursInEuro(t)) {
+      vorne.push({ symbol: t, name: e.name || t, boerse: t.endsWith(".DE") ? "Xetra · Euro" : "Frankfurt · Euro", art: ONVISTA_ART[e.entityType] || "" }); break; }
+  }
+  const frage = istWkn(K) ? (ov[0]?.name || "") : kennung ? K : begriff;
+  const j = frage ? await kursHolen(frage, "suche") : { quotes: [] };
+  if (!j && !vorne.length) return meldung("Keine Verbindung zu Yahoo.");
   // Eingaben behalten: erst ins Objekt schreiben, dann neu zeichnen
   const w = ui.watch === "neu" ? (ui.watchEntwurf ??= {}) : S.watchlist.find((x) => x.id === ui.watch);
   for (const k of ["name", "kennung", "art", "notiz"]) w[k] = f[k].value;
-  ui.treffer = (j.quotes || []).filter((q) => q.symbol).slice(0, 8).map((q) => ({
+  const yahoo = (j?.quotes || []).filter((q) => q.symbol && !/\.TWO$/.test(q.symbol)).map((q) => ({
     symbol: q.symbol, name: q.longname || q.shortname || q.symbol, boerse: q.exchDisp || q.exchange || "", art: q.typeDisp || "" }));
+  ui.treffer = [...vorne, ...yahoo].filter((x, n, l) => l.findIndex((y) => y.symbol === x.symbol) === n).slice(0, 8);
   zeichnen();
 }
 
@@ -128,7 +137,7 @@ function notizenSeite() {
     <h2>Notizen <span>${(S.notizen || []).length}</span></h2>
     <section class="karte formular"><input id="notiz-suche" type="search" placeholder="Suchen …" value="${esc(ui.notizSuche || "")}">
       ${legende(["<b>+</b> unten rechts legt eine neue Notiz an.", "<b>🧮</b> vor dem Titel = Notiz mit gespeichertem Rechner-Plan (Chart und Zahlen) – antippen und „Im Rechner öffnen“.",
-        "Notizen aus einer Position oder der Watchlist stehen auch dort.", "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 Nachkauf · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.",
+        "Notizen aus einer Position oder der Watchlist stehen auch dort.", "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.",
         "Kurs-Alarme stellst du in der Watchlist ein: Wert antippen → Kaufmarke und Verkaufsmarke."], "ℹ️ Legende")}</section>
     ${hebelRechner()}
     ${posgrRechner()}
@@ -1046,6 +1055,7 @@ function mehrSeite() {
       ${k("ki", "✨", "KI-Fragen zum Portfolio", EIN().ki ? "Chat mit Rückfragen, Earnings, Beispiele · nur Name, Einstieg, Long/Short an deinen KI-Anbieter" : "aus · hier einschalten")}
       ${k("einstellungen", "⚙️", "Einstellungen", "Sprache, Design hell/dunkel, Verstecken, Kalender, Startseite")}
       ${k("hinweise", "🔔", "Benachrichtigungen", EIN().hinweise?.an ? "an · Kurse, Earnings, Schlagzeilen" : "aus · nur mit Internet")}
+      ${k("fehlerprotokoll", "🐞", "Fehlerprotokoll", "technische Fehler sammeln, auswerten und teilen – ohne Beträge")}
       ${k("sicherheit", "🔒", "Sicherheit &amp; Sicherung", "App-Sperre, Bildschirmschutz, verschlüsselte Sicherung")}
       ${k("schluessel", "🔑", "API-Schlüssel", "KI (OpenRouter, Claude, ChatGPT, Gemini) und weitere Dienste – eigene Schlüssel eintragen")}
       ${k("datenschutz", "🛡️", "Datenschutz", "was die App wann sendet")}
@@ -1409,7 +1419,7 @@ document.addEventListener("submit", (e) => {
 // Jeder stellt die App fuer sich ein. Gespeichert in S.einstellungen (mit PIN verschluesselt);
 // nur das Design zusaetzlich im Browser-Speicher, damit schon das PIN-Feld passt.
 const KAL_ARTEN = { Dividende: "💶 Dividenden (erhalten, Zahltag)", "Ex-Dividende": "✂️ Ex-Tage mit Berechtigung", Earnings: "📊 Earnings (Quartalszahlen)",
-                    "Haltefrist endet": "⏳ Haltefrist Krypto", Kauf: "🛒 Käufe", Verkauf: "🏷️ Verkäufe", eigen: "📌 eigene Termine" };
+                    "Haltefrist endet": "⏳ Haltefrist Krypto", Kauf: "🛒 Käufe", Verkauf: "🏷️ Verkäufe", Steuertermin: "🧾 Steuertermine (ohne Gewähr)", eigen: "📌 eigene Termine" };
 
 function einstellungenSeite() {
   const e = S.einstellungen ||= {};
@@ -1477,16 +1487,40 @@ document.addEventListener("change", (ev) => {
 // Marken (Einstieg, Knock-out, Stop, Ziel) als Linien, Hebel per Schieberegler, Risiko mit/ohne
 // Stop und Positionsgroesse fuer einen festen Maximalverlust. Speicherbar als Notiz mit Chart.
 // Vereinfacht (ohne Aufgeld, Finanzierungskosten, Spread) - der echte KO des Emittenten weicht ab.
+// 0.57: Vorgaben je Broker (Vorgabe 17.11.: "auf unsere aktiven Broker anwenden, auswaehlbar").
+//  Kraken Futures EU-Privatkunde: laut Kraken-API (marginSchedules "europa" retail) Anfangsmarge 10 % (max. 10x), Wartungsmarge 5 %;
+//   Kraken zeigt bei 10x einen Liquidationspreis um 7,7 % -> wirksame Schwelle ca. 2,5 % (halbe Wartungsmarge). Taker-Gebuehr 0,05 %.
+//  Hyperliquid: Wartungsmarge = halbe Anfangsmarge bei Hoechsthebel (bei 20x: 2,5 %), Taker 0,045 %.
+//  Knock-out-Zertifikat (Trade Republic, Scalable, Smartbroker ...): keine Marge, Schwelle legt der Emittent fest; Ordergebuehr fest in Euro.
+const HEBEL_BROKER = [
+  { key: "kraken", name: "Kraken Futures (EU)", wartung: 2.5, gebuehr: 0.05 },
+  { key: "hyperliquid", name: "Hyperliquid", wartung: 2.5, gebuehr: 0.045 },
+  { key: "zertifikat", name: "Knock-out-Zertifikat (Trade Republic, Scalable, Smartbroker …)", wartung: 0, gebuehr: 0 },
+  { key: "eigen", name: "Eigene Werte", wartung: null, gebuehr: null },
+];
+const hebelBroker = (r) => HEBEL_BROKER.find((b) => b.key === (r && r.broker)) || HEBEL_BROKER[0];
+const HEBEL_WARTUNG = 2.5, HEBEL_GEBUEHR = 0.05;   // Vorgaben in % fuer "Eigene Werte" mit leeren Feldern
 function hebelRechnen(r) {
   const E = zahl(r.einstieg), H = zahl(r.hebel), S = zahl(r.stop), Z = zahl(r.ziel), einsatz = zahl(r.einsatz), maxV = zahl(r.maxverlust);
   if (!(E > 0) || !(H >= 1)) return null;
   const long = r.richtung !== "short", vz = long ? 1 : -1;
-  const ko = long ? E * (1 - 1 / H) : E * (1 + 1 / H);
-  const wirkung = (x) => Math.max(-100, vz * H * (x / E - 1) * 100);     // Produkt in % bei Basiswert x
+  // 0.57: Knock-out/Liquidation NACH Wartungsmarge und Gebuehren (Vorgabe 17.11.: 10x ist nicht 10 %, sondern ca. 7,7 %).
+  // Liquidation, wenn Einsatz - Verlust - Gebuehr Eroeffnen - Gebuehr Schliessen = Wartungsmarge (alles bezogen auf das Volumen):
+  //   long:  1/H - d - f - f(1-d) = m(1-d)  ->  d = (1/H - 2f - m) / (1 - f - m)
+  //   short: 1/H - d - f - f(1+d) = m(1+d)  ->  d = (1/H - 2f - m) / (1 + f + m)
+  const leer = (w) => w == null || String(w).trim() === "";
+  const br = hebelBroker(r), eigen = br.key === "eigen";
+  const m = Math.min(50, Math.max(0, !eigen ? br.wartung : leer(r.wartung) ? HEBEL_WARTUNG : zahl(r.wartung) || 0)) / 100;
+  const f = Math.min(5, Math.max(0, !eigen ? br.gebuehr : leer(r.gebuehr) ? HEBEL_GEBUEHR : zahl(r.gebuehr) || 0)) / 100;
+  const d = Math.max(0, (1 / H - 2 * f - m) / (long ? 1 - f - m : 1 + f + m));
+  const ko = long ? E * (1 - d) : E * (1 + d);
+  const hinterKo = (x) => (long ? x <= ko : x >= ko);
+  // Produkt in % vom Einsatz bei Basiswert x, nach Gebuehren (Eroeffnen + Schliessen); am/hinter dem KO ist alles weg
+  const wirkung = (x) => hinterKo(x) ? -100 : Math.max(-100, H * (vz * (x / E - 1) - f - f * x / E) * 100);
   const v = S > 0 ? wirkung(S) : null, g = Z > 0 ? wirkung(Z) : null;
   const ohneStop = r.ohneStop || !(S > 0);
   const risikoPct = ohneStop ? 100 : Math.abs(v);                         // ohne Stop: ganzer Einsatz kann weg (Knock-out)
-  return { E, H, S, Z, long, ko, koAbstand: (ko / E - 1) * 100, stopAbstand: S > 0 ? (S / E - 1) * 100 : null,
+  return { E, H, S, Z, long, ko, broker: br.key, wartung: m * 100, gebuehr: f * 100, koOhne: (long ? -100 : 100) / H, koSofort: d <= 0, koAbstand: (ko / E - 1) * 100, stopAbstand: S > 0 ? (S / E - 1) * 100 : null,
            zielAbstand: Z > 0 ? (Z / E - 1) * 100 : null, verlust: v, gewinn: g, crv: g > 0 && risikoPct > 0 ? g / risikoPct : null,
            ohneStop, risikoPct, risikoEur: einsatz ? einsatz * risikoPct / 100 : null,
            verlustEur: einsatz && v != null ? einsatz * v / 100 : null, gewinnEur: einsatz && g != null ? einsatz * g / 100 : null,
@@ -1539,6 +1573,7 @@ function hebelZahlen(x) {
       ${x.gewinnEur != null ? `<div><small>Gewinn bei Ziel</small><b class="plus-t">${eur(x.gewinnEur)}</b></div>` : ""}
       ${x.einsatzFuerMax != null ? `<div><small>Einsatz für deinen Max.-Verlust</small><b>${eur(x.einsatzFuerMax)}</b></div>` : ""}
     </div>
+    ${x.koSofort ? `<p class="warn-t klein">Bei diesem Hebel fressen Wartungsmarge und Gebühren den ganzen Einsatz – die Position wäre sofort weg.</p>` : ""}
     ${x.stopHinterKo ? `<p class="warn-t klein">Der Stop liegt hinter dem Knock-out – vorher wäre schon alles weg.</p>` : ""}`;
 }
 
@@ -1546,7 +1581,7 @@ function hebelErgebnis() {
   const r = ui.rechner || {}, x = hebelRechnen(r);
   if (!x) return `<p class="klein" style="margin:8px 0 0">Einstieg und Hebel eintragen.</p>`;
   return `${hebelChart(r)}${hebelZahlen(x)}
-    <p class="klein">Vereinfacht: KO ≈ Einstieg × (1 ${x.long ? "−" : "+"} 1/Hebel), ohne Aufgeld, Finanzierungskosten und Spread. Den echten KO zeigt der Emittent. Keine Anlageberatung.</p>`;
+    <p class="klein">Knock-out nach Wartungsmarge ${fPct.format(x.wartung)} % und Gebühr ${fPct.format(x.gebuehr)} % je Seite: ${pct(x.koAbstand)} statt ${pct(x.koOhne)} (reine Rechnung 1/Hebel). Finanzierungskosten, Aufgeld und Spread sind nicht enthalten – den echten Liquidations- bzw. Knock-out-Preis zeigt deine Börse oder der Emittent. Keine Anlageberatung.</p>`;
 }
 
 function hebelRechner() {
@@ -1559,6 +1594,7 @@ function hebelRechner() {
       <div style="display:flex;justify-content:space-between;align-items:center"><b>🧮 Hebel-Rechner</b>
         <button class="knopf klein" data-rechner-auf="0">schließen</button></div>
       ${legende(["<b>Hebel</b> 10 heißt: bewegt sich der Basiswert 1 %, bewegt sich dein Produkt 10 %.", "<b>Knock-out</b> = bei diesem Kurs ist der Einsatz weg.",
+        "<b>Wartungsmarge</b> = Rest, den die Börse behält – deshalb liegt der Knock-out bei 10× nicht 10 %, sondern etwa 7,5–8 % entfernt.",
         "<b>Stop</b> = dein eigener Ausstieg vorher · <b>Ziel</b> = dort willst du Gewinn mitnehmen.", "<b>Chance : Risiko</b> 2 : 1 heißt: doppelt so viel Gewinn am Ziel wie Verlust am Stop.",
         "Im Chart: grün = Ziel, gestrichelt = Stop, rot = Knock-out."])}
       <label>Name<input data-rechner="titel" value="${esc(r.titel || "")}" placeholder="z. B. Hyperliquid Doppeltop short"></label>
@@ -1571,6 +1607,11 @@ function hebelRechner() {
       <div class="zwei">${f("stop", "Stop", "optional")}${f("ziel", "Ziel", "optional")}</div>
       <div class="reiter"><button type="button" data-rechner-stop="mit" class="${r.ohneStop ? "" : "aktiv"}">mit Stop</button>
         <button type="button" data-rechner-stop="ohne" class="${r.ohneStop ? "aktiv" : ""}">ohne Stop (ganzer Einsatz)</button></div>
+      <label>Broker / Produkt<select data-rechner-broker>${HEBEL_BROKER.map((b) => `<option value="${b.key}" ${hebelBroker(r).key === b.key ? "selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
+      ${hebelBroker(r).key === "eigen" ? `<div class="zwei">${f("wartung", "Wartungsmarge %", fZahl.format(HEBEL_WARTUNG))}${f("gebuehr", "Gebühr % je Seite", fZahl.format(HEBEL_GEBUEHR))}</div>
+      <p class="klein" style="margin:0">Leer = Vorgabe ${fZahl.format(HEBEL_WARTUNG)} % / ${fZahl.format(HEBEL_GEBUEHR)} %. Die genauen Werte stehen bei deiner Börse (Margin- und Gebührenseite).</p>`
+        : hebelBroker(r).key === "zertifikat" ? `<p class="klein" style="margin:0">Beim Zertifikat legt der Emittent die Knock-out-Schwelle fest – meist etwas vor dem Basispreis. Den genauen Wert findest du im Produktblatt; die Ordergebühr ist ein fester Euro-Betrag.</p>`
+        : `<p class="klein" style="margin:0">Vorgabe: Liquidation bei ${fZahl.format(hebelBroker(r).wartung)} % Restmarge, Gebühr ${fZahl.format(hebelBroker(r).gebuehr)} % je Seite. Den genauen Liquidationspreis zeigt ${esc(hebelBroker(r).name.replace(/ \(.*\)$/, ""))} beim Eröffnen. Andere Werte: „Eigene Werte“ wählen.</p>`}
       <div class="zwei">${f("einsatz", "Einsatz € (optional)", "z. B. 500")}${f("maxverlust", "Max. Verlust € (optional)", "z. B. 50")}</div>
       <div id="rechner-ergebnis">${hebelErgebnis()}</div>
       <button class="knopf haupt" data-rechner-notiz="1">Als Notiz speichern (mit Chart)</button>
@@ -1588,6 +1629,7 @@ document.addEventListener("input", (ev) => {
   document.getElementById("rechner-ergebnis").innerHTML = hebelErgebnis();     // nur Ergebnis neu, Eingabe behaelt den Fokus
 });
 document.addEventListener("change", (ev) => {
+  if (ev.target.dataset?.rechnerBroker != null) { (ui.rechner ||= {}).broker = ev.target.value; return zeichnen(); }
   if (ev.target.dataset?.rechnerBasis == null) return;
   (ui.rechner ||= {}).basis = ev.target.value; document.getElementById("rechner-ergebnis").innerHTML = hebelErgebnis();
 });
@@ -1744,7 +1786,11 @@ function wachterAbgleich() {
     texte: { kanal: tr("Depot-Kompass – Hinweise"), earningsHeute: tr("Earnings heute"), earningsMorgen: tr("Earnings morgen"), seitGestern: tr("seit dem letzten Schlusskurs"),
       eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen") },
     werte: wachterWerte() }));
-  if (!ok) meldung("Benachrichtigungen konnten nicht eingerichtet werden.");
+  if (!ok) {
+    let grund = ""; try { grund = APP.wachterFehler ? APP.wachterFehler() : ""; } catch { /* alte Fassung */ }
+    meldung(grund === "netzAus" ? "Benachrichtigungen brauchen Internet – in der App ist es aus (⚙️ → Datenschutz)."
+      : "Benachrichtigungen konnten nicht eingerichtet werden." + (grund ? " Grund: " + grund : ""));
+  }
 }
 let wachterTimer = null;
 function wachterSpaeter() { if (!hinweise().an) return; clearTimeout(wachterTimer); wachterTimer = setTimeout(wachterAbgleich, 3000); }
@@ -1778,6 +1824,8 @@ function hinweiseSeite() {
     </section>
     ${h.an && !aus ? `<section class="karte">
       <p class="klein" style="margin-top:0">${st.erlaubt ? "✓ Vom Handy erlaubt" : "⚠️ Vom Handy nicht erlaubt – bitte in den Android-Einstellungen der App Benachrichtigungen erlauben."}</p>
+      ${!st.erlaubt ? `<button class="knopf" data-los="hinweis-einstellungen" style="width:100%;margin-bottom:8px">⚙️ Android-Einstellungen öffnen</button>` : ""}
+      ${h.an && !aus && !st.geplant ? `<p class="klein warn-t" style="margin-top:0">⚠️ Die Hintergrund-Prüfung ist nicht eingeplant. Schalte Benachrichtigungen einmal aus und wieder an – kommt dann eine Meldung mit „Grund“, schick sie uns.</p>` : ""}
       <p class="klein">${st.geplant ? "✓ Prüfung ist eingeplant" : "Prüfung noch nicht eingeplant"}</p>
       <button class="knopf" data-los="hinweis-test" style="width:100%">🔔 Test-Benachrichtigung</button></section>` : ""}`;
 }
@@ -1797,6 +1845,7 @@ document.addEventListener("change", (e) => {
   zeichnen();
 });
 document.addEventListener("click", (ev) => {
+  if (ev.target.closest('[data-los="hinweis-einstellungen"]')) { if (APP && APP.benachrichtigungEinstellungen) APP.benachrichtigungEinstellungen(); else meldung("Nur in der App."); return; }
   if (!ev.target.closest('[data-los="hinweis-test"]')) return;
   if (!APP || !APP.wachterTest) return meldung("Nur in der App.");
   APP.wachterTest(tr("Depot-Kompass – Hinweise"), "📊 Depot-Kompass", tr("So sieht eine Benachrichtigung aus."));
@@ -1927,6 +1976,11 @@ function unterstuetzenSeite() {
         <li><b>OpenRouter</b> – KI-Chat mit eigenem Schlüssel (auch Gratis-Modelle); ebenso Anthropic, OpenAI, Google</li>
       </ul>
     </section>
+    <h2>💡 Inspiration</h2>
+    <section class="karte">
+      <p class="klein" style="margin-top:0"><b>r/mauerstrassenwetten</b> (Reddit) – danke für Ideen, Diskussionen und die Erinnerung, dass zu jedem Depot auch Verluste und Risiko gehören.</p>
+      <p class="klein"><b>Claude (Anthropic)</b> – Inspirationsquelle und Coding-Helfer bei der Entwicklung.</p>
+    </section>
     <h2>Unterstützen</h2>
     <section class="karte">
       <p class="klein" style="margin-top:0">Depot-Kompass ist kostenlos und bleibt ohne Werbung. Wer das Projekt unterstützen möchte, kann anonym spenden – danke!</p>
@@ -1934,3 +1988,84 @@ function unterstuetzenSeite() {
       ${spendenZeilen()}
     </section>`;
 }
+
+// ------------------------------------------------------------ Fehlerprotokoll (ab 0.59, Vorgabe 17.11.: Log-Sammler mit genauer Auswertung)
+// Java schreibt files/fehler.log (Waechter, Abstuerze, JavaScript-Fehler aus der Konsole); die Oberflaeche ergaenzt Fehler-Meldungen
+// (Zahlen maskiert). Nur technische Texte - keine Betraege, Stueckzahlen, Konten, Schluessel. Raus nur per "Teilen"/"Kopieren".
+window.__protokoll = window.__protokoll || [];
+function protokoll(bereich, text) {
+  const t = String(text || "").slice(0, 1500);
+  try { if (APP && APP.protokoll) return APP.protokoll(bereich, t); } catch { /* weiter im Speicher */ }
+  window.__protokoll.push(`${new Date().toISOString().replace("T", " ").slice(0, 19)} | ${bereich} | ${t}`);
+  if (window.__protokoll.length > 300) window.__protokoll.shift();
+}
+function protokollText() {
+  try { if (APP && APP.protokollLesen) return APP.protokollLesen() || ""; } catch { /* Browser */ }
+  return window.__protokoll.join("\n");
+}
+// 0.59: Fehlercodes (Vorgabe 17.11.: "Fehlercode anzeigen und per E-Mail weiterleiten") - Reihenfolge = Code DK-01 ... DK-08, sonst DK-99
+const PROTOKOLL_URSACHEN = [
+  [/netzAus|Internet in der App aus/i, "Internet ist in der App ausgeschaltet (⚙️ → Datenschutz) – dann gibt es keine Benachrichtigungen."],
+  [/erlaubt=false|nicht erlaubt/i, "Android verbietet der App Benachrichtigungen – Mehr → 🔔 Benachrichtigungen → „Android-Einstellungen öffnen“."],
+  [/KeyStore|Keystore|AEADBadTag|InvalidKey|KeyPermanentlyInvalidated|UnrecoverableKey/i, "Android-Schlüsselspeicher (Keystore) hat den Schlüssel abgelehnt – ab 0.58 wird er automatisch neu angelegt; tritt es weiter auf: an uns schicken."],
+  [/JobScheduler|JobInfo|schedule|IllegalStateException|IllegalArgumentException/i, "Android hat die Hintergrund-Prüfung (JobScheduler) abgelehnt – Akku-Optimierung für die App prüfen."],
+  [/geplant=false/i, "Die Hintergrund-Prüfung ist nicht eingeplant."],
+  [/JSONException|Unterminated|SyntaxError/i, "Die Liste für den Wächter war fehlerhaft (JSON) – bitte an uns schicken."],
+  [/Failed to fetch|NetworkError|timeout|Timeout|UnknownHost|HTTP \d|SocketException/i, "Datenquelle nicht erreichbar (Netz, Yahoo/Onvista) – meist vorübergehend."],
+  [/OutOfMemory/i, "Zu wenig Arbeitsspeicher – sehr große Daten oder viele Screenshots."],
+  [/SecurityException|permission\./i, "Der App fehlt eine Android-Berechtigung – das ist ein Fehler der App (z. B. ACCESS_NETWORK_STATE, behoben in 0.60). Bitte Fehlercode an uns schicken."],
+];
+/** Gruppiert gleiche Fehler (Zeit und Zahlen raus), zaehlt sie und nennt bekannte Ursachen. */
+function protokollAuswerten(text) {
+  const g = new Map();
+  for (const z of String(text || "").split("\n").filter((x) => x.includes(" | "))) {
+    const [zeit, bereich, ...rest] = z.split(" | "), msg = rest.join(" | ");
+    const k = bereich + " | " + msg.replace(/\d[\d.,:]*/g, "#").slice(0, 160);
+    const e = g.get(k) || { bereich, msg, anzahl: 0, erst: zeit, zuletzt: zeit };
+    e.anzahl++; e.zuletzt = zeit; g.set(k, e);
+  }
+  return [...g.values()].sort((a, b) => b.zuletzt.localeCompare(a.zuletzt)).map((e) => {
+    const n = PROTOKOLL_URSACHEN.findIndex(([re]) => re.test(e.bereich + " " + e.msg));
+    return { ...e, code: n < 0 ? "DK-99" : "DK-" + String(n + 1).padStart(2, "0"), ursache: n < 0 ? "" : PROTOKOLL_URSACHEN[n][1] };
+  });
+}
+/** Kurzbericht fuer die E-Mail: Version, Geraet, je Fehler Code + Anzahl + Text (gekuerzt, passt in einen mailto-Link). */
+function protokollBericht(kopf, liste) {
+  let b = kopf + "\n\n" + (liste.length ? liste.map((e) => `${e.code} · ${e.anzahl}× · zuletzt ${e.zuletzt} · ${e.bereich}: ${e.msg.slice(0, 240)}`).join("\n") : "Keine Fehler aufgezeichnet.");
+  if (b.length > 1800) b = b.slice(0, 1800) + "\n… (gekürzt – ganzes Protokoll bitte über „Teilen“ anhängen)";
+  return b;
+}
+function fehlerprotokollSeite() {
+  const text = protokollText(), liste = protokollAuswerten(text);
+  let geraet = ""; try { geraet = APP && APP.protokollGeraet ? APP.protokollGeraet() : navigator.userAgent.replace(/^.*?\(|\).*$/g, ""); } catch { /* egal */ }
+  const kopf = `Depot-Kompass ${appVersion()} · ${geraet}`;
+  return `
+    <h2><button class="knopf klein" data-ziel="mehr">‹ Mehr</button><span>🐞 Fehlerprotokoll</span></h2>
+    <section class="karte">
+      <p class="klein" style="margin-top:0">Die App sammelt hier technische Fehler (Benachrichtigungen, Abstürze, Skript-Fehler, Fehlermeldungen). <b>Keine Beträge, Stückzahlen, Konten oder Schlüssel</b> – Zahlen in Meldungen werden durch # ersetzt. Das Protokoll bleibt auf dem Handy, bis du es selbst teilst.</p>
+      <p class="klein" style="margin-bottom:0">${esc(kopf)}</p><p class="klein" style="margin-top:2px">${text ? text.split("\n").filter(Boolean).length : 0} Einträge</p>
+      <a class="knopf haupt" href="mailto:${KONTAKT}?subject=${encodeURIComponent("Fehlerprotokoll – Depot-Kompass " + appVersion())}&body=${encodeURIComponent(protokollBericht(kopf, liste))}" style="display:block;text-align:center;text-decoration:none;margin-bottom:8px">✉️ Fehlercodes per E-Mail senden</a>
+      <p class="klein" style="margin-top:0">Öffnet deine Mail-App mit den Fehlercodes – du siehst alles vorher und entscheidest selbst, ob du sendest.</p>
+      <div class="zwei"><button class="knopf" data-los="protokoll-teilen">📤 Ganzes Protokoll teilen</button><button class="knopf" data-kopieren="${esc(kopf + "\n" + text)}">📋 Kopieren</button></div>
+      <button class="knopf" data-los="protokoll-leeren" style="width:100%;margin-top:8px">🗑️ Protokoll leeren</button>
+    </section>
+    <h2>Auswertung<span>${liste.length}</span></h2>
+    <section class="karte liste">${liste.length ? liste.map((e) => `
+      <div class="zeile" style="grid-template-columns:minmax(0,1fr) auto">
+        <span style="min-width:0"><span class="titel"><b class="mono">${e.code}</b> · ${esc(e.bereich)}</span>
+          <span class="unter" style="white-space:normal;overflow-wrap:anywhere">${esc(e.msg)}${e.ursache ? `<br><b>➜ ${esc(e.ursache)}</b>` : ""}</span></span>
+        <span class="rechts"><b>${e.anzahl}×</b><span class="klein">${esc(e.zuletzt.slice(5, 16))}</span></span>
+      </div>`).join("") : `<p class="klein" style="margin:8px">Keine Fehler aufgezeichnet. Wenn etwas schiefgeht (z. B. beim Aktualisieren), hier nachsehen.</p>`}</section>`;
+}
+document.addEventListener("click", (ev) => {
+  const x = ev.target.closest('[data-los="protokoll-teilen"],[data-los="protokoll-leeren"]');
+  if (!x) return;
+  if (x.dataset.los === "protokoll-leeren") {
+    try { if (APP && APP.protokollLeeren) APP.protokollLeeren(); } catch { /* Browser */ }
+    window.__protokoll = []; meldung("Protokoll geleert."); return zeichnen();
+  }
+  let geraet = ""; try { geraet = APP && APP.protokollGeraet ? APP.protokollGeraet() : ""; } catch { /* egal */ }
+  const inhalt = `Depot-Kompass ${appVersion()} · ${geraet}\n\n` + protokollText();
+  if (APP && APP.teilen) { if (!APP.teilen("depot-kompass-fehlerprotokoll.txt", "text/plain", inhalt, false)) meldung("Teilen ging nicht."); }
+  else { try { navigator.clipboard.writeText(inhalt); meldung("In die Zwischenablage kopiert."); } catch { meldung("Kopieren ging nicht – bitte von Hand markieren."); } }
+});

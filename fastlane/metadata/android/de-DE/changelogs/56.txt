@@ -1,0 +1,1 @@
+Der Nachkauf-Rechner heißt jetzt „In Tranchen kaufen“. Dazu aus 0.55: Break-even immer sichtbar, bessere Suche (ISIN/WKN → Xetra in Euro), Krypto ohne Euro-Paar.

@@ -36,6 +36,8 @@ R=$(titel "http://127.0.0.1:$PORT/tests/testseite.html?modus=faelle")
 echo "10 Testfälle (Excel, Angriff, Überverkauf, 20.000 Zeilen …): ${R:-keine Antwort}"; [[ "$R" == "TEST OK" ]] || FEHLER=1
 R=$(titel "http://127.0.0.1:$PORT/tests/testseite.html?modus=zertifikat&attrappe=1" 60000)
 echo "Zertifikate (Kurs über Onvista per ISIN/WKN, Attrappe ohne Netz): ${R:-keine Antwort}"; [[ "$R" == "TEST OK" ]] || FEHLER=1
+R=$(titel "http://127.0.0.1:$PORT/tests/testseite.html?modus=suche&attrappe=1" 60000)
+echo "Suche (ISIN/WKN über Onvista zur Euro-Notierung, keine Taiwan-Fehltreffer, Krypto ohne Euro-Paar): ${R:-keine Antwort}"; [[ "$R" == "TEST OK" ]] || FEHLER=1
 R=$(python3 cdp_lauf.py "http://127.0.0.1:$PORT/tests/testseite.html?modus=originale&attrappe=1" --zeit 120 | head -1)
 echo "Originale + ZIP-Export/-Wiederherstellen (Attrappe): ${R:-keine Antwort}"; [[ "$R" == "TEST OK" ]] || FEHLER=1
 # Texterkennung braucht ECHTE Rechenzeit (virtuelle Zeit wartet nicht) -> eigener Steuerer
@@ -46,13 +48,13 @@ echo "Englisch (jede Seite, kein deutscher Rest): ${R:-keine Antwort}"; [[ "$R" 
 [[ -n "${NUR_RECHNEN:-}" ]] && { [[ $FEHLER == 0 ]] && echo "ALLES OK" || echo "FEHLER GEFUNDEN"; exit $FEHLER; }
 for g in "360 780" "412 915" "440 960"; do set -- $g
   for z in 100 160; do
-    for s in uebersicht positionen "positionen&heat=1" watchlist kalender news notizen "kalender&kal=1" mehr feedback depots ki news sicherheit daten datenschutz sachwerte einstellungen "notizen&rechner=1" "notizen&nachkauf=1" "notizen&rechner3=1&gebuehr=1" "notizen&betrag=1&gebuehr=1" "notizen&rechner3=1&dollar=1" "notizen&nachkauf=1&dollar=1" "schluessel&ampel=1" "notizen&plannotiz=1" "uebersicht&dunkel=1" "uebersicht&einzeln=1" "uebersicht&plus=depot" "uebersicht&bearbeiten=1" steuer einstellungen "ki&kichat=1" "ki&ki=1&kireiter=beispiele" "ki&kichat=1&kireiter=verlauf" hinweise "positionen&analysten=1" "uebersicht&teilen=1" "uebersicht&empfang=1" unterstuetzen; do
+    for s in uebersicht positionen "positionen&heat=1" watchlist kalender news notizen "kalender&kal=1" mehr feedback depots ki news sicherheit daten datenschutz sachwerte einstellungen "notizen&rechner=1" "notizen&nachkauf=1" "notizen&rechner3=1&gebuehr=1" "notizen&betrag=1&gebuehr=1" "positionen&bedetail=minus" "positionen&bedetail=plus" "notizen&rechner3=1&dollar=1" "notizen&nachkauf=1&dollar=1" "schluessel&ampel=1" "notizen&plannotiz=1" "uebersicht&dunkel=1" "uebersicht&einzeln=1" "uebersicht&plus=depot" "uebersicht&bearbeiten=1" steuer einstellungen "ki&kichat=1" "ki&ki=1&kireiter=beispiele" "ki&kichat=1&kireiter=verlauf" hinweise "positionen&analysten=1" "uebersicht&teilen=1" "uebersicht&empfang=1" unterstuetzen fehlerprotokoll; do
       R=$(titel "http://127.0.0.1:$PORT/tests/rahmen.html?w=$1&h=$2&p=seite%3D${s//&/%26}%26schrift%3D$z")
       if [[ "$R" != "TEST OK" ]]; then echo "  $1px $z% ${s}: ${R:-keine Antwort}"; FEHLER=1; fi
     done
   done
 done
-for s in uebersicht positionen kalender mehr einstellungen ki daten sicherheit "notizen&nachkauf=1" "notizen&rechner3=1&gebuehr=1" "notizen&betrag=1&gebuehr=1" "notizen&rechner3=1&dollar=1" "notizen&nachkauf=1&dollar=1" "schluessel&ampel=1" "notizen&plannotiz=1" "ki&kichat=1" "ki&ki=1&kireiter=beispiele" "ki&kichat=1&kireiter=verlauf" hinweise "positionen&analysten=1" "uebersicht&teilen=1" "uebersicht&empfang=1" unterstuetzen; do
+for s in uebersicht positionen kalender mehr einstellungen ki daten sicherheit "notizen&nachkauf=1" "notizen&rechner3=1&gebuehr=1" "notizen&betrag=1&gebuehr=1" "positionen&bedetail=minus" "positionen&bedetail=plus" "notizen&rechner3=1&dollar=1" "notizen&nachkauf=1&dollar=1" "schluessel&ampel=1" "notizen&plannotiz=1" "ki&kichat=1" "ki&ki=1&kireiter=beispiele" "ki&kichat=1&kireiter=verlauf" hinweise "positionen&analysten=1" "uebersicht&teilen=1" "uebersicht&empfang=1" unterstuetzen; do
   R=$(titel "http://127.0.0.1:$PORT/tests/rahmen.html?w=360&h=780&p=seite%3D${s}%26schrift%3D160%26sprache%3Den")
   if [[ "$R" != "TEST OK" ]]; then echo "  Englisch 360px 160% ${s}: ${R:-keine Antwort}"; FEHLER=1; fi
 done

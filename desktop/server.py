@@ -30,7 +30,17 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 ASSETS = Path(os.environ.get("ASSETS", "/app/assets"))
 DATEN = Path(os.environ.get("DATEN", "/daten"))
 PORT = int(os.environ.get("PORT", "8098"))
-VERSION = os.environ.get("VERSION", "Desktop")
+def _version():
+    """Versionsnummer aus dem AndroidManifest (gleicher Stand wie die App), sonst VERSION-Variable."""
+    if os.environ.get("VERSION"):
+        return os.environ["VERSION"]
+    try:
+        import re
+        m = re.search(r'versionName="([^"]+)"', Path(os.environ.get("MANIFEST", "/app/AndroidManifest.xml")).read_text(encoding="utf-8"))
+        return (m.group(1) + " Desktop") if m else "Desktop"
+    except OSError:
+        return "Desktop"
+VERSION = _version()
 RUNDEN = 200000
 BEHALTEN = 10
 DATEN.mkdir(parents=True, exist_ok=True)

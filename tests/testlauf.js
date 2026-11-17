@@ -133,13 +133,74 @@ async function rechnen() {
   }
 
   // --- Hebel-Rechner
-  const l = hebelRechnen({ einstieg: "100", hebel: "5", stop: "90", ziel: "120", einsatz: "500", richtung: "long" });
+  // reine Rechnung 1/Hebel (Wartungsmarge 0, Gebuehr 0)
+  const l = hebelRechnen({ einstieg: "100", hebel: "5", stop: "90", ziel: "120", einsatz: "500", richtung: "long", broker: "eigen", wartung: "0", gebuehr: "0" });
   pruefe(nah(l.ko, 80) && nah(l.verlust, -50) && nah(l.gewinn, 100) && nah(l.crv, 2) && nah(l.verlustEur, -250), `Rechner long ${JSON.stringify(l)}`);
-  const k2 = hebelRechnen({ einstieg: "100", hebel: "10", stop: "112", ziel: "95", richtung: "short" });
+  const k2 = hebelRechnen({ einstieg: "100", hebel: "10", stop: "112", ziel: "95", richtung: "short", broker: "eigen", wartung: "0", gebuehr: "0" });
   pruefe(nah(k2.ko, 110) && k2.stopHinterKo && nah(k2.verlust, -100) && nah(k2.gewinn, 50), `Rechner short ${JSON.stringify(k2)}`);
+  // --- 0.57: Knock-out NACH Wartungsmarge + Gebuehren (Vorgabe 17.11.: 10x ist nicht 10 %). Sollwerte aus Python (Decimal):
+  //   long 100, 10x, MM 2,5 %, Gebuehr 0,05 %/Seite -> KO 92,40636 (-7,59364 %); short -> 107,21599 (+7,21599 %)
+  //   MM 2,5 %, ohne Gebuehr -> 92,30769 (-7,69231 %); 5x long: KO 82,14469, Stop 90 -> -50,475 %, Ziel 120 -> +99,45 %; 50x -> sofort weg
+  {
+    const a = hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long" });
+    pruefe(nah(a.ko, 92.4063622, 1e-6) && nah(a.koAbstand, -7.5936378, 1e-6) && nah(a.koOhne, -10) && nah(a.wartung, 2.5) && nah(a.gebuehr, 0.05), `KO Vorgabe long: ${a.ko} / ${a.koAbstand}`);
+    const b = hebelRechnen({ einstieg: "100", hebel: "10", richtung: "short" });
+    pruefe(nah(b.ko, 107.2159922, 1e-6) && nah(b.koAbstand, 7.2159922, 1e-6), `KO Vorgabe short: ${b.ko}`);
+    const c = hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long", broker: "eigen", gebuehr: "0" });
+    pruefe(nah(c.ko, 92.3076923, 1e-6), `KO MM 2,5 ohne Gebuehr: ${c.ko}`);
+    const e5 = hebelRechnen({ einstieg: "100", hebel: "5", stop: "90", ziel: "120", richtung: "long" });
+    pruefe(nah(e5.ko, 82.1446896, 1e-6) && nah(e5.verlust, -50.475, 1e-6) && nah(e5.gewinn, 99.45, 1e-6), `5x nach Gebuehren: ${JSON.stringify([e5.ko, e5.verlust, e5.gewinn])}`);
+    // Broker-Vorgaben (Python): Hyperliquid 10x long MM 2,5 % f 0,045 % -> KO 92,39649 (-7,60351 %); Zertifikat = reine 1/Hebel -> 90; Kraken = Vorgabe
+    const hl = hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long", broker: "hyperliquid" });
+    pruefe(nah(hl.ko, 92.3964907, 1e-6) && hl.broker === "hyperliquid", `Hyperliquid: ${hl.ko}`);
+    const zt = hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long", broker: "zertifikat", wartung: "9" });
+    pruefe(nah(zt.ko, 90) && zt.wartung === 0, `Zertifikat: ${zt.ko}`);
+    pruefe(nah(hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long", broker: "kraken", wartung: "9" }).ko, 92.4063622, 1e-6), "Kraken-Vorgabe ignoriert eigene Felder nicht");
+    ui.rechner = { einstieg: "100", hebel: "10", richtung: "long" }; ui.rechnerOffen = true; zeige("notizen");
+    const sel = document.querySelector("[data-rechner-broker]");
+    pruefe(sel && sel.value === "kraken" && !document.querySelector('[data-rechner="wartung"]'), "Broker-Auswahl fehlt oder Felder sichtbar bei Kraken");
+    sel.value = "eigen"; sel.dispatchEvent(new Event("change", { bubbles: true }));
+    pruefe(ui.rechner.broker === "eigen" && !!document.querySelector('[data-rechner="wartung"]'), "Eigene Werte: Felder fehlen");
+    ui.rechnerOffen = false; ui.rechner = null; zeige("uebersicht");
+    const e50 = hebelRechnen({ einstieg: "100", hebel: "50", richtung: "long" });
+    pruefe(e50.koSofort && nah(e50.ko, 100), "50x mit MM 2,5 %: sofort weg");
+    pruefe(nah(hebelRechnen({ einstieg: "100", hebel: "10", richtung: "long", broker: "eigen", wartung: "1,5" }).ko, (100 * (1 - (0.1 - 0.001 - 0.015) / (1 - 0.0005 - 0.015)))), "Wartungsmarge mit Komma");
+  }
+  // --- 0.59: Fehlerprotokoll - Sammeln, Gruppieren, Ursachen, Zahlen maskiert
+  {
+    window.__protokoll = [];
+    protokoll("Wächter", "setzen=false · Länge 812 · vom Handy erlaubt=true · geplant=false · Grund=JobScheduler hat die Hintergrund-Prüfung abgelehnt (RESULT_FAILURE)");
+    protokoll("Wächter", "setzen=false · Länge 815 · vom Handy erlaubt=true · geplant=false · Grund=JobScheduler hat die Hintergrund-Prüfung abgelehnt (RESULT_FAILURE)");
+    meldung("Speichern fehlgeschlagen! 1.234,56 €");
+    protokoll("Wächter: Einrichten fehlgeschlagen", "java.lang.SecurityException: android.permission.ACCESS_NETWORK_STATE required for jobs with a connectivity constraint");
+    const a = protokollAuswerten(protokollText());
+    pruefe(a.length === 3 && a.some((x) => x.anzahl === 2 && /JobScheduler/.test(x.ursache)) && a.some((x) => x.code === "DK-09"), `Protokoll-Auswertung: ${JSON.stringify(a)}`);
+    pruefe(!/1\.234/.test(protokollText()) && /# €/.test(protokollText()), "Protokoll: Zahlen nicht maskiert");
+    pruefe(a.find((x) => x.anzahl === 2).code === "DK-04" && /DK-04 · 2×/.test(protokollBericht("Kopf", a)), `Fehlercode: ${a.map((x) => x.code)}`);
+    ui.seite = "fehlerprotokoll"; zeichnen();
+    pruefe(/Auswertung/.test(document.getElementById("inhalt").textContent) && document.querySelector('[data-los="protokoll-teilen"]') , "Fehlerprotokoll-Seite fehlt");
+    { const m = document.querySelector('#inhalt a[href^="mailto:"]'); pruefe(m && /DK-04/.test(m.getAttribute("href")), `Mail-Link: ${m ? m.getAttribute("href").slice(0, 200) : "keiner"} | ${document.getElementById("inhalt").innerHTML.slice(0, 300)}`); }
+    window.__protokoll = []; zeige("uebersicht");
+  }
+  // --- 0.59: Hinweis ab -35 % (Sollwert Python: 100/0,65-100 = 53,846 %)
+  {
+    const p40 = { wert: 600, einstand: 1000, gvPct: -40, stueck: 10 }, p30 = { wert: 700, einstand: 1000, gvPct: -30, stueck: 10 };
+    const k40 = breakEvenKarte(p40, { kurs: 60 }), k30 = breakEvenKarte(p30, { kurs: 70 });
+    pruefe(/Ab etwa −35 %/.test(k40) && /\+53,85 %/.test(k40) && !/Ab etwa −35 %/.test(k30), "Hinweis ab −35 % falsch");
+  }
+  // --- 0.58: Steuertermine (4 je Jahr, Vorjahr bis naechstes Jahr, abschaltbar)
+  {
+    const st = steuerTermine(), j = +heute().slice(0, 4);
+    pruefe(st.length === 12 && st.some((x) => x.datum === `${j}-12-15` && /Verlustbescheinigung/.test(x.titel)) && st.every((x) => /Ohne Gewähr/.test(x.info)), `Steuertermine: ${st.length}`);
+    const ev = kalenderEreignisse([S.aktiv]);
+    pruefe(ev.filter((x) => x.art === "Steuertermin").length === 12, "Steuertermine fehlen im Kalender");
+    (S.einstellungen.kalAus ||= {}).Steuertermin = true;
+    pruefe(!kalenderEreignisse([S.aktiv]).some((x) => x.art === "Steuertermin"), "Steuertermine nicht abschaltbar");
+    delete S.einstellungen.kalAus.Steuertermin;
+  }
   // --- Beispiel 08.11.: Hyperliquid Doppeltop short, Hebel 10, Einstieg 93, Stop = KO 102,3, Ziel 77
   {
-    const r = { titel: "Hyper Liquid Doppel top short", richtung: "short", einstieg: "93", hebel: "10", stop: "102,3", ziel: "77", einsatz: "200", maxverlust: "50" };
+    const r = { titel: "Hyper Liquid Doppel top short", richtung: "short", einstieg: "93", hebel: "10", stop: "102,3", ziel: "77", einsatz: "200", maxverlust: "50", broker: "eigen", wartung: "0", gebuehr: "0" };
     const x = hebelRechnen(r);
     pruefe(nah(x.ko, 102.3) && nah(x.koAbstand, 10) && nah(x.verlust, -100) && nah(x.gewinn, 172.043, 0.01) && nah(x.crv, 1.7204, 0.001),
            `HYPE: ${JSON.stringify([x.ko, x.koAbstand, x.verlust, x.gewinn, x.crv])}`);
@@ -200,7 +261,7 @@ async function rechnen() {
     pruefe(nachkaufRechnen({ ...grund, bestand: "0", ziel: "80000" }).fehler.length === 1, "Bestand 0 nicht abgefangen");
     pruefe(/über dem aktuellen Kurs/.test(nachkaufRechnen({ ...grund, ziel: "59000" }).B.fehler) && /über dem aktuellen Kurs/.test(nachkaufRechnen({ ...grund, ziel: "50000" }).B.fehler),
            "Ziel ≤ Kurs: keine klare Meldung");
-    pruefe(/kein Nachkauf nötig/.test(nachkaufRechnen({ ...grund, ziel: "99000" }).B.fehler), "Ziel über Einstand nicht erkannt");
+    pruefe(/keine weitere Tranche nötig/.test(nachkaufRechnen({ ...grund, ziel: "99000" }).B.fehler), "Ziel über Einstand nicht erkannt");
     pruefe(/senken geht nicht/.test(nachkaufRechnen({ ...grund, kurs: "120000", ziel: "99000" }).B.fehler), "Kurs über Einstand nicht erkannt");
     const s = nachkaufRechnen({ ...grund, ziel: "59.500" });
     pruefe(nah(s.B.budget, 23577.39, 0.01) && s.warnungen.some((w) => /Sunk-Cost/.test(w)), `Sunk-Cost-Warnung fehlt: ${JSON.stringify(s)}`);
@@ -293,6 +354,33 @@ async function rechnen() {
         pruefe(/\(\+15 %\)/.test(en) && /\(-4\.5 %\)/.test(en) && !/\d\. %/.test(en), `Marken-Chart englisch: ${en.replace(/<[^>]+>/g, "|")}`);
         window.sprache = alt; Object.keys(fmtCache).forEach((k) => delete fmtCache[k]); }
       S.notizen = []; zeige("uebersicht");
+    }
+    // --- Break-even nach Gebuehren (0.55): Sollwerte mit Python
+    {
+      const alt = S.einstellungen.nachkaufGebuehr; S.einstellungen.nachkaufGebuehr = "";
+      let b = breakEven({ einstand: 1000, wert: 700, stueck: 10 });
+      pruefe(nah(b.noetig, 42.857, 0.001) && nah(b.puffer, -42.857, 0.001) && nah(b.kursBE, 100), `Break-even −30 %: ${JSON.stringify(b)}`);
+      b = breakEven({ einstand: 1000, wert: 400, stueck: 10 }); pruefe(nah(b.noetig, 150, 0.001), `Break-even −60 %: ${b.noetig}`);
+      b = breakEven({ einstand: 1000, wert: 11000, stueck: 10 }); pruefe(nah(b.puffer, 90.909, 0.001) && b.noetig < 0, `Puffer +1000 %: ${JSON.stringify(b)}`);
+      S.einstellungen.nachkaufGebuehr = "0,25";
+      b = breakEven({ einstand: 1000, wert: 700, stueck: 10 }); pruefe(nah(b.noetig, 43.215, 0.001) && nah(b.kursBE, 100.2506, 0.001) && b.gebuehr === 0.25, `Break-even mit Gebühr: ${JSON.stringify(b)}`);
+      pruefe(breakEven({ einstand: 1000, wert: 0, stueck: 1 }) === null && breakEven({ ohneKurs: true, einstand: 1, wert: 1 }) === null, "Break-even ohne Kurs/Wert nicht abgefangen");
+      S.einstellungen.nachkaufGebuehr = alt;
+      // Anzeige: Liste und Detail, je eine Position im Minus und im Plus
+      const ansichtAlt = ui.posAnsicht; ui.posAnsicht = "liste"; zeige("positionen");
+      const liste = positionen().liste.filter((p) => !p.ohneKurs && p.einstand > 0);
+      const mi = liste.find((p) => p.gv < 0), pl = liste.find((p) => p.gv > 0);
+      const txt = document.getElementById("inhalt").textContent;
+      pruefe(/Break-even \+/.test(txt) && /Puffer [−-]/.test(txt), `Break-even fehlt in der Positionsliste: ${txt.slice(0, 120)}`);
+      for (const [p, muster] of [[mi, /Bis Break-even[\s\S]*Was es braucht, um wieder bei null zu sein/], [pl, /Puffer bis Break-even[\s\S]*Was ein Rücksetzer für dich bedeutet/]]) {
+        if (!p) continue;
+        ui.detail = p.id; zeichnen();
+        const d = document.getElementById("inhalt").textContent;
+        pruefe(muster.test(d) && /Verlust und nötiger Anstieg/.test(d) && /\+42,86 %/.test(d) && /\+150,00 %/.test(d), `Break-even-Karte in ${p.name}: ${d.slice(0, 160)}`);
+      }
+      ui.verdeckt = true; if (mi) { ui.detail = mi.id; zeichnen(); }
+      pruefe(!mi || !/von \d[\d.,]* € auf/.test(document.getElementById("inhalt").textContent) || EIN().verstecken === "betraege", "Beträge aus: Break-even-Kurse sichtbar");
+      ui.verdeckt = false; ui.detail = null; ui.posAnsicht = ansichtAlt; zeige("uebersicht");
     }
     // --- Dollar in den Rechnern (0.53): gleiche Rechnung, $-Zeichen, Umrechnung in Euro mit Kurs
     {
@@ -1084,6 +1172,9 @@ async function englischTest() {
     S.einstellungen.eurUsd = { kurs: 1.0842, datum: "2026-11-16" }; ui.rechnerOffen = true; ui.rechner = { richtung: "long", einstieg: "100", hebel: "5" };
     for (const k of ["posgr", "gewinn", "nachkauf"]) { try { ui[k].waehrung = "usd"; zeige("notizen"); ui[k].waehrung = "eur"; } catch (e) { f.push("Dollar " + k + ": " + e.message); } }
     ui.watch = "neu"; try { zeichnen(); } catch (e) { f.push("Watch-Formular: " + e.message); } ui.watch = null;
+    for (const p of positionen().liste.filter((x) => !x.ohneKurs).filter((x, n, l) => x === l.find((y) => y.gv < 0) || x === l.find((y) => y.gv > 0))) {
+      ui.detail = p.id; try { zeichnen(); } catch (e) { f.push("Detail " + p.name + ": " + e.message); } }
+    ui.detail = null;
     for (const s of seiten) { ui.alle = undefined; try { zeige(s); } catch (e) { f.push(`${s}: ${e.message}`); } }
     ui.einfuehrung = 1; zeichnen(); ui.einfuehrung = 2; zeichnen(); ui.einfuehrung = 3; zeichnen(); ui.einfuehrung = null;
     ui.gesperrt = true; ui.pinBereit = true; ui.pinMeldung = "Falsche PIN – noch 3 Versuche bis zur Wartezeit."; try { zeichnen(); } catch (e) { f.push("PIN-Seite: " + e.message); }
@@ -1111,6 +1202,44 @@ async function englischTest() {
   const rest = [...window.__fehlend].filter((s) => /[a-zäöüß]{3}/.test(s) && ![...namen].some((n) => n && (s.includes(n) || n.includes(s))));
   window.sprache = () => "de";
   if (rest.length) f.push(`${rest.length} unübersetzt: ` + rest.slice(0, 8).map((s) => "„" + s.slice(0, 40) + "“").join(", "));
+  return f;
+}
+
+/** Suche (0.55): Antworten wie im echten Suchtest vom 17.11.2026 (Yahoo per ISIN = London/USD, per WKN = Taiwan-Fehltreffer,
+ *  Onvista = deutsches Kuerzel; Krypto ohne Euro-Paar). Erwartet: immer die Euro-Notierung, nie ".TWO". */
+async function suchTest() {
+  (S.einstellungen ||= {}).einfuehrung = 99; ui.einfuehrung = null;
+  const f = [], q = (s, typ = "ETF", ex = "") => ({ symbol: s, quoteType: typ, exchange: ex, shortname: s });
+  window.__suche = {
+    onvista: { IE00B4L5Y983: [{ entityType: "FUND", isin: "IE00B4L5Y983", wkn: "A0RPWH", symbol: "EUNL", name: "iShares Core MSCI World UCITS ETF" }],
+               A0RPWH: [{ entityType: "FUND", isin: "IE00B4L5Y983", wkn: "A0RPWH", symbol: "EUNL", name: "iShares Core MSCI World UCITS ETF" }],
+               "716460": [{ entityType: "STOCK", isin: "DE0007164600", wkn: "716460", symbol: "SAP", name: "SAP SE" }],
+               DE0005933931: [{ entityType: "FUND", isin: "DE0005933931", wkn: "593393", symbol: "EXS1", name: "iShares Core DAX UCITS ETF" }],
+               JE00B1VS3333: [{ entityType: "DERIVATIVE", isin: "JE00B1VS3333", symbol: "16IA", name: "WisdomTree Physical Silver" }],
+               "Münchener Rück": [{ entityType: "STOCK", isin: "DE0008430026", wkn: "843002", symbol: "MUV2", name: "Münchener Rückversicherungs-Gesellschaft" }] },
+    yahoo: { IE00B4L5Y983: [q("IWDA.L")], "716460": [q("716460.TWO", "EQUITY")], DE0005933931: [], JE00B1VS3333: [q("JE00B1VS3333.SG", "ETF")],
+             "SAP SE": [q("SAP.DE", "EQUITY"), q("SAP", "EQUITY")], NEAR: [q("NEAR-USD", "CRYPTOCURRENCY"), q("WNEAR-USD", "CRYPTOCURRENCY")],
+             HYPE: [q("HYPE32196-USD", "CRYPTOCURRENCY")], "Münchener Rück": [] },
+    kurse: { "EUNL.DE": [95.1, "EUR"], "IWDA.L": [143, "USD"], "SAP.DE": [213.4, "EUR"], "EXS1.DE": [219.2, "EUR"], "JE00B1VS3333.SG": [38.7, "EUR"],
+             "MUV2.DE": [591.6, "EUR"], "BTC-EUR": [58647, "EUR"], "NEAR-USD": [2.1, "USD"], "HYPE32196-USD": [31, "USD"] } };
+  const soll = async (wert, erwartet, was) => { const r = await wert; if (r !== erwartet) f.push(`${was}: ${r} statt ${erwartet}`); };
+  await soll(tickerSuchen({ isin: "IE00B4L5Y983", art: "ETF" }), "EUNL.DE", "ETF per ISIN (statt London IWDA.L)");
+  await soll(tickerSuchen({ isin: "DE0005933931", art: "ETF" }), "EXS1.DE", "iShares Core DAX (Yahoo findet nichts)");
+  await soll(tickerSuchen({ isin: "JE00B1VS3333", art: "ETC" }), "JE00B1VS3333.SG", "ETC ohne Xetra-Kurs -> Stuttgart");
+  await soll(watchTicker({ kennung: "716460", art: "Aktie" }), "SAP.DE", "WKN SAP (nicht Taiwan 716460.TWO)");
+  await soll(watchTicker({ kennung: "a0rpwh", art: "ETF" }), "EUNL.DE", "WKN klein geschrieben");
+  await soll(tickerSuchen({ isin: "BTC", art: "Krypto" }), "BTC-EUR", "Krypto mit Euro-Paar");
+  await soll(tickerSuchen({ isin: "NEAR", art: "Krypto" }), "NEAR-USD", "NEAR ohne Euro-Paar (nicht WNEAR)");
+  await soll(tickerSuchen({ isin: "HYPE", art: "Krypto" }), "HYPE32196-USD", "HYPE ohne Euro-Paar");
+  // Trefferliste in der Watchlist: Onvista-Vorschlag vorne, nie .TWO
+  zeige("watchlist"); ui.watch = "neu"; ui.watchEntwurf = { name: "", kennung: "716460", art: "Aktie" }; zeichnen();
+  await tickerTreffer();
+  const tr = (ui.treffer || []).map((x) => x.symbol);
+  if (tr[0] !== "SAP.DE" || tr.some((s) => /\.TWO$/.test(s))) f.push("Trefferliste WKN: " + tr.join(","));
+  ui.watchEntwurf = { name: "Münchener Rück", kennung: "", art: "Aktie" }; zeichnen(); await tickerTreffer();
+  if ((ui.treffer || [])[0]?.symbol !== "MUV2.DE") f.push("Trefferliste Name Münchener Rück: " + (ui.treffer || []).map((x) => x.symbol).join(","));
+  // Krypto-Reparatur beim Aktualisieren: vorhandener NEAR-EUR-Ticker wird einmal geprueft und ersetzt
+  ui.watch = null; ui.treffer = null; window.__suche = null;
   return f;
 }
 
@@ -1344,8 +1473,10 @@ async function seitePruefen(q) {
   if (q.get("kal")) { ui.kalArt = "gv"; ui.gvMonat = "2026-01"; }
   zeige(q.get("seite"));
   if (q.get("plannotiz")) { ui.notiz = { id: "n9" }; zeichnen(); }
+  if (q.get("bedetail")) { const l = positionen().liste.filter((p) => !p.ohneKurs && p.einstand > 0); const p = q.get("bedetail") === "minus" ? l.find((x) => x.gv < 0) : l.find((x) => x.gv > 0);
+    if (p) { ui.detail = p.id; zeichnen(); const d = document.querySelector(".be-karte details"); if (d) d.open = true; } }
   // Bildschirmfotos: Inhalt nach oben schieben statt rollen (Rollen wird im Aufnahme-Modus nicht gezeichnet); Kopf und Leiste bleiben stehen
-  if (q.get("zu")) { const el = document.getElementById(q.get("zu")), inh = document.getElementById("inhalt");
+  if (q.get("zu")) { const el = /^[.#\[]/.test(q.get("zu")) ? document.querySelector(q.get("zu")) : document.getElementById(q.get("zu")), inh = document.getElementById("inhalt");
     if (el && inh) inh.style.marginTop = -(el.getBoundingClientRect().top - inh.getBoundingClientRect().top - (+q.get("hoch") || 20)) + "px"; }
   if (window.__analystenId) { ui.detail = window.__analystenId; zeichnen(); }
   if (q.get("schrift")) document.body.style.zoom = q.get("schrift") / 100;
@@ -1383,6 +1514,9 @@ async function seitePruefen(q) {
       if (q.get("zahl")) text += " · " + ui.klicks + " Klicks";
     } else if (q.get("modus") === "originale") {
       const f = await originaleTest();
+      text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
+    } else if (q.get("modus") === "suche") {
+      const f = await suchTest();
       text = f.length ? "FEHLER " + f.join(" ; ") : "OK";
     } else if (q.get("modus") === "zertifikat") {
       const f = await zertifikatTest();

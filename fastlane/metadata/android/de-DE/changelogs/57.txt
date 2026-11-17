@@ -1,0 +1,1 @@
+Hebel-Rechner zeigt den echten Knock-out nach Wartungsmarge und Gebühren (10× ≈ −7,6 % statt −10 %), Broker wählbar: Kraken Futures, Hyperliquid, Knock-out-Zertifikat oder eigene Werte.

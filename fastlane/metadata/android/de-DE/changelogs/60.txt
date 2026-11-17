@@ -1,0 +1,1 @@
+Benachrichtigungen repariert (fehlende Android-Berechtigung ACCESS_NETWORK_STATE, gefunden über das Fehlerprotokoll), Fehlercode DK-09, Positionsliste sauber getrennt.

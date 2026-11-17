@@ -44,6 +44,7 @@ public class Teilen extends ContentProvider {
     @Override
     public String getType(Uri uri) {
         String n = String.valueOf(uri.getLastPathSegment()).toLowerCase();
+        if (n.endsWith(".txt")) return "text/plain";
         if (n.endsWith(".csv")) return "text/csv";
         if (n.endsWith(".zip")) return "application/zip";
         if (n.endsWith(".pdf")) return "application/pdf";

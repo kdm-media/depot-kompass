@@ -2,6 +2,35 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.60 – 17.11.2026
+- **Benachrichtigungen funktionieren wieder:** Das neue Fehlerprotokoll hat die Ursache gezeigt – Android verlangt für die Hintergrund-Prüfung „nur mit Internet“ die Berechtigung „Netzwerkstatus lesen“ (ACCESS_NETWORK_STATE). Sie fehlte; jetzt ist sie eingetragen (normale Berechtigung, keine Rückfrage, liest nur „Netz da ja/nein“).
+- Fehlerprotokoll erkennt fehlende Berechtigungen als eigenen Fehlercode (DK-09).
+- Positionsliste: Prozent, Betrag und „Break-even“ stehen wieder sauber getrennt untereinander (klebten bei großer Schrift aneinander).
+
+## 0.59 – 17.11.2026
+- **Hinweis schon ab −35 %:** Ab etwa −35 % braucht es über +54 % Anstieg, um wieder bei null zu sein. Die Break-even-Karte zeigt dann, dass manche die Position auflösen und bei Bedarf neu eröffnen, um den Verlust zu begrenzen – mit Hinweis zur Verlustverrechnung. Keine Empfehlung.
+- **Credits: neuer Abschnitt „💡 Inspiration“** – Dank an r/mauerstrassenwetten und Claude (Anthropic) als Inspirationsquelle und Coding-Helfer.
+- **🐞 Fehlerprotokoll** (Mehr → Fehlerprotokoll): sammelt technische Fehler – Benachrichtigungen, Abstürze, Skript-Fehler, Fehlermeldungen –, fasst gleiche Fehler zusammen, zeigt Fehlercodes (DK-01 … DK-99) mit bekannter Ursache und schickt sie auf Wunsch per E-Mail – du siehst die Mail vorher. Läuft komplett lokal, ohne Beträge (Zahlen werden durch # ersetzt), bleibt auf dem Handy, bis du es teilst.
+- **Benachrichtigungen nach „Aktualisieren“:** Die Hintergrund-Prüfung wurde bei jedem Speichern neu bei Android angemeldet – Android begrenzt das. Jetzt nur noch, wenn sich etwas ändert; eine Ablehnung durch Android wird erkannt und protokolliert.
+- **Desktop-Version (Docker):** zeigt jetzt automatisch dieselbe Versionsnummer wie die App; Schritt-für-Schritt-Anleitung für Windows und macOS.
+
+## 0.58 – 17.11.2026
+- **Steuertermine im Kalender** (ohne Gewähr, in den Einstellungen abschaltbar): Vorabpauschale Anfang Januar, Abgabefrist Steuererklärung 31.07., Freistellungsauftrag prüfen 01.12., Verlustbescheinigung beantragen bis 15.12.
+- **Hinweis bei großem Minus:** Ab −50 % zeigt die Break-even-Karte, dass realisierte Verluste steuerlich mit Gewinnen verrechnet werden können – nur Rechnung und Hinweis, keine Empfehlung.
+- **Benachrichtigungen:** Schlägt das Einrichten fehl, nennt die App jetzt den Grund. Ein beschädigter Schlüssel im Android-Speicher wird automatisch neu angelegt. Neuer Knopf „Android-Einstellungen öffnen“, wenn das Handy Benachrichtigungen verbietet, und ein Hinweis, wenn die Hintergrund-Prüfung nicht eingeplant ist.
+
+## 0.57 – 17.11.2026
+- **Hebel-Rechner rechnet den echten Knock-out:** Bei 10× liegt die Liquidation nicht 10 % entfernt, sondern wegen Wartungsmarge und Gebühren näher (bei Kraken Futures etwa 7,6–7,7 %). Der Rechner zieht beides ab und zeigt „−7,59 % statt −10 %“. Gewinn und Verlust an Stop und Ziel stehen jetzt nach Gebühren.
+- **Broker wählbar:** Kraken Futures (EU), Hyperliquid, Knock-out-Zertifikat (Trade Republic, Scalable, Smartbroker …) oder eigene Werte für Wartungsmarge und Gebühr. Warnung, wenn ein Hebel den Einsatz sofort auffressen würde.
+
+## 0.56 – 17.11.2026
+- Der Nachkauf-Rechner heißt jetzt **„In Tranchen kaufen“** – für einen entspannten Durchschnittspreis. Alle Texte, Knöpfe und Erklärungen angepasst.
+
+## 0.55 – 17.11.2026
+- **Break-even immer sichtbar:** In der Positionsliste steht bei jeder Position „bis Break-even +X %“ (im Minus) bzw. „Puffer −X %“ (im Plus), nach Gebühren. In der Position selbst eine eigene Kennzahl und ein Rechenbeispiel: was es braucht, um wieder bei null zu sein (mit Ziel-Kurs) – oder was ein Rücksetzer von 20 % für dich bedeutet. Dazu die Tabelle „Verlust und nötiger Anstieg“ (−50 % braucht +100 %). Nur Rechnung, keine Empfehlung.
+- **Bessere Suche:** ISIN und WKN werden jetzt über Onvista aufgelöst und landen bei der Xetra- bzw. Frankfurt-Notierung in Euro – vorher oft London/Mailand in Dollar oder Pfund. Gefunden werden jetzt auch Xetra-Gold, iShares Core DAX, ETCs (über Stuttgart) und Aktien per WKN. Die Trefferliste in der Watchlist zeigt die Euro-Notierung zuerst; Fehltreffer per WKN an fremden Börsen sind ausgeschlossen. Getestet mit 53 echten ETFs, ETCs und Aktien.
+- **Krypto ohne Euro-Paar** (z. B. NEAR, HYPE, SUI) bekommt automatisch einen Kurs über die Dollar-Notierung, in Euro umgerechnet.
+
 ## 0.54 – 16.11.2026
 - Englisch: Prozentangaben in den Rechner-Charts ohne überflüssigen Punkt („+100 %“ statt „+100. %“).
 - Store-Bilder und Store-Texte auf aktuellem Stand.
