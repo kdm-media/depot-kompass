@@ -1654,11 +1654,6 @@ function detailSeite(id) {
         <label>Zielgewicht in %<input name="ziel" inputmode="decimal" value="${i.ziel != null ? String(i.ziel).replace(".", ",") : ""}"></label>
       </div>
       <div class="zwei">
-        <label>🔔 Alarm unter € (Kurs ≤)<input name="alarmUnter" inputmode="decimal" value="${i.alarmUnter != null ? String(i.alarmUnter).replace(".", ",") : ""}"></label>
-        <label>🔔 Alarm über € (Kurs ≥)<input name="alarmUeber" inputmode="decimal" value="${i.alarmUeber != null ? String(i.alarmUeber).replace(".", ",") : ""}"></label>
-      </div>
-      <p class="klein" style="margin:0">Kurs-Alarm, z. B. Stop-, Nachkauf- oder Ziel-Marke: Bei eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy, wenn der Kurs die Marke erreicht. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.</p>
-      <div class="zwei">
         <label>Status<select name="status">${Object.entries(STATUS).map(([k, t]) =>
           `<option value="${k}" ${(i.status || "") === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <label>Kurs vom<input value="${i.kursDatum ? datum(i.kursDatum) : "–"}" disabled></label>
@@ -1671,6 +1666,7 @@ function detailSeite(id) {
         <button class="knopf" type="button" data-gewinn-aus="${esc(id)}">💰 Gewinnmitnahme</button>
         <button class="knopf" type="button" data-posgr-aus="${esc(id)}">⚖️ Positionsgröße</button>` : ""}</div>
     </form>
+    ${alarmeZu(`p:${S.aktiv}:${id}`)}
     ${notizenZu(id)}
     ${newsZu(i.name || id)}
     <datalist id="branchen">${[...new Set(Object.values(D.instrumente).map((x) => x.branche).filter(Boolean))].sort()
@@ -3656,15 +3652,16 @@ function zeichnen() {
     : ui.depotEmpfang ? depotEmpfangSeite()
     : ui.termin ? terminFormular()
     : ui.notiz ? notizFormular()
+    : ui.alarm ? alarmFormular()
     : ui.watch ? watchFormular()
     : ui.detail ? detailSeite(ui.detail)
     : { uebersicht, positionen: positionenSeite, buchungen: buchungenSeite, daten: datenSeite, depots: depotsSeite,
         kalender: kalenderSeite, watchlist: watchlistSeite, mehr: mehrSeite, notizen: notizenSeite, ki: kiSeite,
         schluessel: schluesselSeite, datenschutz: datenschutzSeite, news: newsSeite, sicherheit: sicherheitSeite,
         sachwerte: sachwerteSeite, einstellungen: einstellungenSeite, steuer: steuerSeite, feedback: feedbackSeite, hinweise: hinweiseSeite, unterstuetzen: unterstuetzenSeite, fehlerprotokoll: fehlerprotokollSeite }[ui.seite]());
-  if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.termin && !ui.vorschau && ui.seite === "uebersicht")
+  if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.alarm && !ui.termin && !ui.vorschau && ui.seite === "uebersicht")
     inhalt.insertAdjacentHTML("beforeend", `<button class="fab" data-plus="auf" aria-label="Hinzufügen: Datei, Depot, Buchung, Sachwert">+</button>`);
-  else if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.termin && !ui.vorschau && ["positionen", "buchungen"].includes(ui.seite) && D.buchungen.length)
+  else if (!ui.formular && !ui.detail && !ui.notiz && !ui.watch && !ui.alarm && !ui.termin && !ui.vorschau && ["positionen", "buchungen"].includes(ui.seite) && D.buchungen.length)
     inhalt.insertAdjacentHTML("beforeend", `<button class="fab" data-neu="buchung" aria-label="Neue Buchung">+</button>`);
   document.getElementById("titel").textContent = ui.seite === "uebersicht" && !ui.detail && gesamtAnsicht() ? (ui.person ? ui.person + " – alle Depots" : personen().length > 1 ? "Haushalt" : "Alle Depots")
     : D.name + (D.rolle === "beobachtet" ? " 👁" : "");
@@ -3680,6 +3677,7 @@ window.zurueck = () => {
   if (ui.einfuehrung === 1) return false;
   if (ui.plus || ui.depotEdit) { ui.plus = null; ui.depotEdit = null; zeichnen(); return true; }
   if (ui.sachwert) { ui.sachwert = null; zeichnen(); return true; }
+  if (ui.alarm) { ui.alarm = null; ui.alarmEntwurf = null; zeichnen(); return true; }
   if (ui.notiz) { ui.notiz = null; zeichnen(); return true; }
   if (ui.termin) { ui.termin = null; zeichnen(); return true; }
   if (ui.zuordnung) { ui.zuordnung = null; zeichnen(); return true; }
@@ -3976,7 +3974,6 @@ document.addEventListener("submit", async (e) => {
     const kurs = zahl(f.get("kurs"));
     if (kurs !== i.kurs) { i.kurs = kurs; i.kursDatum = kurs != null ? heute() : null; }
     i.ziel = zahl(f.get("ziel"));
-    if (f.has("alarmUnter")) { i.alarmUnter = zahl(f.get("alarmUnter")) ?? undefined; i.alarmUeber = zahl(f.get("alarmUeber")) ?? undefined; }
     sichern(); meldung("Gespeichert."); return zeichnen();
   }
   if (e.target.id === "buchung-form") {

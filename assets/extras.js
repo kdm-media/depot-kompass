@@ -8,10 +8,15 @@
 const WATCH_ARTEN = ["Aktie", "ETF", "Zertifikat", "Optionsschein", "Anleihe", "Krypto", "Rohstoff", "Index", "Sonstiges"];
 
 function watchlistSeite() {
+  const nAlarme = alarme().length;
+  const reiter = `<div class="reiter" style="margin:8px 0 0">
+      <button data-watch-reiter="werte" class="${ui.watchReiter !== "alarme" ? "aktiv" : ""}">Werte</button>
+      <button data-watch-reiter="alarme" class="${ui.watchReiter === "alarme" ? "aktiv" : ""}">🔔 Alarme${nAlarme ? ` (${nAlarme})` : ""}</button></div>`;
+  if (ui.watchReiter === "alarme") return `${posReiter()}${reiter}${alarmSeite()}`;
   const liste = [...(S.watchlist || [])].sort((a, b) => (a.name || "").localeCompare(b.name || "", "de"));
   const signale = liste.filter((w) => watchSignal(w)).length;
-  return `${posReiter()}
-    <h2>Watchlist <span>${liste.length}${signale ? ` · <span class="warn-t">${signale} an der Marke</span>` : ""}</span></h2>
+  return `${posReiter()}${reiter}
+    <h2>Watchlist <span>${liste.length}${signale ? ` · <span class="warn-t">${signale} mit Alarm</span>` : ""}</span></h2>
     <section class="karte liste">${liste.map(watchZeile).join("") ||
       `<p class="klein" style="margin:8px">Noch leer. Unten rechts auf + tippen und Aktien, ETFs, Zertifikate (WKN/ISIN) oder Krypto eintragen.</p>`}</section>
     <p class="klein">Zertifikate ohne Kurs: Kurs von Hand eintragen.</p>
@@ -20,9 +25,8 @@ function watchlistSeite() {
 
 function watchSignal(w) {
   if (w.kurs == null) return "";
-  if (w.kaufMarke != null && w.kurs <= w.kaufMarke) return "Kaufmarke erreicht";
-  if (w.verkaufMarke != null && w.kurs >= w.verkaufMarke) return "Verkaufsmarke erreicht";
-  return "";
+  const l = alarmeErreicht("w:" + w.id);
+  return l.length ? "🔔 " + l.map((a) => a.name).join(", ") : "";
 }
 
 function watchZeile(w) {
@@ -32,7 +36,7 @@ function watchZeile(w) {
     <button class="zeile" data-watch="${esc(w.id)}">
       <span class="mono">${w.art === "Krypto" ? "₿" : esc(kuerzel(w.name))}</span>
       <span style="min-width:0">
-        <span class="titel">${esc(w.name)}${sig ? `<span class="marke-status st-pruefen">${esc(sig)}</span>` : ""}</span>
+        <span class="titel">${esc(w.name)}${sig ? `<span class="marke-status st-pruefen" data-kein-tr>${esc(sig)}</span>` : ""}</span>
         <span class="unter">${esc(w.art)} · ${esc(w.kennung || w.ticker || "")}${w.ticker && w.ticker !== w.kennung ? " → " + esc(w.ticker) : ""}${
           !w.ticker && !w.kursHand ? ' · <span class="warn-t">Ticker wählen</span>' : ""}</span>
       </span>
@@ -55,14 +59,7 @@ function watchFormular() {
         <label>WKN, ISIN oder Ticker<input name="kennung" value="${esc(w.kennung || "")}" placeholder="z. B. 723610, DE0007236101, SIE.DE, BTC" autocapitalize="characters"></label>
         <label>Art<select name="art">${WATCH_ARTEN.map((a) => `<option ${w.art === a ? "selected" : ""}>${a}</option>`).join("")}</select></label>
       </div>
-      <div class="zwei">
-        <label>Kaufmarke € (Kurs ≤)<input name="kaufMarke" inputmode="decimal" value="${z(w.kaufMarke)}"></label>
-        <label>Verkaufsmarke € (Kurs ≥)<input name="verkaufMarke" inputmode="decimal" value="${z(w.verkaufMarke)}"></label>
-      </div>
-      ${legende(["<b>Kaufmarke</b> = dein Wunschkurs zum Kaufen. Fällt der Kurs auf oder unter die Marke, steht in der Watchlist „Kaufmarke erreicht“.",
-        "<b>Verkaufsmarke</b> = dein Wunschkurs zum Verkaufen. Steigt der Kurs auf oder über die Marke, steht dort „Verkaufsmarke erreicht“.",
-        "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄).",
-        "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.", "Beide Felder sind freiwillig – leer lassen heißt: keine Marke."], "ℹ️ So funktionieren die Marken")}
+      <p class="klein" style="margin:0">🔔 Alarme (Marken, Zonen, Bewegung in %) für diesen Wert stellst du unten unter „Alarme“ oder in der Watchlist im Reiter „🔔 Alarme“ ein.</p>
       <div class="zwei">
         <label>Kurs € (leer = automatisch)<input name="kurs" inputmode="decimal" value="${w.kursHand ? z(w.kurs) : ""}" placeholder="${w.kurs != null && !w.kursHand ? fZahl.format(w.kurs) : ""}"></label>
         <label>Ticker<input name="ticker" id="watch-ticker" value="${esc(w.ticker || "")}" placeholder="über „Ticker suchen“ wählen"></label>
@@ -78,7 +75,7 @@ function watchFormular() {
         ${!neu ? `<button class="knopf" type="button" data-notiz-neu="w:${esc(w.id)}">+ Notiz</button>
         <button class="knopf gefahr" type="button" data-watch-loeschen="${esc(w.id)}">Entfernen</button>` : ""}</div>
     </form>
-    ${!neu ? notizenZu("w:" + w.id) : ""}`;
+    ${!neu ? alarmeZu("w:" + w.id) + notizenZu("w:" + w.id) : ""}`;
 }
 
 const ONVISTA_ART = { STOCK: "Aktie", FUND: "ETF / Fonds", DERIVATIVE: "ETC / Zertifikat", BOND: "Anleihe", INDEX: "Index", CURRENCY: "Devise", PRECIOUS_METAL: "Edelmetall" };
@@ -368,10 +365,14 @@ const kurz = (x) => x == null || !isFinite(x) ? "–" : fZahl.format(rund(x, x >
 function kiDaten(richtung, extra = {}) {
   const z = [];
   if (richtung === "watchlist") {
-    z.push("Watchlist (Abstand Kurs zu Kaufmarke / Verkaufsmarke):");
+    z.push("Watchlist (mit gesetzten Alarmen; Abstand = wie weit der Kurs noch laufen muss):");
     for (const w of S.watchlist || []) {
-      const ab = (m) => m != null && w.kurs != null ? `${kz((w.kurs / m - 1) * 100)} %` : "–";
-      z.push(`- ${w.name} (${w.art}): zur Kaufmarke ${ab(w.kaufMarke)}, zur Verkaufsmarke ${ab(w.verkaufMarke)}`);
+      const al = alarme().filter((a) => a.bezug === "w:" + w.id && a.an !== false).map((a) => {
+        const st = alarmStand(a, w.kurs);
+        return `${a.name} ${a.art === "unter" ? "unter " + kurz(a.wert) : a.art === "ueber" ? "über " + kurz(a.wert) : a.art === "zone" ? "Zone " + kurz(a.von) + "–" + kurz(a.bis) : kz(a.prozent) + " %"}`
+          + (st.erreicht ? " (erreicht)" : st.abstand != null ? ` (noch ${kz(st.abstand)} %)` : "");
+      });
+      z.push(`- ${w.name} (${w.art})${al.length ? ": " + al.join("; ") : ""}`);
     }
     return z.join("\n");
   }
@@ -1173,7 +1174,7 @@ document.addEventListener("click", (e) => {
   if ((x = t("[data-watch]"))) { ui.watch = x.dataset.watch; ui.treffer = null; ui.watchEntwurf = null; zeichnen(); return scrollTo(0, 0); }
   if ((x = t("[data-watch-loeschen]"))) {
     if (!confirm("Von der Watchlist entfernen?")) return;
-    S.watchlist = S.watchlist.filter((w) => w.id !== x.dataset.watchLoeschen); ui.watch = null; sichern(); return zeichnen();
+    S.watchlist = S.watchlist.filter((w) => w.id !== x.dataset.watchLoeschen); S.alarme = alarme().filter((a) => a.bezug !== "w:" + x.dataset.watchLoeschen); ui.watch = null; sichern(); return zeichnen();
   }
   if ((x = t("[data-notiz-neu]"))) { ui.notiz = { bezug: x.dataset.notizNeu }; zeichnen(); return scrollTo(0, 0); }
   if ((x = t("[data-notiz]"))) { ui.notiz = { id: x.dataset.notiz }; zeichnen(); return scrollTo(0, 0); }
@@ -1247,8 +1248,7 @@ document.addEventListener("submit", (e) => {
     const w = neu ? { id: neueId("w"), aufgenommen: heute() } : S.watchlist.find((x) => x.id === ui.watch);
     const kennung = String(f.get("kennung") || "").trim().toUpperCase();
     if (!neu && kennung !== (w.kennung || "")) { w.ticker = ""; w.verlauf = null; w.termine = null; w.kursStart = null; }
-    Object.assign(w, { name: String(f.get("name")).trim(), kennung, art: f.get("art"), notiz: String(f.get("notiz") || "").trim(),
-      kaufMarke: zahl(f.get("kaufMarke")), verkaufMarke: zahl(f.get("verkaufMarke")) });
+    Object.assign(w, { name: String(f.get("name")).trim(), kennung, art: f.get("art"), notiz: String(f.get("notiz") || "").trim() });
     const tk = String(f.get("ticker") || "").trim();
     if (tk) w.ticker = tk;
     const kurs = zahl(f.get("kurs"));
@@ -1760,11 +1760,10 @@ document.addEventListener("input", (ev) => { if (ev.target.id === "ki-rueck") ui
 const HINWEIS_STD = { an: false, kurse: true, schwelle: 5, earnings: true, news: false, marken: true, stunden: 12 };
 const hinweise = () => ({ ...HINWEIS_STD, ...(EIN().hinweise || {}) });
 
-/** Alle Werte aus allen Depots (mit Bestand) und der Watchlist - Name, Ticker, kommende Earnings, Kurs-Marken in Euro (0.61).
- *  Marken: art "kauf"/"unter" = melden bei Kurs <= Wert, "verkauf"/"ueber" = bei Kurs >= Wert. Nur Werte mit Yahoo-Ticker. */
+/** Alle Werte aus allen Depots (mit Bestand) und der Watchlist - Name, Ticker, kommende Earnings - plus (0.62) alle
+ *  eingeschalteten Alarme mit Yahoo-Ticker als "marken": { id, name, art: unter|ueber|zone|prozent, wert, von, bis, prozent, basis, text }. */
 function wachterWerte() {
   const m = new Map(), offen = D;
-  const marke = (liste, art, wert) => { if (wert != null && wert > 0 && !liste.some((x) => x.art === art && x.wert === wert)) liste.push({ art, wert }); };
   try {
     for (const d of Object.values(S.depots || {})) {
       if (d.beobachtet) continue;
@@ -1772,21 +1771,22 @@ function wachterWerte() {
       for (const p of positionen().liste) {
         const i = p.inst || {};
         if (!i.ticker && !(i.termine?.earnings || []).length) continue;
-        const key = i.ticker || p.name;
-        const e = m.get(key) || { name: p.name, ticker: i.ticker || "", earnings: (i.termine?.earnings || []).filter((x) => x >= heute()).slice(0, 4),
-          suche: typeof newsBegriff === "function" ? newsBegriff(p.name) : p.name, news: !["ETF", "Fonds"].includes(i.art), marken: [] };
-        if (i.ticker) { marke(e.marken, "unter", i.alarmUnter); marke(e.marken, "ueber", i.alarmUeber); }
-        m.set(key, e);
+        m.set(i.ticker || p.name, { name: p.name, ticker: i.ticker || "", earnings: (i.termine?.earnings || []).filter((x) => x >= heute()).slice(0, 4),
+          suche: typeof newsBegriff === "function" ? newsBegriff(p.name) : p.name, news: !["ETF", "Fonds"].includes(i.art), marken: [] });
       }
     }
   } finally { D = offen; }
-  for (const w of S.watchlist || []) {
-    if (!w.ticker || w.kursHand) continue;
-    const e = m.get(w.ticker) || { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: true, marken: [] };
-    marke(e.marken, "kauf", w.kaufMarke); marke(e.marken, "verkauf", w.verkaufMarke);
+  for (const w of S.watchlist || []) if (w.ticker && !w.kursHand && !m.has(w.ticker))
+    m.set(w.ticker, { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: true, marken: [] });
+  for (const a of alarme()) {
+    if (a.an === false) continue;
+    const w = alarmWert(a.bezug);
+    if (!w || !w.ticker) continue;
+    const e = m.get(w.ticker) || { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: false, marken: [] };
+    e.marken.push({ id: a.id, name: a.name, art: a.art, wert: a.wert, von: a.von, bis: a.bis, prozent: a.prozent, basis: a.basis, text: tr(alarmBedingung(a, true)) });
     m.set(w.ticker, e);
   }
-  // Werte mit Marken zuerst, damit sie bei mehr als 60 Werten sicher geprueft werden
+  // Werte mit Alarmen zuerst, damit sie bei mehr als 60 Werten sicher geprueft werden
   return [...m.values()].sort((a, b) => (b.marken.length > 0) - (a.marken.length > 0)).slice(0, 60);
 }
 
@@ -1797,7 +1797,7 @@ function wachterAbgleich() {
   const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, kurse: h.kurse, earnings: h.earnings, news: h.news, marken: h.marken, sprache: sprache(),
     texte: { kanal: tr("Depot-Kompass – Hinweise"), earningsHeute: tr("Earnings heute"), earningsMorgen: tr("Earnings morgen"), seitGestern: tr("seit dem letzten Schlusskurs"),
       eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen"),
-      kauf: tr("Kaufmarke erreicht"), verkauf: tr("Verkaufsmarke erreicht"), unter: tr("Alarm-Marke unterschritten"), ueber: tr("Alarm-Marke überschritten"), kursJetzt: tr("Kurs jetzt") },
+      kursJetzt: tr("Kurs jetzt") },
     werte: wachterWerte() }));
   if (!ok) {
     let grund = ""; try { grund = APP.wachterFehler ? APP.wachterFehler() : ""; } catch { /* alte Fassung */ }
@@ -1828,7 +1828,7 @@ function hinweiseSeite() {
     <section class="karte liste">
       ${zeile("hinweis-an", "Benachrichtigungen an", "ab Werk aus", h.an && !aus)}
       ${zeile("hinweis-kurse", "Starke Kursbewegung", "Veränderung seit dem letzten Schlusskurs", h.kurse)}
-      ${zeile("hinweis-marken", "Kurs-Alarme (Marken)", "Kauf-/Verkaufsmarke aus der Watchlist, Alarm-Marken aus den Positionen", h.marken)}
+      ${zeile("hinweis-marken", "Alarme", "deine Alarme aus Watchlist → 🔔 Alarme (Marken, Zonen, Bewegung in %)", h.marken)}
       ${zeile("hinweis-earnings", "Earnings heute oder morgen", "Termine aus „Kurse & Daten aktualisieren“", h.earnings)}
       ${zeile("hinweis-news", "Neue Schlagzeilen", "Google News, Suche nach dem Namen (ohne ETFs)", h.news)}
     </section>
@@ -1983,7 +1983,7 @@ function unterstuetzenSeite() {
         <li><b>Tesseract OCR</b> (tesseract-core 5.1.1, WebAssembly) – Texterkennung für Screenshots · Apache-2.0</li>
         <li><b>Tesseract-Sprachdaten Deutsch</b> (tessdata_best) – Apache-2.0</li>
       </ul>
-      <p class="klein">Alles andere (Rechnen, PDF-Lesen, Charts, Verschlüsselung, ZIP) ist eigener Code ohne fremde Bibliotheken. Die App nutzt keine Google-Dienste.</p>
+      <p class="klein">Alles andere (Rechnen, PDF-Lesen, Charts, Verschlüsselung, ZIP) ist eigener Code ohne fremde Bibliotheken. Keine Google-Play-Dienste, keine Tracker – Google News und Gemini nur auf Knopfdruck.</p>
       <p class="klein"><b>Datenquellen</b> – nur auf Knopfdruck und nur, wenn Internet erlaubt ist:</p>
       <ul class="klein">
         <li><b>Yahoo Finance</b> – Kurse, Kursverlauf, Termine, Earnings, Schlagzeilen</li>
@@ -2084,4 +2084,301 @@ document.addEventListener("click", (ev) => {
   const inhalt = `Depot-Kompass ${appVersion()} · ${geraet}\n\n` + protokollText();
   if (APP && APP.teilen) { if (!APP.teilen("depot-kompass-fehlerprotokoll.txt", "text/plain", inhalt, false)) meldung("Teilen ging nicht."); }
   else { try { navigator.clipboard.writeText(inhalt); meldung("In die Zwischenablage kopiert."); } catch { meldung("Kopieren ging nicht – bitte von Hand markieren."); } }
+});
+
+// ------------------------------------------------------------ Alarme (ab 0.62)
+// Vorgabe 17.11.: eigener Reiter in der Watchlist, mehrere benannte Alarme je Wert, Marke unter/ueber, Zone von-bis,
+// Bewegung in %. Werte aus Watchlist und eigenen Depots. Alte Kauf-/Verkaufsmarke und "Alarm unter/ueber" werden uebernommen.
+// S.alarme = [{ id, name, bezug: "w:<watchId>" | "p:<depotId>:<instId>", art: unter|ueber|zone|prozent, wert, von, bis, prozent, basis, an, erstellt }]
+const ALARM_ARTEN = { unter: "Kurs fällt unter", ueber: "Kurs steigt über", zone: "Kurs in Zone (von–bis)", prozent: "Bewegung in % seit dem Setzen" };
+
+function alarme() {
+  const l = (S.alarme ??= []);
+  // Uebernahme der alten Felder (Watchlist bis 0.61, Positionen 0.61) - laeuft bei jedem Aufruf, auch nach Import alter Sicherungen
+  for (const w of S.watchlist || []) {
+    if (w.kaufMarke != null) l.push({ id: neueId("a"), name: "Kaufmarke", bezug: "w:" + w.id, art: "unter", wert: w.kaufMarke, an: true, erstellt: heute() });
+    if (w.verkaufMarke != null) l.push({ id: neueId("a"), name: "Verkaufsmarke", bezug: "w:" + w.id, art: "ueber", wert: w.verkaufMarke, an: true, erstellt: heute() });
+    delete w.kaufMarke; delete w.verkaufMarke;
+  }
+  for (const [did, d] of Object.entries(S.depots || {}))
+    for (const [iid, i] of Object.entries(d.instrumente || {})) {
+      if (i.alarmUnter != null) l.push({ id: neueId("a"), name: "Alarm unter", bezug: `p:${did}:${iid}`, art: "unter", wert: i.alarmUnter, an: true, erstellt: heute() });
+      if (i.alarmUeber != null) l.push({ id: neueId("a"), name: "Alarm über", bezug: `p:${did}:${iid}`, art: "ueber", wert: i.alarmUeber, an: true, erstellt: heute() });
+      delete i.alarmUnter; delete i.alarmUeber;
+    }
+  // eingefuegte "prozent"-Alarme ohne Ausgangskurs bekommen ihn, sobald der Wert einen Kurs hat
+  for (const a of l) if (a.art === "prozent" && !(a.basis > 0)) { const w = alarmWert(a.bezug); if (w && w.kurs > 0) { a.basis = w.kurs; a.basisBezug = a.bezug; } }
+  return l;
+}
+
+/** Wert hinter einem Alarm: Name, Ticker (nur wenn Yahoo-Kurs), Kurs in Euro, Herkunft. */
+function alarmWert(bezug) {
+  const [typ, a, b] = String(bezug || "").split(":");
+  if (typ === "w") {
+    const w = (S.watchlist || []).find((x) => x.id === a);
+    return w ? { name: w.name, ticker: w.kursHand ? "" : (w.ticker || ""), kurs: w.kurs, herkunft: "Watchlist" } : null;
+  }
+  if (typ === "p") {
+    const d = S.depots?.[a], i = d?.instrumente?.[b];
+    return i ? { name: i.name || b, ticker: i.ticker || "", kurs: i.kurs, herkunft: d.name } : null;
+  }
+  return null;
+}
+
+/** Alle waehlbaren Werte: Watchlist und alle Depots (Werte mit Kurs oder Ticker). */
+function alarmWerteListe() {
+  const l = (S.watchlist || []).map((w) => ({ bezug: "w:" + w.id, name: w.name, herkunft: "Watchlist" }));
+  for (const [did, d] of Object.entries(S.depots || {}))
+    for (const [iid, i] of Object.entries(d.instrumente || {}))
+      if (i.ticker || i.kurs != null) l.push({ bezug: `p:${did}:${iid}`, name: i.name || iid, herkunft: d.name });
+  return l.sort((x, y) => (x.name || "").localeCompare(y.name || "", "de"));
+}
+
+/** Zustand eines Alarms beim aktuellen Kurs: erreicht ja/nein und Abstand in % (positiv = Kurs muss steigen). */
+function alarmStand(a, kurs) {
+  if (kurs == null || !(kurs > 0)) return { erreicht: false, abstand: null };
+  if (a.art === "unter") return { erreicht: kurs <= a.wert, abstand: (a.wert / kurs - 1) * 100 };
+  if (a.art === "ueber") return { erreicht: kurs >= a.wert, abstand: (a.wert / kurs - 1) * 100 };
+  if (a.art === "zone") {
+    const lo = Math.min(a.von, a.bis), hi = Math.max(a.von, a.bis);
+    return { erreicht: kurs >= lo && kurs <= hi, abstand: kurs < lo ? (lo / kurs - 1) * 100 : kurs > hi ? (hi / kurs - 1) * 100 : 0 };
+  }
+  if (a.art === "prozent" && a.basis > 0) {
+    const jetzt = (kurs / a.basis - 1) * 100;
+    return { erreicht: a.prozent < 0 ? jetzt <= a.prozent + 1e-9 : jetzt >= a.prozent - 1e-9, abstand: null, bewegung: jetzt };   // 1e-9: Rundung (90/100-1 = -9,999…)
+  }
+  return { erreicht: false, abstand: null };
+}
+
+/** Bedingung als kurzer Text (Euro). */
+function alarmBedingung(a, roh = false) {
+  // roh: fuer die Benachrichtigung - nie verdeckt (Schalter "Betraege aus" gilt nur fuer die Anzeige)
+  const k = (x) => roh ? fEur.format(x) : kursE(x), p = (x) => roh ? (x > 0 ? "+" : "") + fPct.format(x) + " %" : pct(x);
+  if (a.art === "unter") return `unter ${k(a.wert)}`;
+  if (a.art === "ueber") return `über ${k(a.wert)}`;
+  if (a.art === "zone") return `Zone ${k(Math.min(a.von, a.bis))} – ${k(Math.max(a.von, a.bis))}`;
+  if (a.art === "prozent") return `${p(a.prozent)} ab ${k(a.basis)}`;
+  return "";
+}
+
+/** Erreichte, eingeschaltete Alarme eines Bezugs (fuer die Markierung in der Watchlist). */
+function alarmeErreicht(bezug) {
+  const w = alarmWert(bezug);
+  return alarme().filter((a) => a.bezug === bezug && a.an !== false && w && alarmStand(a, w.kurs).erreicht);
+}
+
+function alarmZeile(a) {
+  const w = alarmWert(a.bezug);
+  const st = alarmStand(a, w?.kurs);
+  const zustand = a.an === false ? `<span class="marke-status st-ok">aus</span>`
+    : st.erreicht ? `<span class="marke-status st-pruefen">erreicht</span>` : "";
+  const abstand = st.bewegung != null ? `<span>bisher ${pct(st.bewegung)}</span>`
+    : st.abstand != null && !st.erreicht ? `<span>noch ${pct(st.abstand)}</span>` : "";
+  return `
+    <button class="zeile" data-alarm="${esc(a.id)}" style="grid-template-columns:minmax(0,1fr) auto">
+      <span style="min-width:0"><span class="titel"><span data-kein-tr>${esc(a.name || "Alarm")}</span>${zustand}</span>
+        <span class="unter"><span data-kein-tr>${esc(w ? w.name : "Wert fehlt")}</span> · <span>${alarmBedingung(a)}</span>${w && !w.ticker ? ' · <span class="warn-t">ohne Ticker: nur in der App</span>' : ""}</span></span>
+      <span class="rechts"><b>${w && w.kurs != null ? kursE(w.kurs) : "kein Kurs"}</b>${abstand}</span>
+    </button>`;
+}
+
+/** Reiter "🔔 Alarme" der Watchlist. */
+function alarmSeite() {
+  const l = [...alarme()].sort((x, y) => ((alarmWert(x.bezug)?.name || "").localeCompare(alarmWert(y.bezug)?.name || "", "de")) || (x.name || "").localeCompare(y.name || "", "de"));
+  const erreicht = l.filter((a) => a.an !== false && alarmStand(a, alarmWert(a.bezug)?.kurs).erreicht).length;
+  return `
+    <h2>Alarme <span>${l.length}${erreicht ? ` · <span class="warn-t">${erreicht} erreicht</span>` : ""}</span></h2>
+    <section class="karte liste">${l.map(alarmZeile).join("") ||
+      `<p class="klein" style="margin:8px">Noch keine Alarme. Unten rechts auf + tippen: Wert wählen, Namen geben (z. B. „Kaufzone“, „Stop“, „Ziel 1“) und Marke, Zone oder Bewegung in % festlegen. Pro Wert gehen beliebig viele Alarme.</p>`}</section>
+    <div class="zwei"><button class="knopf" data-alarm-import="auf">📥 Alarme einfügen</button>
+      <button class="knopf" data-alarm-teilen="alle" ${l.length ? "" : "disabled"}>📤 Alle teilen</button></div>
+    ${ui.alarmImport ? `<section class="karte formular" style="margin-top:10px">
+      <label>Alarme als Text einfügen (eine Zeile je Alarm)<textarea id="alarm-import-text" rows="7" placeholder="Bitcoin | BTC-EUR | Kaufzone | zone 54.000 bis 56.000"></textarea></label>
+      <p class="klein" style="margin:0">Aufbau: <b>Wert | Ticker | Name | Bedingung</b>. Bedingung: „unter 1.300“, „über 1.650“, „zone 1.380 bis 1.420“ oder „prozent -10“. Gibt es den Wert noch nicht, kommt er in die Watchlist. Der Text enthält nur Namen und Kurse – keine Beträge.</p>
+      <div class="zwei"><button class="knopf haupt" data-alarm-import="los">Übernehmen</button><button class="knopf" data-alarm-import="zu">Abbrechen</button></div></section>` : ""}
+    ${legende(["Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄) – erreichte Alarme stehen hier und in der Watchlist.",
+      "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich. Android prüft dafür nur alle paar Stunden – kein Sekunden-Alarm wie in einer Trading-App.",
+      "Ein Alarm meldet sich einmal und ist wieder scharf, sobald der Kurs die Marke oder Zone verlassen hat.",
+      "Werte ohne Yahoo-Ticker (z. B. Zertifikate, Handkurs) prüft nur die App selbst, nicht der Hintergrund.",
+      "Teilen und Einfügen geht als einfacher Text (unverschlüsselt) – so kannst du einzelne Alarme weitergeben oder dir selbst schicken. Er enthält nur Wert, Ticker, Name und Kurs-Marken."], "ℹ️ So funktionieren die Alarme")}
+    <button class="fab" data-alarm="neu" aria-label="Alarm hinzufügen">+</button>`;
+}
+
+/** Kleine Liste der Alarme eines Werts (Watchlist-Eintrag oder Position) mit "+ Alarm". */
+function alarmeZu(bezug) {
+  const l = alarme().filter((a) => a.bezug === bezug);
+  return `<h2>🔔 Alarme</h2>
+    <section class="karte liste">${l.map(alarmZeile).join("") || `<p class="klein" style="margin:8px">Noch kein Alarm für diesen Wert.</p>`}
+      <div style="padding:8px"><button class="knopf" type="button" data-alarm="neu" data-alarm-bezug="${esc(bezug)}" style="width:100%">+ Alarm für diesen Wert</button></div></section>`;
+}
+
+function alarmFormular() {
+  const neu = ui.alarm === "neu";
+  const a = ui.alarmEntwurf ??= neu ? { name: "", bezug: ui.alarmBezug || "", art: "unter", an: true }
+    : { ...(alarme().find((x) => x.id === ui.alarm) || {}) };
+  const z = (x) => x != null ? String(x).replace(".", ",") : "";
+  const w = alarmWert(a.bezug);
+  const werte = alarmWerteListe();
+  const feld = (art, html) => a.art === art ? html : "";
+  return `
+    <h2><button class="knopf klein" data-los="zurueck">‹ Zurück</button><span>${neu ? "Neuer Alarm" : "Alarm"}</span></h2>
+    <form class="karte formular" id="alarm-form">
+      <label>Wert<select name="bezug" data-alarm-feld required><option value="">– Wert wählen –</option>${werte.map((x) =>
+        `<option value="${esc(x.bezug)}" ${x.bezug === a.bezug ? "selected" : ""}>${esc(x.name)} · ${esc(x.herkunft)}</option>`).join("")}</select></label>
+      ${w ? `<p class="klein" style="margin:0">Kurs jetzt: <b>${w.kurs != null ? kursE(w.kurs) : "kein Kurs"}</b>${!w.ticker ? ' · <span class="warn-t">ohne Ticker – nur die App prüft, kein Hintergrund-Alarm</span>' : ""}</p>` : ""}
+      <label>Name<input name="name" value="${esc(a.name || "")}" placeholder="z. B. Kaufzone, Stop, Ziel 1, Nachkauf 2" maxlength="40"></label>
+      <label>Art<select name="art" data-alarm-feld>${Object.entries(ALARM_ARTEN).map(([k, t]) => `<option value="${k}" ${a.art === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
+      ${feld("unter", `<label>Kurs € (melden bei Kurs ≤)<input name="wert" inputmode="decimal" value="${z(a.wert)}" required></label>`)}
+      ${feld("ueber", `<label>Kurs € (melden bei Kurs ≥)<input name="wert" inputmode="decimal" value="${z(a.wert)}" required></label>`)}
+      ${feld("zone", `<div class="zwei"><label>von €<input name="von" inputmode="decimal" value="${z(a.von)}" required></label>
+        <label>bis €<input name="bis" inputmode="decimal" value="${z(a.bis)}" required></label></div>
+        <p class="klein" style="margin:0">Meldet sich, sobald der Kurs in die Zone läuft – egal ob von oben oder von unten.</p>`)}
+      ${feld("prozent", `<label>Bewegung in % (z. B. −10 oder 15)<input name="prozent" inputmode="decimal" value="${z(a.prozent)}" required></label>
+        ${a.basis || w?.kurs != null ? `<p class="klein" style="margin:0">Gerechnet ab dem Kurs beim Speichern: <b>${kursE(a.basis || w.kurs)}</b></p>` : ""}
+        <p class="klein" style="margin:0">Minus = Rückgang, Plus = Anstieg.</p>`)}
+      <label class="zeile" style="grid-template-columns:minmax(0,1fr) auto;cursor:pointer;padding:0">
+        <span>Alarm eingeschaltet</span><input type="checkbox" name="an" ${a.an !== false ? "checked" : ""} style="width:26px;height:26px"></label>
+      <div class="knoepfe"><button class="knopf haupt" type="submit">Speichern</button>
+        ${!neu ? `<button class="knopf" type="button" data-alarm-teilen="${esc(ui.alarm)}">📤 Teilen</button>
+        <button class="knopf gefahr" type="button" data-alarm-loeschen="${esc(ui.alarm)}">Löschen</button>` : ""}</div>
+    </form>`;
+}
+
+/** Formularstand in den Entwurf uebernehmen (bei Wechsel von Wert oder Art neu zeichnen). */
+function alarmEntwurfLesen() {
+  const f = document.getElementById("alarm-form");
+  if (!f || !ui.alarmEntwurf) return;
+  const d = new FormData(f), a = ui.alarmEntwurf;
+  a.bezug = String(d.get("bezug") || ""); a.name = String(d.get("name") || "").trim(); a.art = String(d.get("art") || "unter"); a.an = !!d.get("an");
+  for (const k of ["wert", "von", "bis", "prozent"]) if (d.has(k)) a[k] = zahl(d.get(k));
+}
+
+document.addEventListener("change", (e) => {
+  if (!e.target.closest("#alarm-form") || !e.target.hasAttribute("data-alarm-feld")) return;
+  alarmEntwurfLesen(); zeichnen();
+});
+document.addEventListener("click", (ev) => {
+  const t = (s) => ev.target.closest(s);
+  let x;
+  if ((x = t("[data-watch-reiter]"))) { ui.watchReiter = x.dataset.watchReiter; return zeichnen(); }
+  if ((x = t("[data-alarm]"))) {
+    ui.alarm = x.dataset.alarm; ui.alarmEntwurf = null; ui.alarmBezug = x.dataset.alarmBezug || "";
+    zeichnen(); return scrollTo(0, 0);
+  }
+  if ((x = t("[data-alarm-loeschen]"))) {
+    if (!confirm("Diesen Alarm löschen?")) return;
+    S.alarme = alarme().filter((a) => a.id !== x.dataset.alarmLoeschen);
+    ui.alarm = null; ui.alarmEntwurf = null; sichern(); meldung("Alarm gelöscht."); return zeichnen();
+  }
+});
+document.addEventListener("submit", (e) => {
+  if (e.target.id !== "alarm-form") return;
+  e.preventDefault();
+  alarmEntwurfLesen();
+  const a = ui.alarmEntwurf, w = alarmWert(a.bezug);
+  if (!w) return meldung("Bitte einen Wert wählen.");
+  if ((a.art === "unter" || a.art === "ueber") && !(a.wert > 0)) return meldung("Bitte einen Kurs eintragen.");
+  if (a.art === "zone" && !(a.von > 0 && a.bis > 0)) return meldung("Bitte die Zone (von und bis) eintragen.");
+  if (a.art === "prozent") {
+    if (!a.prozent) return meldung("Bitte eine Bewegung in % eintragen, z. B. −10.");
+    if (!a.basis || a.basisBezug !== a.bezug) {
+      if (!(w.kurs > 0)) return meldung("Für „Bewegung in %“ braucht der Wert einen Kurs – erst „Kurse & Daten aktualisieren“.");
+      a.basis = w.kurs; a.basisBezug = a.bezug;
+    }
+  }
+  const sauber = { name: a.name || { unter: "Unter-Marke", ueber: "Über-Marke", zone: "Zone", prozent: "Bewegung" }[a.art], bezug: a.bezug, art: a.art, an: a.an !== false };
+  if (a.art === "unter" || a.art === "ueber") sauber.wert = a.wert;
+  if (a.art === "zone") { sauber.von = Math.min(a.von, a.bis); sauber.bis = Math.max(a.von, a.bis); }
+  if (a.art === "prozent") { sauber.prozent = a.prozent; sauber.basis = a.basis; sauber.basisBezug = a.basisBezug; }
+  const l = alarme();
+  if (ui.alarm === "neu") l.push({ id: neueId("a"), erstellt: heute(), ...sauber });
+  else { const alt = l.find((x) => x.id === ui.alarm); if (alt) { for (const k of ["wert", "von", "bis", "prozent", "basis", "basisBezug"]) delete alt[k]; Object.assign(alt, sauber); } }
+  ui.alarm = null; ui.alarmEntwurf = null;
+  sichern(); meldung(w.ticker ? "Alarm gespeichert." : "Alarm gespeichert – ohne Ticker prüft ihn nur die App, kein Hintergrund-Alarm.");
+  return zeichnen();
+});
+
+// ------------------------------------------------------------ Alarme als Text teilen / einfuegen (0.62)
+// Eine Zeile je Alarm:  Wert | Ticker | Name | Bedingung   (Bedingung: unter X · über X · zone X bis Y · prozent P [ab B])
+// Unverschluesselt mit Absicht (Vorgabe 17.11.: "Alarme einzeln unverschluesselt importieren und exportieren") - enthaelt keine Betraege.
+const alarmZahlText = (x) => String(rund(x, 8)).replace(".", ",");
+function alarmAlsText(a) {
+  const w = alarmWert(a.bezug) || {};
+  const b = a.art === "unter" ? `unter ${alarmZahlText(a.wert)}` : a.art === "ueber" ? `über ${alarmZahlText(a.wert)}`
+    : a.art === "zone" ? `zone ${alarmZahlText(a.von)} bis ${alarmZahlText(a.bis)}`
+    : `prozent ${alarmZahlText(a.prozent)}${a.basis > 0 ? " ab " + alarmZahlText(a.basis) : ""}`;
+  return [w.name || "", w.ticker || "", a.name || "", b].map((x) => String(x).replace(/[|\n]/g, " ").trim()).join(" | ");
+}
+function alarmeTextKopf() { return "# Depot-Kompass – Alarme (Wert | Ticker | Name | Bedingung)"; }
+
+/** Text lesen -> { neu: [...], fehler: [...] }. Legt fehlende Werte als Watchlist-Eintrag an (nur wenn anwenden). */
+function alarmeAusText(text, anwenden = true) {
+  const neu = [], fehler = [];
+  for (const [n, roh] of String(text || "").split(/\r?\n/).entries()) {
+    const z = roh.trim();
+    if (!z || z.startsWith("#")) continue;
+    const t = z.split("|").map((x) => x.trim());
+    if (t.length < 4) { fehler.push(`Zeile ${n + 1}: zu wenige Teile`); continue; }
+    const [wert, ticker, name] = t, bed = t.slice(3).join(" ").replace(/\s+/g, " ");
+    const m = bed.match(/^(unter|über|ueber|zone|prozent|%)\s+(.+)$/i);
+    if (!m) { fehler.push(`Zeile ${n + 1}: Bedingung unbekannt`); continue; }
+    const art = { "über": "ueber", "%": "prozent" }[m[1].toLowerCase()] || m[1].toLowerCase();
+    const a = { name: name.slice(0, 40) || "Alarm", art, an: true };
+    if (art === "zone") {
+      const zz = m[2].split(/\s+bis\s+|\s*[–—-]\s*/i).map(zahl);
+      if (zz.length !== 2 || !(zz[0] > 0 && zz[1] > 0)) { fehler.push(`Zeile ${n + 1}: Zone unklar`); continue; }
+      a.von = Math.min(...zz); a.bis = Math.max(...zz);
+    } else if (art === "prozent") {
+      const pz = m[2].split(/\s+ab\s+/i); a.prozent = zahl(pz[0].replace("%", "")); if (pz[1]) a.basis = zahl(pz[1]);
+      if (!a.prozent) { fehler.push(`Zeile ${n + 1}: Prozent fehlt`); continue; }
+    } else { a.wert = zahl(m[2]); if (!(a.wert > 0)) { fehler.push(`Zeile ${n + 1}: Kurs fehlt`); continue; } }
+    a.wertName = wert; a.ticker = ticker.toUpperCase();
+    neu.push(a);
+  }
+  if (!anwenden) return { neu, fehler };
+  const l = alarme();
+  let angelegt = 0, doppelt = 0, ueber = 0;
+  for (const a of neu) {
+    const tk = a.ticker, nm = (a.wertName || "").toLowerCase();
+    let bezug = "";
+    const w = (S.watchlist || []).find((x) => (tk && (x.ticker || "").toUpperCase() === tk) || (!tk && (x.name || "").toLowerCase() === nm));
+    if (w) bezug = "w:" + w.id;
+    if (!bezug) for (const [did, d] of Object.entries(S.depots || {})) {
+      const e = Object.entries(d.instrumente || {}).find(([, i]) => (tk && (i.ticker || "").toUpperCase() === tk) || (!tk && (i.name || "").toLowerCase() === nm));
+      if (e) { bezug = `p:${did}:${e[0]}`; break; }
+    }
+    if (!bezug) {
+      if (!a.wertName && !tk) { fehler.push("Alarm ohne Wert übersprungen"); continue; }
+      const nw = { id: neueId("w"), aufgenommen: heute(), name: a.wertName || tk, kennung: tk, ticker: tk, art: /-(EUR|USD)$/.test(tk) ? "Krypto" : "Aktie" };
+      (S.watchlist ??= []).push(nw); bezug = "w:" + nw.id; ueber++;
+    }
+    const x = { name: a.name, bezug, art: a.art, an: true };
+    for (const k of ["wert", "von", "bis", "prozent", "basis"]) if (a[k] != null) x[k] = a[k];
+    if (x.basis) x.basisBezug = bezug;
+    if (l.some((y) => y.bezug === bezug && y.art === x.art && y.name === x.name && y.wert === x.wert && y.von === x.von && y.bis === x.bis && y.prozent === x.prozent)) { doppelt++; continue; }
+    l.push({ id: neueId("a"), erstellt: heute(), ...x }); angelegt++;
+  }
+  return { neu, fehler, angelegt, doppelt, ueber };
+}
+
+document.addEventListener("click", (ev) => {
+  let x = ev.target.closest("[data-alarm-import]");
+  if (x) {
+    const was = x.dataset.alarmImport;
+    if (was === "auf") { ui.alarmImport = true; return zeichnen(); }
+    if (was === "zu") { ui.alarmImport = false; return zeichnen(); }
+    const r = alarmeAusText(document.getElementById("alarm-import-text")?.value || "");
+    if (!r.angelegt && !r.doppelt) return meldung(r.fehler.length ? "Nichts übernommen – " + r.fehler.slice(0, 3).join(", ") : "Kein Alarm im Text gefunden.");
+    ui.alarmImport = false; sichern();
+    meldung(`${r.angelegt} Alarme übernommen` + (r.ueber ? `, ${r.ueber} Werte neu in der Watchlist` : "") + (r.doppelt ? `, ${r.doppelt} schon vorhanden` : "")
+      + (r.fehler.length ? `, ${r.fehler.length} Zeilen übersprungen` : "") + (r.ueber ? " – Kurse kommen mit „Kurse & Daten aktualisieren“." : "."));
+    return zeichnen();
+  }
+  x = ev.target.closest("[data-alarm-teilen]");
+  if (!x) return;
+  const l = x.dataset.alarmTeilen === "alle" ? alarme() : alarme().filter((a) => a.id === x.dataset.alarmTeilen);
+  if (!l.length) return;
+  const text = alarmeTextKopf() + "\n" + l.map(alarmAlsText).join("\n") + "\n";
+  if (APP && APP.teilen) { if (!APP.teilen("depot-kompass-alarme.txt", "text/plain", text, false)) meldung("Teilen ging nicht."); }
+  else { try { navigator.clipboard.writeText(text); meldung("In die Zwischenablage kopiert."); } catch { meldung("Kopieren ging nicht."); } }
 });

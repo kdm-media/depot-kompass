@@ -2,6 +2,14 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.62 – 17 Nov 2026
+- **🔔 Alerts as their own tab in the watchlist** (Watchlist → “🔔 Alerts”): any number of alerts per asset, each with its own name – e.g. “buy zone”, “stop”, “target 1”, “top-up 2”. Four types: **price falls below**, **price rises above**, **zone from–to** (notifies as soon as the price enters the zone) and **move in %** since set (e.g. −10 %). Assets from the watchlist and all your own portfolios can be chosen.
+- The list shows price, distance (“−4.6 % to go”) and “reached” for each alert; each can be switched on and off. Every watchlist entry and every position lists its alerts with “+ Alert for this asset”.
+- Previous buy/sell marks and “alert below/above” from 0.61 are turned into named alerts automatically; the old fields are gone.
+- Notification with the alert's name (“🔔 Rheinmetall – buy zone”). Android still only checks every few hours; assets without a Yahoo ticker are only checked by the app.
+- **Share and paste alerts** as plain text (deliberately unencrypted, only asset, ticker, name and price marks – no amounts): “📤 Share all” or single in the alert, “📥 Paste alerts” in the tab. One line per alert, e.g. `Bitcoin | BTC-EUR | Kaufzone | zone 54.000 bis 56.000`. Missing assets are added to the watchlist automatically, duplicates are detected.
+- Credits: “no Google Play services, no trackers – Google News and Gemini only on request” (previously the misleading “no Google services”).
+
 ## 0.61 – 17 Nov 2026
 - **🔔 Price alerts as notifications:** buy and sell marks from the watchlist now also notify you on your phone when the price reaches them – not only the next time you open the app. New on every position: **alert below / alert above** (e.g. a stop, top-up or target mark). Prices in dollars, pounds etc. are converted to euros as in the app. Each mark notifies once and is armed again as soon as the price has left it.
 - Separate switch “Price alerts (marks)” under ⚙️ → More → 🔔 Notifications. Honest note: Android only checks in the background every few hours – no second-by-second alarm like in a trading app.

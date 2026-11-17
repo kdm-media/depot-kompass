@@ -22,3 +22,18 @@ local.properties
 *.log
 # Desktop: verschluesselte Nutzerdaten
 desktop/daten/
+# Interne Projektdateien (Vorgabe 17.11.2026) - gehoeren nie ins oeffentliche Repository
+LOGBUCH.md
+TODO.md
+FAHRPLAN*.md
+VEROEFFENTLICHEN.md
+PLAN_STAND.md
+entwurf/*
+!entwurf/logo_bauen.py
+*.bak*
+annahmen.json
+TOKEN_JE_VERSION*
+kosten*.html
+privat-muster*
+erlaubte-mails*
+signatur-sicherung/

@@ -1,0 +1,1 @@
+🔔 Alerts as their own tab in the watchlist: several named alerts per asset (e.g. buy zone, stop, target 1) – mark below/above, zone from–to or move in % – for watchlist and your own positions. Old marks are carried over. Alerts can be shared and pasted as text.

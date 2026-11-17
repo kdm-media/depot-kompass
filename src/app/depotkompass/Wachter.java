@@ -217,21 +217,30 @@ public class Wachter extends JobService {
                     if (mitMarken) {
                         double eur = inEuro(jetzt, meta.optString("currency", "EUR"), fx);
                         if (!Double.isNaN(eur) && eur > 0) {
+                            // 0.62: benannte Alarme - Marke unter/ueber, Zone von-bis, Bewegung in % seit dem Setzen
                             for (int j = 0; j < marken.length(); j++) {
                                 JSONObject mk = marken.optJSONObject(j);
                                 if (mk == null) continue;
                                 String art = mk.optString("art");
-                                double wert = mk.optDouble("wert", Double.NaN);
-                                if (Double.isNaN(wert) || wert <= 0) continue;
-                                boolean unten = art.equals("kauf") || art.equals("unter");
-                                boolean erreicht = unten ? eur <= wert : eur >= wert;
-                                String mschl = "m:" + ticker + ":" + art + ":" + wert;
+                                boolean erreicht;
+                                if (art.equals("unter")) erreicht = eur <= mk.optDouble("wert", -1);
+                                else if (art.equals("ueber")) { double wert = mk.optDouble("wert", Double.NaN); erreicht = !Double.isNaN(wert) && wert > 0 && eur >= wert; }
+                                else if (art.equals("zone")) {
+                                    double von = mk.optDouble("von", Double.NaN), bis = mk.optDouble("bis", Double.NaN);
+                                    erreicht = !Double.isNaN(von) && !Double.isNaN(bis) && eur >= Math.min(von, bis) && eur <= Math.max(von, bis);
+                                } else if (art.equals("prozent")) {
+                                    double basis = mk.optDouble("basis", Double.NaN), soll = mk.optDouble("prozent", Double.NaN);
+                                    double ist = (eur / basis - 1) * 100;
+                                    erreicht = basis > 0 && !Double.isNaN(soll) && soll != 0 && (soll < 0 ? ist <= soll + 1e-9 : ist >= soll - 1e-9);
+                                } else continue;
+                                String mschl = "m:" + mk.optString("id") + ":" + art + ":" + mk.optString("wert") + ":" + mk.optString("von") + ":" + mk.optString("bis") + ":" + mk.optString("prozent");
                                 if (erreicht && !gemeldet.getBoolean(mschl, false)) {
-                                    zeigen(this, kanal, (unten ? "🎯 " : "🏁 ") + name,
-                                            t.optString(art, art) + ": " + String.format(ort, "%,.2f €", wert) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + String.format(ort, "%,.2f €", eur), nr++);
+                                    String alarmName = mk.optString("name", "");
+                                    zeigen(this, kanal, "🔔 " + name + (alarmName.isEmpty() ? "" : " – " + alarmName),
+                                            mk.optString("text", art) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + String.format(ort, "%,.2f €", eur), nr++);
                                     gemeldet.edit().putBoolean(mschl, true).apply();
                                 } else if (!erreicht && gemeldet.getBoolean(mschl, false)) {
-                                    gemeldet.edit().remove(mschl).apply();   // wieder scharf, sobald der Kurs die Marke verlassen hat
+                                    gemeldet.edit().remove(mschl).apply();   // wieder scharf, sobald der Kurs Marke/Zone verlassen hat
                                 }
                             }
                         }

@@ -2,6 +2,14 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.62 – 17.11.2026
+- **🔔 Alarme als eigener Reiter in der Watchlist** (Watchlist → „🔔 Alarme“): Pro Wert beliebig viele Alarme, jeder mit eigenem Namen – z. B. „Kaufzone“, „Stop“, „Ziel 1“, „Nachkauf 2“. Vier Arten: **Kurs fällt unter**, **Kurs steigt über**, **Zone von–bis** (meldet sich, sobald der Kurs in die Zone läuft) und **Bewegung in %** seit dem Setzen (z. B. −10 %). Wählbar sind Werte aus der Watchlist und aus allen eigenen Depots.
+- Die Liste zeigt je Alarm Kurs, Abstand („noch −4,6 %“) und „erreicht“; einzeln ein- und ausschaltbar. In jedem Watchlist-Eintrag und jeder Position stehen die eigenen Alarme mit „+ Alarm für diesen Wert“.
+- Bisherige Kauf-/Verkaufsmarken und „Alarm unter/über“ aus 0.61 werden automatisch zu benannten Alarmen; die alten Felder sind weg.
+- Benachrichtigung mit Namen des Alarms („🔔 Rheinmetall – Kaufzone“). Android prüft weiter nur alle paar Stunden; Werte ohne Yahoo-Ticker prüft nur die App.
+- **Alarme teilen und einfügen** als einfacher Text (bewusst unverschlüsselt, nur Wert, Ticker, Name und Kurs-Marken – keine Beträge): „📤 Alle teilen“ oder einzeln im Alarm, „📥 Alarme einfügen“ im Reiter. Eine Zeile je Alarm, z. B. `Bitcoin | BTC-EUR | Kaufzone | zone 54.000 bis 56.000`. Fehlende Werte kommen automatisch in die Watchlist, Doppelte werden erkannt.
+- Credits: „keine Google-Play-Dienste, keine Tracker – Google News und Gemini nur auf Knopfdruck“ (vorher missverständlich „keine Google-Dienste“).
+
 ## 0.61 – 17.11.2026
 - **🔔 Kurs-Alarme als Benachrichtigung:** Kaufmarke und Verkaufsmarke aus der Watchlist melden sich jetzt auch aufs Handy, wenn der Kurs sie erreicht – nicht erst beim nächsten Öffnen der App. Neu in jeder Position: **Alarm unter / Alarm über** (z. B. Stop-, Nachkauf- oder Ziel-Marke). Kurse in Dollar, Pfund usw. werden wie in der App in Euro umgerechnet. Jede Marke meldet sich einmal und ist wieder scharf, sobald der Kurs sie verlassen hat.
 - Eigener Schalter „Kurs-Alarme (Marken)“ unter ⚙️ → Mehr → 🔔 Benachrichtigungen. Ehrlicher Hinweis: Android prüft im Hintergrund nur alle paar Stunden – kein Sekunden-Alarm wie in einer Trading-App.

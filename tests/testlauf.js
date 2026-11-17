@@ -182,29 +182,60 @@ async function rechnen() {
     { const m = document.querySelector('#inhalt a[href^="mailto:"]'); pruefe(m && /DK-04/.test(m.getAttribute("href")), `Mail-Link: ${m ? m.getAttribute("href").slice(0, 200) : "keiner"} | ${document.getElementById("inhalt").innerHTML.slice(0, 300)}`); }
     window.__protokoll = []; zeige("uebersicht");
   }
-  // --- 0.61: Kurs-Alarme - Marken aus Watchlist und Positionen gehen an den Waechter (Werte mit Marken zuerst)
+  // --- 0.62: Alarme - Uebernahme alter Marken, vier Arten, Zone/Prozent, Waechter-Daten, Reiter + Formular
   {
-    const altW = S.watchlist;
-    S.watchlist = [...(altW || []), { id: "wtest", name: "Testwert", ticker: "TST.DE", kaufMarke: 12.5, verkaufMarke: 20 },
-                   { id: "wtest2", name: "Handkurs", ticker: "HND.DE", kaufMarke: 5, kursHand: true }];
-    let ww = wachterWerte();
-    const e = ww.find((x) => x.ticker === "TST.DE");
-    pruefe(e && e.marken.length === 2 && e.marken[0].art === "kauf" && e.marken[0].wert === 12.5 && e.marken[1].art === "verkauf" && ww[0].marken.length > 0,
-      `Watchlist-Marken fehlen: ${JSON.stringify(e)}`);
-    pruefe(!ww.some((x) => x.ticker === "HND.DE"), "Watchlist mit Handkurs darf nicht in den Wächter");
-    const pos = positionen().liste.find((p) => p.inst) ;
+    const altW = S.watchlist, altA = S.alarme;
+    S.alarme = [];
+    S.watchlist = [...(altW || []), { id: "wtest", name: "Testwert", ticker: "TST.DE", kurs: 100, kaufMarke: 90, verkaufMarke: 120 },
+                   { id: "wtest2", name: "Handkurs", ticker: "HND.DE", kurs: 5, kaufMarke: 6, kursHand: true }];
+    const pos = positionen().liste.find((p) => p.inst);
     pruefe(!!pos, "Keine Position für den Alarm-Test");
-    if (pos) {
-      const tAlt = pos.inst.ticker; if (!tAlt) pos.inst.ticker = "ALM.DE";   // Testdaten haben ggf. keinen Ticker
-      pos.inst.alarmUnter = 1.5; pos.inst.alarmUeber = 99999;
-      ww = wachterWerte();
-      const pe = ww.find((x) => x.ticker === pos.inst.ticker);
-      pruefe(pe && pe.marken.some((m) => m.art === "unter" && m.wert === 1.5) && pe.marken.some((m) => m.art === "ueber" && m.wert === 99999), `Positions-Alarm fehlt: ${JSON.stringify(pe)}`);
-      delete pos.inst.alarmUnter; delete pos.inst.alarmUeber; if (!tAlt) delete pos.inst.ticker;
-    }
-    S.watchlist = altW;
+    const tAlt = pos.inst.ticker; if (!tAlt) pos.inst.ticker = "ALM.DE";
+    pos.inst.alarmUnter = 1.5;
+    const l = alarme();
+    pruefe(l.length === 4 && l.some((a) => a.bezug === "w:wtest" && a.name === "Kaufmarke" && a.art === "unter" && a.wert === 90)
+      && l.some((a) => a.name === "Alarm unter" && a.bezug === `p:${S.aktiv}:${pos.id}`)
+      && !S.watchlist.some((w) => w.kaufMarke != null) && pos.inst.alarmUnter == null, `Übernahme alter Marken: ${JSON.stringify(l)}`);
+    // Zustaende (Sollwerte von Hand nachvollziehbar: 90/100-1 = -10 %)
+    pruefe(alarmStand({ art: "unter", wert: 90 }, 100).erreicht === false && Math.abs(alarmStand({ art: "unter", wert: 90 }, 100).abstand + 10) < 1e-9, "Abstand Marke unter");
+    pruefe(alarmStand({ art: "zone", von: 110, bis: 95 }, 100).erreicht && !alarmStand({ art: "zone", von: 95, bis: 99 }, 100).erreicht
+      && Math.abs(alarmStand({ art: "zone", von: 95, bis: 99 }, 100).abstand + 1) < 1e-9, "Zone falsch");
+    pruefe(alarmStand({ art: "prozent", prozent: -10, basis: 100 }, 90).erreicht && !alarmStand({ art: "prozent", prozent: -10, basis: 100 }, 91).erreicht
+      && alarmStand({ art: "prozent", prozent: 15, basis: 100 }, 115).erreicht, "Bewegung in % falsch");
+    l.push({ id: "az", name: "Kaufzone", bezug: "w:wtest", art: "zone", von: 95, bis: 105, an: true });
+    l.push({ id: "aaus", name: "Aus", bezug: "w:wtest", art: "ueber", wert: 50, an: false });
+    pruefe(watchSignal(S.watchlist.find((w) => w.id === "wtest")) === "🔔 Kaufzone", `Watchlist-Markierung: ${watchSignal(S.watchlist.find((w) => w.id === "wtest"))}`);
+    const ww = wachterWerte(), e = ww.find((x) => x.ticker === "TST.DE");
+    pruefe(e && e.marken.length === 3 && e.marken.some((m) => m.art === "zone" && m.von === 95 && /Zone/.test(m.text)) && !e.marken.some((m) => m.id === "aaus") && ww[0].marken.length > 0,
+      `Wächter-Daten: ${JSON.stringify(e)}`);
+    pruefe(!ww.some((x) => x.ticker === "HND.DE"), "Handkurs darf nicht in den Wächter");
+    pruefe(ww.find((x) => x.ticker === pos.inst.ticker)?.marken.some((m) => m.art === "unter" && m.wert === 1.5), "Positions-Alarm fehlt im Wächter");
+    // Reiter + Formular
+    ui.seite = "watchlist"; ui.watchReiter = "alarme"; zeichnen();
+    pruefe(/Kaufzone/.test(document.getElementById("inhalt").textContent) && document.querySelector('[data-alarm="neu"]'), "Reiter Alarme fehlt");
+    ui.alarm = "neu"; ui.alarmEntwurf = null; ui.alarmBezug = "w:wtest"; zeichnen();
+    const f = document.getElementById("alarm-form");
+    f.querySelector('[name="art"]').value = "prozent"; f.querySelector('[name="art"]').dispatchEvent(new Event("change", { bubbles: true }));
+    const f2 = document.getElementById("alarm-form");
+    pruefe(!!f2.querySelector('[name="prozent"]') && !f2.querySelector('[name="wert"]'), "Formular: Feld für % fehlt");
+    f2.querySelector('[name="name"]').value = "Rücksetzer"; f2.querySelector('[name="prozent"]').value = "-10";
+    f2.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+    const neuA = alarme().find((a) => a.name === "Rücksetzer");
+    pruefe(neuA && neuA.art === "prozent" && neuA.prozent === -10 && neuA.basis === 100 && !ui.alarm, `Alarm speichern: ${JSON.stringify(neuA)}`);
+    // Text teilen / einfuegen (0.62): Rundweg, neuer Wert -> Watchlist, Doppelte, Fehlerzeilen, deutsche Zahlen
+    const txt = alarmeTextKopf() + "\n" + alarme().filter((a) => a.bezug === "w:wtest").map(alarmAlsText).join("\n");
+    pruefe(/Testwert \| TST\.DE \| Kaufzone \| zone 95 bis 105/.test(txt) && /Rücksetzer \| prozent -10 ab 100/.test(txt), `Alarm-Text: ${txt}`);
+    const vorher = alarme().length;
+    const r1 = alarmeAusText(txt);
+    pruefe(r1.angelegt === 0 && r1.doppelt === alarme().filter((a) => a.bezug === "w:wtest").length && alarme().length === vorher, `Doppelte nicht erkannt: ${JSON.stringify(r1)}`);
+    const r2 = alarmeAusText("Solana | SOL-EUR | Kaufzone | zone 60,1 bis 62,8\nBitcoin | BTC-EUR | Stop | unter 50.009\nXRP | XRP-EUR | Rücksetzer | prozent -8\nKaputt | X | Y | irgendwas\n# Kommentar\nTestwert | TST.DE | Ziel 2 | über 1.234,5");
+    const sol = alarme().find((a) => a.name === "Kaufzone" && alarmWert(a.bezug)?.name === "Solana"), btc = alarme().find((a) => a.name === "Stop" && alarmWert(a.bezug)?.name === "Bitcoin");
+    pruefe(r2.angelegt === 4 && r2.ueber === 3 && r2.fehler.length === 1 && sol && sol.von === 60.1 && sol.bis === 62.8 && btc && btc.wert === 50009
+      && alarme().some((a) => a.bezug === "w:wtest" && a.name === "Ziel 2" && a.wert === 1234.5) && S.watchlist.some((w) => w.ticker === "XRP-EUR" && w.art === "Krypto"), `Alarm-Einfügen: ${JSON.stringify(r2)}`);
+    if (!tAlt) delete pos.inst.ticker;
+    S.watchlist = altW; S.alarme = altA; ui.watchReiter = null;
     ui.seite = "hinweise"; zeichnen();
-    pruefe(!!document.getElementById("hinweis-marken") && /kein Sekunden-Alarm/.test(document.getElementById("inhalt").textContent), "Schalter Kurs-Alarme fehlt");
+    pruefe(!!document.getElementById("hinweis-marken") && /kein Sekunden-Alarm/.test(document.getElementById("inhalt").textContent), "Schalter Alarme fehlt");
     zeige("uebersicht");
   }
   // --- 0.59: Hinweis ab -35 % (Sollwert Python: 100/0,65-100 = 53,846 %)
@@ -434,7 +465,7 @@ async function rechnen() {
       ui.posgrOffen = ui.gewinnOffen = ui.nachkaufOffen = ui.rechnerOffen = true; zeige("notizen");
       pruefe(document.querySelectorAll("#inhalt details.legende").length === 5, `Legenden auf der Notizen-Seite: ${document.querySelectorAll("#inhalt details.legende").length} statt 5`);
       ui.posgrOffen = ui.gewinnOffen = ui.nachkaufOffen = ui.rechnerOffen = false;
-      ui.watch = "neu"; zeichnen(); pruefe(/Kaufmarke erreicht/.test(document.querySelector("#watch-form details.legende")?.textContent || ""), "Legende zu den Marken fehlt im Watchlist-Formular"); ui.watch = null;
+      ui.seite = "watchlist"; ui.watchReiter = "alarme"; zeichnen(); pruefe(/einmal und ist wieder scharf/.test(document.querySelector("#inhalt details.legende")?.textContent || ""), "Legende zu den Alarmen fehlt"); ui.watchReiter = null;
       // Aktualisieren-Knopf oben neben dem Einstell-Knopf
       const kn = document.getElementById("aktualisieren-oben");
       pruefe(kn && kn.dataset.los === "kurse" && kn.nextElementSibling?.dataset.ziel === "mehr", "Aktualisieren-Knopf sitzt nicht neben dem Einstell-Knopf");
@@ -1197,6 +1228,13 @@ async function englischTest() {
     S.einstellungen.eurUsd = { kurs: 1.0842, datum: "2026-11-16" }; ui.rechnerOffen = true; ui.rechner = { richtung: "long", einstieg: "100", hebel: "5" };
     for (const k of ["posgr", "gewinn", "nachkauf"]) { try { ui[k].waehrung = "usd"; zeige("notizen"); ui[k].waehrung = "eur"; } catch (e) { f.push("Dollar " + k + ": " + e.message); } }
     ui.watch = "neu"; try { zeichnen(); } catch (e) { f.push("Watch-Formular: " + e.message); } ui.watch = null;
+    // 0.62: Alarme - Reiter, Formular in allen vier Arten, Alarme im Watchlist-Eintrag
+    try {
+      S.alarme = [{ id: "ap", name: "Rücksetzer", bezug: "w:w1", art: "prozent", prozent: -10, basis: 10, an: true }, { id: "az", name: "Zone", bezug: "w:w1", art: "zone", von: 8, bis: 11, an: false }];
+      ui.seite = "watchlist"; ui.watchReiter = "alarme"; ui.alarmImport = true; zeichnen(); ui.alarmImport = false;
+      for (const art of ["unter", "ueber", "zone", "prozent"]) { ui.alarm = "neu"; ui.alarmEntwurf = { name: "", bezug: "w:w1", art, an: true }; zeichnen(); }
+      ui.alarm = null; ui.alarmEntwurf = null; ui.watch = "w1"; zeichnen(); ui.watch = null; ui.watchReiter = null;
+    } catch (e) { f.push("Alarme: " + e.message); }
     for (const p of positionen().liste.filter((x) => !x.ohneKurs).filter((x, n, l) => x === l.find((y) => y.gv < 0) || x === l.find((y) => y.gv > 0))) {
       ui.detail = p.id; try { zeichnen(); } catch (e) { f.push("Detail " + p.name + ": " + e.message); } }
     ui.detail = null;
@@ -1491,6 +1529,15 @@ async function seitePruefen(q) {
   if (q.get("plannotiz")) { S.notizen = [{ id: "n9", titel: "Rheinmetall Gewinnmitnahme", text: "Einstand 600", datum: "2026-11-16T10:00:00Z", bezug: "",
       plan: { typ: "gewinn", daten: { art: "aktie", modus: "betrag", bestand: "3", einstand: "600", k1: "1.022", b1: "500", k2: "1.200", b2: "800" } } }]; }
   if (q.get("dollar")) { S.einstellungen.eurUsd = { kurs: 1.0842, datum: "2026-11-16" }; for (const k of ["posgr", "gewinn", "nachkauf"]) if (ui[k]) ui[k].waehrung = "usd"; }
+  if (q.get("alarme")) {
+    S.watchlist = [{ id: "w1", name: "Rheinmetall", kennung: "703000", ticker: "RHM.DE", art: "Aktie", kurs: 1488.5, aufgenommen: "2026-11-01" },
+                   { id: "w2", name: "Bitcoin", kennung: "BTC", ticker: "BTC-EUR", art: "Krypto", kurs: 79120, aufgenommen: "2026-11-01" }];
+    S.alarme = [{ id: "a1", name: "Kaufzone", bezug: "w:w1", art: "zone", von: 1380, bis: 1420, an: true }, { id: "a2", name: "Stop", bezug: "w:w1", art: "unter", wert: 1300, an: true },
+                { id: "a3", name: "Ziel 1", bezug: "w:w1", art: "ueber", wert: 1650, an: true }, { id: "a4", name: "Rücksetzer", bezug: "w:w2", art: "prozent", prozent: -10, basis: 82000, an: true },
+                { id: "a5", name: "Ausbruch", bezug: "w:w2", art: "ueber", wert: 78000, an: true }];
+    ui.watchReiter = "alarme";
+    if (q.get("alarme") === "form") { ui.alarm = "neu"; ui.alarmEntwurf = { name: "Kaufzone 2", bezug: "w:w1", art: "zone", von: 1250, bis: 1300, an: true }; }
+  }
   if (q.get("einzeln")) ui.alle = false;
   if (q.get("plus")) ui.plus = q.get("plus");
   if (q.get("bearbeiten")) ui.depotEdit = S.aktiv;

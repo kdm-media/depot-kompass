@@ -208,8 +208,8 @@ Object.assign(UEB.en, {
   "Credits": "Credits", "Open-Source-Bausteine": "Open-source components", "(in der App enthalten, laufen offline):": "(included in the app, run offline):",
   "Tesseract OCR": "Tesseract OCR", "(tesseract-core #, WebAssembly) – Texterkennung für Screenshots · Apache#": "(tesseract-core #, WebAssembly) – text recognition for screenshots · Apache#",
   "Tesseract-Sprachdaten Deutsch": "Tesseract language data German", "(tessdata_best) – Apache#": "(tessdata_best) – Apache#",
-  "Alles andere (Rechnen, PDF-Lesen, Charts, Verschlüsselung, ZIP) ist eigener Code ohne fremde Bibliotheken. Die App nutzt keine Google-Dienste.":
-    "Everything else (calculations, PDF reading, charts, encryption, ZIP) is our own code without third-party libraries. The app uses no Google services.",
+  "Alles andere (Rechnen, PDF-Lesen, Charts, Verschlüsselung, ZIP) ist eigener Code ohne fremde Bibliotheken. Keine Google-Play-Dienste, keine Tracker – Google News und Gemini nur auf Knopfdruck.":
+    "Everything else (calculations, PDF reading, charts, encryption, ZIP) is our own code without third-party libraries. No Google Play services, no trackers – Google News and Gemini only on request.",
   "Datenquellen": "Data sources", "– nur auf Knopfdruck und nur, wenn Internet erlaubt ist:": "– only at the push of a button and only if internet is allowed:",
   "Yahoo Finance": "Yahoo Finance", "– Kurse, Kursverlauf, Termine, Earnings, Schlagzeilen": "– prices, price history, dates, earnings, headlines",
   "Onvista": "Onvista", "– Kurse für Zertifikate, Optionsscheine, Anleihen (per ISIN/WKN)": "– prices for certificates, warrants, bonds (by ISIN/WKN)",
@@ -809,4 +809,44 @@ Object.assign(UEB.en, {
     "To be honest: Android only checks in the background every few hours (battery). This is not a second-by-second alarm like in a trading app – for fast stops use the order at your broker.",
   "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.":
     "With notifications switched on (⚙️ → More → 🔔) your phone also tells you when a mark is reached – Android checks for this every few hours in the background.",
+  // 0.62: Alarme
+  "Werte": "Assets", "🔔 Alarme": "🔔 Alerts", "Alarme": "Alerts", "🔔 Alarme (#)": "🔔 Alerts (#)", "erreicht": "reached", 
+  "Kurs fällt unter": "Price falls below", "Kurs steigt über": "Price rises above", "Kurs in Zone (von–bis)": "Price in zone (from–to)",
+  "Bewegung in % seit dem Setzen": "Move in % since set", "Neuer Alarm": "New alert", "Alarm": "Alert", "– Wert wählen –": "– choose asset –",
+  "Kurs € (melden bei Kurs ≤)": "Price € (notify at price ≤)", "Kurs € (melden bei Kurs ≥)": "Price € (notify at price ≥)", "von €": "from €", "bis €": "to €",
+  "Meldet sich, sobald der Kurs in die Zone läuft – egal ob von oben oder von unten.": "Notifies as soon as the price enters the zone – from above or below.",
+  "Bewegung in % (z. B. −10 oder 15)": "Move in % (e.g. −10 or 15)", "Minus = Rückgang, Plus = Anstieg.": "Minus = decline, plus = rise.",
+  "Gerechnet ab dem Kurs beim Speichern": "Calculated from the price when saved", "Alarm eingeschaltet": "Alert switched on",
+  "z. B. Kaufzone, Stop, Ziel 1, Nachkauf 2": "e.g. buy zone, stop, target 1, top-up 2", "Kurs jetzt:": "Price now:",
+  "ohne Ticker – nur die App prüft, kein Hintergrund-Alarm": "no ticker – only the app checks, no background alert",
+  "ohne Ticker: nur in der App": "no ticker: app only", "Wert fehlt": "asset missing", "kein Kurs": "no price",
+  "Noch keine Alarme. Unten rechts auf + tippen: Wert wählen, Namen geben (z. B. „Kaufzone“, „Stop“, „Ziel 1“) und Marke, Zone oder Bewegung in % festlegen. Pro Wert gehen beliebig viele Alarme.":
+    "No alerts yet. Tap + at the bottom right: choose an asset, give it a name (e.g. “buy zone”, “stop”, “target 1”) and set a mark, zone or move in %. Any number of alerts per asset.",
+  "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄) – erreichte Alarme stehen hier und in der Watchlist.":
+    "Checked on every “Update prices & data” (top right 🔄) – reached alerts show here and in the watchlist.",
+  "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich. Android prüft dafür nur alle paar Stunden – kein Sekunden-Alarm wie in einer Trading-App.":
+    "With notifications switched on (⚙️ → More → 🔔) your phone also notifies you. Android only checks every few hours for this – no second-by-second alarm like in a trading app.",
+  "Ein Alarm meldet sich einmal und ist wieder scharf, sobald der Kurs die Marke oder Zone verlassen hat.": "An alert notifies once and is armed again as soon as the price has left the mark or zone.",
+  "Werte ohne Yahoo-Ticker (z. B. Zertifikate, Handkurs) prüft nur die App selbst, nicht der Hintergrund.": "Assets without a Yahoo ticker (e.g. certificates, manual price) are only checked by the app itself, not in the background.",
+  "ℹ️ So funktionieren die Alarme": "ℹ️ How alerts work", "Noch kein Alarm für diesen Wert.": "No alert for this asset yet.",
+  "+ Alarm für diesen Wert": "+ Alert for this asset", "Alarm hinzufügen": "Add alert", "Diesen Alarm löschen?": "Delete this alert?", "Alarm gelöscht.": "Alert deleted.",
+  "Bitte einen Wert wählen.": "Please choose an asset.", "Bitte einen Kurs eintragen.": "Please enter a price.", "Bitte die Zone (von und bis) eintragen.": "Please enter the zone (from and to).",
+  "Bitte eine Bewegung in % eintragen, z. B. −10.": "Please enter a move in %, e.g. −10.",
+  "Für „Bewegung in %“ braucht der Wert einen Kurs – erst „Kurse & Daten aktualisieren“.": "“Move in %” needs a price for the asset – first “Update prices & data”.",
+  "Alarm gespeichert.": "Alert saved.", "Alarm gespeichert – ohne Ticker prüft ihn nur die App, kein Hintergrund-Alarm.": "Alert saved – without a ticker only the app checks it, no background alert.",
+  "🔔 Alarme (Marken, Zonen, Bewegung in %) für diesen Wert stellst du unten unter „Alarme“ oder in der Watchlist im Reiter „🔔 Alarme“ ein.":
+    "🔔 Alerts (marks, zones, move in %) for this asset are set below under “Alerts” or in the watchlist tab “🔔 Alerts”.",
+  "deine Alarme aus Watchlist → 🔔 Alarme (Marken, Zonen, Bewegung in %)": "your alerts from watchlist → 🔔 Alerts (marks, zones, move in %)",
+  "unter #\u00a0€": "below #\u00a0€", "über #\u00a0€": "above #\u00a0€", "Zone #\u00a0€ – #\u00a0€": "zone #\u00a0€ – #\u00a0€", "# % ab #\u00a0€": "# % from #\u00a0€",
+  "noch # %": "# % to go", "bisher # %": "so far # %", "Gerechnet ab dem Kurs beim Speichern:": "Calculated from the price when saved:",
+  "📥 Alarme einfügen": "📥 Paste alerts", "📤 Alle teilen": "📤 Share all", "Übernehmen": "Apply", 
+  "Alarme als Text einfügen (eine Zeile je Alarm)": "Paste alerts as text (one line per alert)",
+  "Aufbau:": "Format:", "Wert | Ticker | Name | Bedingung": "Asset | Ticker | Name | Condition",
+  ". Bedingung: „unter 1.300“, „über 1.650“, „zone 1.380 bis 1.420“ oder „prozent -10“. Gibt es den Wert noch nicht, kommt er in die Watchlist. Der Text enthält nur Namen und Kurse – keine Beträge.":
+    ". Condition: “unter 1.300”, “über 1.650”, “zone 1.380 bis 1.420” or “prozent -10” (keywords stay German). If the asset doesn't exist yet, it is added to the watchlist. The text only contains names and prices – no amounts.",
+  "Teilen und Einfügen geht als einfacher Text (unverschlüsselt) – so kannst du einzelne Alarme weitergeben oder dir selbst schicken. Er enthält nur Wert, Ticker, Name und Kurs-Marken.":
+    "Sharing and pasting works as plain text (unencrypted) – so you can pass on single alerts or send them to yourself. It only contains asset, ticker, name and price marks.",
+  "Kein Alarm im Text gefunden.": "No alert found in the text.", "Kopieren ging nicht.": "Copying failed.",
+  "# Alarme übernommen.": "# alerts added.", "# Alarme übernommen, # schon vorhanden.": "# alerts added, # already there.",
+  "# Alarme übernommen, # Werte neu in der Watchlist – Kurse kommen mit „Kurse & Daten aktualisieren“.": "# alerts added, # assets new in the watchlist – prices come with “Update prices & data”.",
 });
