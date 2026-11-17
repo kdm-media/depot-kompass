@@ -1,0 +1,1 @@
+Sicherheits-Update: keine Inhalte auf dem Sperrbildschirm, stärkere Passwörter (ZIP mind. 14 Zeichen), Schutz vor präparierten Dateien, CSV-Formeln entschärft, neuer automatischer Angriffstest. SECURITY.md für vertrauliche Meldungen.

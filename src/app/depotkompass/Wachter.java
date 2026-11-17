@@ -125,19 +125,30 @@ public class Wachter extends JobService {
         return nm != null && (Build.VERSION.SDK_INT < 24 || nm.areNotificationsEnabled());
     }
 
+    /** 0.63: neutraler Text fuer den Sperrbildschirm (Sprache aus der App, siehe pruefen()). */
+    static volatile String sperrText = "Neuer Hinweis – zum Ansehen entsperren";
+
     /** Beispiel-Hinweis sofort zeigen (Knopf "Test-Benachrichtigung"). */
     static void zeigen(Context c, String kanalName, String titel, String text, int nr) {
         NotificationManager nm = (NotificationManager) c.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
         if (Build.VERSION.SDK_INT >= 26) {
-            nm.createNotificationChannel(new NotificationChannel(KANAL, kanalName == null || kanalName.isEmpty() ? "Depot-Kompass" : kanalName,
-                    NotificationManager.IMPORTANCE_DEFAULT));
+            NotificationChannel ch = new NotificationChannel(KANAL, kanalName == null || kanalName.isEmpty() ? "Depot-Kompass" : kanalName,
+                    NotificationManager.IMPORTANCE_DEFAULT);
+            ch.setLockscreenVisibility(Notification.VISIBILITY_PRIVATE);   // 0.63: Inhalt nicht auf dem Sperrbildschirm
+            nm.createNotificationChannel(ch);
         }
         Intent oeffnen = new Intent(c, MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
         PendingIntent pi = PendingIntent.getActivity(c, 0, oeffnen, PendingIntent.FLAG_UPDATE_CURRENT | (Build.VERSION.SDK_INT >= 23 ? PendingIntent.FLAG_IMMUTABLE : 0));
         Notification.Builder b = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, KANAL) : new Notification.Builder(c);
         b.setSmallIcon(c.getApplicationInfo().icon).setContentTitle(titel).setContentText(text)
                 .setStyle(new Notification.BigTextStyle().bigText(text)).setContentIntent(pi).setAutoCancel(true);
+        // 0.63 (Sicherheit): auf dem Sperrbildschirm nur ein neutraler Hinweis - keine Werte, Kurse oder Namen
+        if (Build.VERSION.SDK_INT >= 21) {
+            Notification.Builder offen = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(c, KANAL) : new Notification.Builder(c);
+            offen.setSmallIcon(c.getApplicationInfo().icon).setContentTitle("Depot-Kompass").setContentText(sperrText);
+            b.setVisibility(Notification.VISIBILITY_PRIVATE).setPublicVersion(offen.build());
+        }
         nm.notify(nr, b.build());
     }
 
@@ -179,6 +190,7 @@ public class Wachter extends JobService {
         Locale ort = "en".equals(k.optString("sprache")) ? Locale.US : Locale.GERMANY;
         long letzteNews = gemeldet.getLong("newsStand", System.currentTimeMillis() - 12 * 3600000L);
         String kanal = t.optString("kanal", "Depot-Kompass");
+        sperrText = t.optString("entsperren", sperrText);
         JSONArray werte = k.optJSONArray("werte");
         if (werte == null) return;
         int nr = 100;

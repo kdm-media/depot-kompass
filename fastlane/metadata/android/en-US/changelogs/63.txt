@@ -1,0 +1,1 @@
+Security update: no content on the lock screen, stronger passwords (ZIP min. 14 characters), protection against crafted files, CSV formulas neutralised, new automated attack test. SECURITY.md for private reports.

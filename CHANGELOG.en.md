@@ -2,6 +2,14 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.63 – 17 Nov 2026 – security update
+- **Lock screen:** notifications no longer show any content on a locked phone (no names, prices or marks) – only "New notice – unlock to view".
+- **Stronger passwords:** backup password now at least 14 characters, sharing a portfolio at least 12 – with letters and numbers, no repetitions. The ZIP export requires a backup password of at least 14 characters because the ZIP format derives its key only weakly.
+- **Crafted files:** files over 50 MB are not read; overlong lines and fields in CSV files are truncated (a crafted file could previously freeze the app for seconds); PDFs have a total decompression limit.
+- **CSV export:** text that would run as a formula in Excel/LibreOffice (=, +, -, @) is neutralised.
+- **Verified:** a new automated attack test injects HTML into every field (portfolios, securities, notes, watchlist, alerts, news, AI answers, physical assets) and checks every page – foreign text never turns into HTML. Plus a test with broken and crafted files.
+- New: `SECURITY.md` – how to report vulnerabilities privately.
+
 ## 0.62 – 17 Nov 2026
 - **🔔 Alerts as their own tab in the watchlist** (Watchlist → “🔔 Alerts”): any number of alerts per asset, each with its own name – e.g. “buy zone”, “stop”, “target 1”, “top-up 2”. Four types: **price falls below**, **price rises above**, **zone from–to** (notifies as soon as the price enters the zone) and **move in %** since set (e.g. −10 %). Assets from the watchlist and all your own portfolios can be chosen.
 - The list shows price, distance (“−4.6 % to go”) and “reached” for each alert; each can be switched on and off. Every watchlist entry and every position lists its alerts with “+ Alert for this asset”.

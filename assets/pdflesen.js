@@ -132,6 +132,8 @@ const pdfLesen = (() => {
   const alsBytes = (t) => { const b = new Uint8Array(t.length); for (let i = 0; i < t.length; i++) b[i] = t.charCodeAt(i) & 255; return b; };
 
   // ---------------------------------------------------------- Stroeme entpacken
+  // 0.63 (Sicherheit): Gesamtbudget je PDF gegen "Zip-Bomben" aus vielen kleinen Stroemen
+  let budget = 0;
   async function entpacken(b, art) {
     const ds = new DecompressionStream(art), w = ds.writable.getWriter();
     w.write(b).catch(() => {}); w.close().catch(() => {});
@@ -141,10 +143,10 @@ const pdfLesen = (() => {
       for (;;) {
         const { done, value } = await r.read();
         if (done) break;
-        teile.push(value); n += value.length;
-        if (n > 150e6) throw new Error("PDF-Inhalt zu groß");
+        teile.push(value); n += value.length; budget += value.length;
+        if (n > 60e6 || budget > 200e6) throw new Error("PDF-Inhalt zu groß");
       }
-    } catch (e) { if (!n) throw e; }                 // Rest hinter dem Ende: behalten, was da ist
+    } catch (e) { if (!n || budget > 200e6) throw e; }   // Rest hinter dem Ende: behalten, was da ist (Budget-Ueberlauf aber abbrechen)
     const aus = new Uint8Array(n);
     let p = 0;
     for (const t of teile) { aus.set(t, p); p += t.length; }
@@ -265,6 +267,7 @@ const pdfLesen = (() => {
 
   // ---------------------------------------------------------- Hauptteil
   return async function pdfLesen(bytes) {
+    budget = 0;
     const s = alsText(bytes);
     const kopf = s.indexOf("%PDF-");
     if (kopf < 0 || kopf > 1024) throw new Error("Das ist keine PDF-Datei.");

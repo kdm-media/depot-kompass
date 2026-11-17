@@ -776,6 +776,9 @@ public class MainActivity extends Activity {
         public String zipExport(String index, String dateiname, String liesmich) {
             String pw = schluessel("sicherung");
             if (pw == null) return "kein Passwort";
+            // 0.63 (Sicherheit): Das ZIP-Format (WinZip-AES) leitet den Schluessel nur mit 1000 Runden ab -
+            // darum muss das Passwort selbst stark sein, sonst ist die ZIP per Durchprobieren angreifbar.
+            if (pw.length() < 14) return "passwort zu kurz";
             if (tresorAn() && !Tresor.offen()) return "gesperrt";
             try {
                 java.util.List<ZipAes.Eintrag> l = new java.util.ArrayList<ZipAes.Eintrag>();

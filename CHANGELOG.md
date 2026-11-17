@@ -2,6 +2,14 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.63 – 17.11.2026 – Sicherheits-Update
+- **Sperrbildschirm:** Benachrichtigungen zeigen auf dem gesperrten Handy keine Inhalte mehr (keine Namen, Kurse oder Marken) – nur „Neuer Hinweis – zum Ansehen entsperren“.
+- **Stärkere Passwörter:** Sicherungs-Passwort jetzt mindestens 14 Zeichen, Depot teilen mindestens 12 – jeweils mit Buchstaben und Zahlen, ohne Wiederholungen. Der ZIP-Export verlangt ein Sicherungs-Passwort mit mindestens 14 Zeichen, weil das ZIP-Format den Schlüssel nur schwach ableitet.
+- **Präparierte Dateien:** Dateien über 50 MB werden nicht eingelesen; überlange Zeilen und Felder in CSV-Dateien werden gekappt (vorher konnte eine präparierte Datei die App sekundenlang lahmlegen); PDFs haben eine Gesamtgrenze beim Entpacken.
+- **CSV-Export:** Text, der in Excel/LibreOffice als Formel laufen würde (=, +, -, @), wird entschärft.
+- **Geprüft:** Ein neuer automatischer Angriffstest schleust HTML in alle Felder (Depots, Wertpapiere, Notizen, Watchlist, Alarme, News, KI-Antworten, Sachwerte) und prüft jede Seite – nirgends wird fremder Text zu HTML. Dazu ein Test mit kaputten und präparierten Dateien.
+- Neu: `SECURITY.md` – wie man Sicherheitslücken vertraulich meldet.
+
 ## 0.62 – 17.11.2026
 - **🔔 Alarme als eigener Reiter in der Watchlist** (Watchlist → „🔔 Alarme“): Pro Wert beliebig viele Alarme, jeder mit eigenem Namen – z. B. „Kaufzone“, „Stop“, „Ziel 1“, „Nachkauf 2“. Vier Arten: **Kurs fällt unter**, **Kurs steigt über**, **Zone von–bis** (meldet sich, sobald der Kurs in die Zone läuft) und **Bewegung in %** seit dem Setzen (z. B. −10 %). Wählbar sind Werte aus der Watchlist und aus allen eigenen Depots.
 - Die Liste zeigt je Alarm Kurs, Abstand („noch −4,6 %“) und „erreicht“; einzeln ein- und ausschaltbar. In jedem Watchlist-Eintrag und jeder Position stehen die eigenen Alarme mit „+ Alarm für diesen Wert“.

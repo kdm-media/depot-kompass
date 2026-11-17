@@ -929,7 +929,7 @@ function sicherheitSeite() {
     <section class="karte">
       <p style="margin-top:0" class="${alt == null || alt > 14 ? "warn-t" : ""}">${st.letzte ? `Letzte Sicherung: ${new Date(st.letzte).toLocaleString(LOC_DATUM(), { dateStyle: "short", timeStyle: "short" })}<br><span class="klein">${esc(st.datei)}</span>` : "Noch keine Sicherung."}</p>
       <form class="formular" id="pw-form">
-        <label>${st.passwort ? "Sicherungs-Passwort ändern" : "1. Sicherungs-Passwort festlegen"}<input name="pw1" type="password" autocomplete="new-password" minlength="10" placeholder="mindestens 10 Zeichen, eigenes Passwort"></label>
+        <label>${st.passwort ? "Sicherungs-Passwort ändern" : "1. Sicherungs-Passwort festlegen"}<input name="pw1" type="password" autocomplete="new-password" minlength="14" placeholder="mindestens 14 Zeichen, eigenes Passwort"></label>
         <label>Passwort wiederholen<input name="pw2" type="password" autocomplete="new-password"></label>
         <button class="knopf" type="submit">${st.passwort ? "Passwort ändern" : "Passwort speichern"}</button>
       </form>
@@ -1282,8 +1282,8 @@ document.addEventListener("submit", (e) => {
   if (e.target.id === "pw-form") {
     e.preventDefault();
     const a = String(f.get("pw1") || ""), b = String(f.get("pw2") || "");
-    if (a.length < 10) return meldung("Mindestens 10 Zeichen.");
-    if (/^\d+$/.test(a) || new Set(a).size < 5) return meldung("Zu einfach – bitte Buchstaben und Zahlen mischen.");
+    if (a.length < 14) return meldung("Mindestens 14 Zeichen.");
+    if (!passwortStark(a)) return meldung("Zu einfach – bitte Buchstaben und Zahlen mischen, keine Wiederholungen.");
     if (a !== b) return meldung("Die Passwörter sind nicht gleich.");
     const ok = APP ? APP.schluesselSetzen("sicherung", a) : false;
     meldung(ok ? "Passwort gespeichert." : "Nur in der App möglich."); return zeichnen();
@@ -1704,6 +1704,16 @@ document.addEventListener("submit", (ev) => {
   sichern(); meldung("Quelle hinzugefügt – „News laden“ holt sie mit."); zeichnen();
 });
 
+/** 0.63 (Sicherheit): Mindestanforderung an Passwoerter fuer Sicherungen/Exporte - Buchstaben + Ziffern (oder sehr lang),
+ *  mindestens 6 verschiedene Zeichen, keine reinen Wiederholungen/Folgen. */
+function passwortStark(p) {
+  p = String(p || "");
+  if (new Set(p).size < 6) return false;
+  if (/^(.+)\1+$/.test(p)) return false;                                  // abcabcabc
+  if (/0123|1234|2345|3456|4567|5678|6789|abcd|qwer|asdf/i.test(p) && p.length < 20) return false;
+  return (/[a-zäöüß]/i.test(p) && /\d/.test(p)) || p.length >= 20;
+}
+
 // ------------------------------------------------------------ Beta: Version + Fehler melden
 const appVersion = () => (APP && APP.version ? APP.version() : "") || "Test";
 const KONTAKT = "depot-kompass.breach557@passmail.net";
@@ -1797,7 +1807,7 @@ function wachterAbgleich() {
   const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, kurse: h.kurse, earnings: h.earnings, news: h.news, marken: h.marken, sprache: sprache(),
     texte: { kanal: tr("Depot-Kompass – Hinweise"), earningsHeute: tr("Earnings heute"), earningsMorgen: tr("Earnings morgen"), seitGestern: tr("seit dem letzten Schlusskurs"),
       eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen"),
-      kursJetzt: tr("Kurs jetzt") },
+      kursJetzt: tr("Kurs jetzt"), entsperren: tr("Neuer Hinweis – zum Ansehen entsperren") },
     werte: wachterWerte() }));
   if (!ok) {
     let grund = ""; try { grund = APP.wachterFehler ? APP.wachterFehler() : ""; } catch { /* alte Fassung */ }
@@ -1878,8 +1888,8 @@ function depotTeilenKarte(id) {
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px"><b style="min-width:0;overflow-wrap:anywhere">🔐 Depot verschlüsselt teilen</b><button class="knopf klein" type="button" data-depot-teilen="">schließen</button></div>
       <p class="klein" style="margin:0">Erstellt eine verschlüsselte Datei nur mit diesem Depot. Die andere Person liest sie mit dem Passwort ein – als eigenes, beobachtetes Depot. Ihre übrigen Daten bleiben unberührt.</p>
       <label>Name für den Empfänger<input name="name" value="${esc(d.name)}" maxlength="40" required></label>
-      <label>Passwort (mind. 8 Zeichen)<input name="pw" type="password" autocomplete="new-password" required minlength="8"></label>
-      <label>Passwort wiederholen<input name="pw2" type="password" autocomplete="new-password" required minlength="8"></label>
+      <label>Passwort (mind. 12 Zeichen)<input name="pw" type="password" autocomplete="new-password" required minlength="12"></label>
+      <label>Passwort wiederholen<input name="pw2" type="password" autocomplete="new-password" required minlength="12"></label>
       <p class="klein" style="margin:0">Enthalten: Wertpapiere, Buchungen und Cash dieses Depots. Nicht enthalten: Notizen, Original-Dokumente, Schlüssel, andere Depots. Das Passwort am besten auf einem anderen Weg weitergeben (z. B. persönlich).</p>
       <div class="knoepfe"><button class="knopf haupt" type="submit" name="aktion" value="teilen">📤 Teilen</button>
         <button class="knopf" type="submit" name="aktion" value="speichern">💾 Speichern</button></div>
@@ -1919,7 +1929,8 @@ document.addEventListener("submit", (ev) => {
     ev.preventDefault();
     const f = new FormData(form), d = S.depots[form.dataset.id], pw = String(f.get("pw") || "");
     if (!d) return;
-    if (pw.length < 8) return meldung("Mindestens 8 Zeichen.");
+    if (pw.length < 12) return meldung("Mindestens 12 Zeichen.");
+    if (!passwortStark(pw)) return meldung("Zu einfach – bitte Buchstaben und Zahlen mischen, keine Wiederholungen.");
     if (pw !== String(f.get("pw2") || "")) return meldung("Die Passwörter sind nicht gleich.");
     if (!APP || !APP.verschluesseln) return meldung("Nur in der App möglich.");
     const name = String(f.get("name") || d.name).trim() || "Depot";

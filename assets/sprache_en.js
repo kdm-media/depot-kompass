@@ -849,4 +849,11 @@ Object.assign(UEB.en, {
   "Kein Alarm im Text gefunden.": "No alert found in the text.", "Kopieren ging nicht.": "Copying failed.",
   "# Alarme übernommen.": "# alerts added.", "# Alarme übernommen, # schon vorhanden.": "# alerts added, # already there.",
   "# Alarme übernommen, # Werte neu in der Watchlist – Kurse kommen mit „Kurse & Daten aktualisieren“.": "# alerts added, # assets new in the watchlist – prices come with “Update prices & data”.",
+  // 0.63: Sicherheit
+  "Neuer Hinweis – zum Ansehen entsperren": "New notice – unlock to view",
+  "Für die ZIP braucht das Sicherungs-Passwort mindestens 14 Zeichen – bitte unter Sicherheit & Sicherung ändern.": "The ZIP export needs a backup password of at least 14 characters – please change it under Security & backup.",
+  "Mindestens 14 Zeichen.": "At least 14 characters.", "Mindestens 12 Zeichen.": "At least 12 characters.",
+  "Zu einfach – bitte Buchstaben und Zahlen mischen, keine Wiederholungen.": "Too simple – please mix letters and numbers, no repetitions.",
+  "mindestens 14 Zeichen, eigenes Passwort": "at least 14 characters, your own password", "Passwort (mind. 12 Zeichen)": "Password (min. 12 characters)",
+  "Datei zu groß (über 50 MB)": "File too large (over 50 MB)", "PDF-Inhalt zu groß": "PDF content too large",
 });

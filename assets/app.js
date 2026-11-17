@@ -1993,12 +1993,13 @@ function vorschauSeite() {
 function csvZeilen(text, trenner) {
   const zeilen = [];
   let feld = "", zeile = [], inQ = false;
+  const MAX_FELD = 4000;      // 0.63 (Sicherheit): echte Exporte haben nie riesige Felder - praeparierte Dateien sollen die App nicht lahmlegen
   for (let i = 0; i < text.length; i++) {
     const c = text[i];
     if (inQ) {
-      if (c === '"' && text[i + 1] === '"') { feld += '"'; i++; }
+      if (c === '"' && text[i + 1] === '"') { if (feld.length < MAX_FELD) feld += '"'; i++; }
       else if (c === '"') inQ = false;
-      else feld += c;
+      else if (feld.length < MAX_FELD) feld += c;
     } else if (c === '"') inQ = true;
     else if (c === trenner) { zeile.push(feld); feld = ""; }
     else if (c === "\n" || c === "\r") {
@@ -2006,7 +2007,7 @@ function csvZeilen(text, trenner) {
       zeile.push(feld); feld = "";
       if (zeile.some((x) => x !== "")) zeilen.push(zeile);
       zeile = [];
-    } else feld += c;
+    } else if (feld.length < MAX_FELD) feld += c;
   }
   zeile.push(feld);
   if (zeile.some((x) => x !== "")) zeilen.push(zeile);
@@ -2016,6 +2017,8 @@ function csvZeilen(text, trenner) {
 
 function erkennen(text, dateiname) {
   if (/^\s*\{/.test(text)) return { format: "Sicherung", sicherung: JSON.parse(text) };
+  // 0.63 (Sicherheit): ueberlange Zeilen (praeparierte Dateien) kappen, bevor Muster darueber laufen - echte Exporte haben kurze Zeilen
+  if (/[^\n]{20000}/.test(text)) text = text.replace(/[^\n]{20000,}/g, (z) => z.slice(0, 20000));
   const erste = text.split(/\r?\n/, 1)[0];
   const trenner = (erste.match(/;/g) || []).length > (erste.match(/,/g) || []).length ? ";" : ",";
   const { kopf, daten } = csvZeilen(text, trenner);
@@ -2357,6 +2360,7 @@ function zipExportieren() {
   const r = APP.zipExport(JSON.stringify(index), `Depot-Kompass-Export-${tag}.zip`, liesmich);
   if (r === "kein Passwort") { meldung("Erst ein Sicherungs-Passwort festlegen (⚙️ → Sicherheit & Sicherung)."); return zeige("sicherheit"); }
   if (r === "gesperrt") return meldung("App ist gesperrt – bitte erst entsperren.");
+  if (r === "passwort zu kurz") { meldung("Für die ZIP braucht das Sicherungs-Passwort mindestens 14 Zeichen – bitte unter Sicherheit & Sicherung ändern."); return zeige("sicherheit"); }
   if (!r.startsWith("ok")) return meldung("Export fehlgeschlagen: " + r);
   meldung(`ZIP mit ${anzahl(index.length, "Original", "Originalen")} erstellt – jetzt den Speicherort wählen.` + (r.startsWith("ok:") ? ` (${r.slice(3)} fehlten)` : ""));
 }
@@ -3592,7 +3596,9 @@ window.gespeichert = (ok) => meldung(ok ? "Datei gespeichert." : "Nicht gespeich
 
 function bestandCsv() {
   const kopf = "Konto,Instrument,Art,Ticker,Stueck,Wert_EUR,Einstand_EUR,Haltefrist_Ende,Notiz";
-  const q = (s) => /[",\n]/.test(s) ? '"' + String(s).replace(/"/g, '""') + '"' : String(s ?? "");
+  // 0.63 (Sicherheit): Text, der in Excel/LibreOffice als Formel liefe (=, +, -, @ …), mit ' entschaerfen - Zahlen bleiben Zahlen
+  const q = (x) => { let s = String(x ?? ""); if (/^[=+\-@\t\r]/.test(s) && !/^-?\d+(\.\d+)?$/.test(s)) s = "'" + s;
+    return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
   const zeilen = Object.values(bestand()).filter((p) => p.stueck > 1e-9).map((p) => {
     const i = D.instrumente[p.instrument] || {};
     const wert = i.kurs != null ? p.stueck * i.kurs : p.einstand;
@@ -3866,6 +3872,8 @@ document.addEventListener("change", async (e) => {
 async function dateienEinlesen(dateien) {
   const l = [];
   for (const d of dateien) {
+    // 0.63 (Sicherheit): keine Riesendateien einlesen (Speicher, absichtlich praeparierte Dateien)
+    if (d.size > 50e6) { l.push({ name: d.name, text: "", fehler: "Datei zu groß (über 50 MB)" }); continue; }
     let roh = null;
     try { roh = new Uint8Array(await d.arrayBuffer()); } catch { /* unten als "nicht lesbar" */ }
     const nach = (x) => { if (roh && !x.fehler) x.original = { name: d.name, roh, vorhanden: d.vorhandenesOriginal || null }; l.push(x); };

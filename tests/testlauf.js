@@ -238,6 +238,69 @@ async function rechnen() {
     pruefe(!!document.getElementById("hinweis-marken") && /kein Sekunden-Alarm/.test(document.getElementById("inhalt").textContent), "Schalter Alarme fehlt");
     zeige("uebersicht");
   }
+  // --- 0.63 (Sicherheit): HTML-Einschleusung - fremder Text darf nirgends als HTML wirken (alle Seiten + Formulare)
+  {
+    const sicher = JSON.stringify(S), altD = S.aktiv;
+    const P = (k) => `<img id="xss${k}" src="x"><a id="xssa${k}" href="https://boese.example">x</a><b id="xssb${k}">`;
+    D.name = "Depot" + P(1);
+    const iid = Object.keys(D.instrumente)[0];
+    if (iid) Object.assign(D.instrumente[iid], { name: "Wert" + P(2), notiz: P(3), branche: "Br" + P(4), ticker: "TST.DE" });
+    S.watchlist = [{ id: "wx", name: "Watch" + P(5), kennung: "X" + P(6), art: "Aktie", kurs: 10, notiz: P(7), ticker: "WX.DE", aufgenommen: "2026-01-01" }];
+    S.alarme = [{ id: "ax", name: "Alarm" + P(8), bezug: "w:wx", art: "unter", wert: 9, an: true }];
+    S.notizen = [{ id: "nx", titel: "Notiz" + P(9), text: "Text" + P(10), datum: "2026-01-02T10:00:00Z", bezug: "" }];
+    S.news = { stand: new Date().toISOString(), eintraege: [{ titel: "News" + P(11), quelle: "Quelle" + P(12), zeit: Date.now(), link: "javascript:alert(1)", bezug: "Wert" + P(2), sprache: "de" }] };
+    S.kiChats = [{ id: "kx", titel: "Chat" + P(13), anbieter: "openrouter", modell: "m", erstellt: new Date().toISOString(),
+      nachrichten: [{ rolle: "nutzer", text: "Frage" + P(14), zeit: new Date().toISOString() }, { rolle: "ki", text: "**Antwort**" + P(15) + "\n- Punkt" + P(16), zeit: new Date().toISOString() }] }];
+    S.sachwerte = [{ id: "sx", name: "Sache" + P(17), art: "Technik", kaufdatum: "2025-01-01", kaufpreis: 100, verlust: 10, wert: null }];
+    const treffer = [];
+    const pruef = (wo) => { const el = document.querySelector('[id^="xss"]'); if (el) treffer.push(`${wo}: <${el.tagName.toLowerCase()} id=${el.id}>`);
+      const js = [...document.querySelectorAll("a[href]")].find((a) => /^javascript:/i.test(a.getAttribute("href"))); if (js) treffer.push(wo + ": javascript-Link"); };
+    const seiten = ["uebersicht", "positionen", "watchlist", "kalender", "news", "notizen", "mehr", "daten", "depots", "buchungen", "sicherheit",
+                    "datenschutz", "einstellungen", "schluessel", "ki", "hinweise", "unterstuetzen", "sachwerte", "steuer", "feedback", "fehlerprotokoll"];
+    for (const sx of seiten) { try { zeige(sx); pruef(sx); } catch (e) { treffer.push(sx + ": Absturz " + e.message); } }
+    const extra = [["Detail", () => { ui.detail = iid; }], ["Watch-Formular", () => { ui.watch = "wx"; }], ["Alarme", () => { ui.seite = "watchlist"; ui.watchReiter = "alarme"; }],
+                   ["Alarm-Formular", () => { ui.alarm = "ax"; ui.alarmEntwurf = null; }], ["Notiz", () => { ui.notiz = { id: "nx" }; }], ["KI-Chat", () => { ui.seite = "ki"; ui.kiChatId = "kx"; ui.kiReiter = "chat"; }]];
+    for (const [wo, f] of extra) { try { f(); zeichnen(); pruef(wo); } catch (e) { treffer.push(wo + ": Absturz " + e.message); }
+      ui.detail = null; ui.watch = null; ui.alarm = null; ui.notiz = null; ui.watchReiter = null; ui.kiChatId = null; }
+    pruefe(!treffer.length, "HTML-Einschleusung möglich: " + treffer.slice(0, 8).join(" | "));
+    // Gegenprobe: der Angriffstext ist wirklich angekommen - nur eben als harmloser Text
+    zeige("watchlist"); const sichtbar = document.getElementById("inhalt").textContent.includes('Watch<img id="xss5"');
+    zeige("notizen"); const sichtbar2 = document.getElementById("inhalt").textContent.includes('Notiz<img id="xss9"');
+    pruefe(sichtbar && sichtbar2, "Gegenprobe Einschleusung: Testtext nicht sichtbar – Test wäre wirkungslos");
+    S = JSON.parse(sicher); oeffnen(altD); zeige("uebersicht");
+  }
+  // --- 0.63 (Sicherheit): kaputte/praeparierte Dateien beim Import - kein Absturz, kein Haengen, Riesendatei abgelehnt
+  {
+    const sicher = JSON.stringify(S), altD = S.aktiv, fehler = [];
+    let zufall = 12345; const rnd = () => (zufall = (zufall * 1103515245 + 12345) % 2147483648) / 2147483648;
+    const bytes = (n) => { const b = new Uint8Array(n); for (let i = 0; i < n; i++) b[i] = Math.floor(rnd() * 256); return b; };
+    const enc = (t) => new TextEncoder().encode(t);
+    const faelle = [
+      ["zufall.csv", bytes(5000)], ["zufall.pdf", bytes(3000)], ["leer.csv", new Uint8Array(0)],
+      ["kaputt.pdf", enc("%PDF-1.7\n1 0 obj << /Length 999999 /Filter /FlateDecode >> stream\n" + "x".repeat(500) + "\nendstream endobj\n%%EOF")],
+      ["nur-kopf.pdf", enc("%PDF-")], ["riesenfeld.csv", enc("Datum;Name;Betrag\n2026-01-01;" + "A".repeat(300000) + ";1\n")],
+      ["html.csv", enc('Datum;Name;Stück;Kurs\n2026-01-01;<img id="xssimp" src=x>;1;2\n')], ["formel.csv", enc("Datum;Name;Betrag\n2026-01-01;=HYPERLINK(\"https://boese.example\");1\n")],
+      ["falsch.zip", enc("PK\u0003\u0004kaputt")]
+    ];   // Bilder (Texterkennung) prueft der eigene Screenshot-Test
+    const t0 = Date.now();
+    for (const [name, b] of faelle) {
+      try { const f = new File([b], name, { type: /\.png$/.test(name) ? "image/png" : "" });
+        await Promise.race([dateienEinlesen([f]), new Promise((_, nein) => setTimeout(() => nein(new Error("hängt")), 20000))]);
+        ui.vorschau = null; ui.wiederherstellen = null; zeichnen();
+        if (document.querySelector('[id^="xss"]')) fehler.push(name + ": HTML eingeschleust");
+      } catch (e) { fehler.push(name + ": " + e.message); }
+    }
+    // Riesendatei (vorgetaeuschte Groesse) wird abgelehnt, ohne gelesen zu werden
+    const gross = { name: "riesig.csv", size: 60e6, type: "", arrayBuffer: async () => { throw new Error("darf nicht gelesen werden"); } };
+    try { await dateienEinlesen([gross]); } catch (e) { fehler.push("riesig: " + e.message); }
+    ui.vorschau = null; ui.wiederherstellen = null;
+    { const alt = D.instrumente, altB = D.buchungen; D.instrumente = { f1: { name: '=HYPERLINK("https://boese.example")', art: "Aktie" } };
+      D.buchungen = [{ nr: 1, typ: "kauf", datum: "2026-01-01", instrument: "f1", konto: "+Konto", stueck: 2, kurs: 10, gebuehr: 0 }];
+      const c = bestandCsv(); D.instrumente = alt; D.buchungen = altB;
+      if (!/"'=HYPERLINK/.test(c) || !/'\+Konto/.test(c) || /,=/.test(c)) fehler.push("CSV-Formel nicht entschärft: " + c.split("\n")[1]); }
+    pruefe(!fehler.length, "Datei-Angriff: " + fehler.slice(0, 6).join(" | "));
+    S = JSON.parse(sicher); oeffnen(altD); zeige("uebersicht");
+  }
   // --- 0.59: Hinweis ab -35 % (Sollwert Python: 100/0,65-100 = 53,846 %)
   {
     const p40 = { wert: 600, einstand: 1000, gvPct: -40, stueck: 10 }, p30 = { wert: 700, einstand: 1000, gvPct: -30, stueck: 10 };
