@@ -61,7 +61,8 @@ function watchFormular() {
       </div>
       ${legende(["<b>Kaufmarke</b> = dein Wunschkurs zum Kaufen. Fällt der Kurs auf oder unter die Marke, steht in der Watchlist „Kaufmarke erreicht“.",
         "<b>Verkaufsmarke</b> = dein Wunschkurs zum Verkaufen. Steigt der Kurs auf oder über die Marke, steht dort „Verkaufsmarke erreicht“.",
-        "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄).", "Beide Felder sind freiwillig – leer lassen heißt: keine Marke."], "ℹ️ So funktionieren die Marken")}
+        "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄).",
+        "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.", "Beide Felder sind freiwillig – leer lassen heißt: keine Marke."], "ℹ️ So funktionieren die Marken")}
       <div class="zwei">
         <label>Kurs € (leer = automatisch)<input name="kurs" inputmode="decimal" value="${w.kursHand ? z(w.kurs) : ""}" placeholder="${w.kurs != null && !w.kursHand ? fZahl.format(w.kurs) : ""}"></label>
         <label>Ticker<input name="ticker" id="watch-ticker" value="${esc(w.ticker || "")}" placeholder="über „Ticker suchen“ wählen"></label>
@@ -1756,12 +1757,14 @@ document.addEventListener("input", (ev) => { if (ev.target.id === "ki-rueck") ui
 // ------------------------------------------------------------ Benachrichtigungen (ab 0.46, nur online, ab Werk aus)
 // Android prueft alle paar Stunden im Hintergrund (Java: Wachter). Uebergeben werden nur Namen, Ticker und Termine -
 // verschluesselt im App-Speicher. Keine Betraege, Stueckzahlen oder Konten.
-const HINWEIS_STD = { an: false, kurse: true, schwelle: 5, earnings: true, news: false, stunden: 12 };
+const HINWEIS_STD = { an: false, kurse: true, schwelle: 5, earnings: true, news: false, marken: true, stunden: 12 };
 const hinweise = () => ({ ...HINWEIS_STD, ...(EIN().hinweise || {}) });
 
-/** Alle Werte aus allen Depots (mit Bestand) und der Watchlist - Name, Ticker, kommende Earnings. */
+/** Alle Werte aus allen Depots (mit Bestand) und der Watchlist - Name, Ticker, kommende Earnings, Kurs-Marken in Euro (0.61).
+ *  Marken: art "kauf"/"unter" = melden bei Kurs <= Wert, "verkauf"/"ueber" = bei Kurs >= Wert. Nur Werte mit Yahoo-Ticker. */
 function wachterWerte() {
   const m = new Map(), offen = D;
+  const marke = (liste, art, wert) => { if (wert != null && wert > 0 && !liste.some((x) => x.art === art && x.wert === wert)) liste.push({ art, wert }); };
   try {
     for (const d of Object.values(S.depots || {})) {
       if (d.beobachtet) continue;
@@ -1769,22 +1772,32 @@ function wachterWerte() {
       for (const p of positionen().liste) {
         const i = p.inst || {};
         if (!i.ticker && !(i.termine?.earnings || []).length) continue;
-        m.set(i.ticker || p.name, { name: p.name, ticker: i.ticker || "", earnings: (i.termine?.earnings || []).filter((x) => x >= heute()).slice(0, 4),
-          suche: typeof newsBegriff === "function" ? newsBegriff(p.name) : p.name, news: !["ETF", "Fonds"].includes(i.art) });
+        const key = i.ticker || p.name;
+        const e = m.get(key) || { name: p.name, ticker: i.ticker || "", earnings: (i.termine?.earnings || []).filter((x) => x >= heute()).slice(0, 4),
+          suche: typeof newsBegriff === "function" ? newsBegriff(p.name) : p.name, news: !["ETF", "Fonds"].includes(i.art), marken: [] };
+        if (i.ticker) { marke(e.marken, "unter", i.alarmUnter); marke(e.marken, "ueber", i.alarmUeber); }
+        m.set(key, e);
       }
     }
   } finally { D = offen; }
-  for (const w of S.watchlist || []) if (w.ticker && !m.has(w.ticker)) m.set(w.ticker, { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: true });
-  return [...m.values()].slice(0, 60);
+  for (const w of S.watchlist || []) {
+    if (!w.ticker || w.kursHand) continue;
+    const e = m.get(w.ticker) || { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: true, marken: [] };
+    marke(e.marken, "kauf", w.kaufMarke); marke(e.marken, "verkauf", w.verkaufMarke);
+    m.set(w.ticker, e);
+  }
+  // Werte mit Marken zuerst, damit sie bei mehr als 60 Werten sicher geprueft werden
+  return [...m.values()].sort((a, b) => (b.marken.length > 0) - (a.marken.length > 0)).slice(0, 60);
 }
 
 function wachterAbgleich() {
   if (!APP || !APP.wachterSetzen) return;
   const h = hinweise();
   if (!h.an || sicherheitStatus().netzAus) { APP.wachterSetzen(""); return; }
-  const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, kurse: h.kurse, earnings: h.earnings, news: h.news, sprache: sprache(),
+  const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, kurse: h.kurse, earnings: h.earnings, news: h.news, marken: h.marken, sprache: sprache(),
     texte: { kanal: tr("Depot-Kompass – Hinweise"), earningsHeute: tr("Earnings heute"), earningsMorgen: tr("Earnings morgen"), seitGestern: tr("seit dem letzten Schlusskurs"),
-      eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen") },
+      eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen"),
+      kauf: tr("Kaufmarke erreicht"), verkauf: tr("Verkaufsmarke erreicht"), unter: tr("Alarm-Marke unterschritten"), ueber: tr("Alarm-Marke überschritten"), kursJetzt: tr("Kurs jetzt") },
     werte: wachterWerte() }));
   if (!ok) {
     let grund = ""; try { grund = APP.wachterFehler ? APP.wachterFehler() : ""; } catch { /* alte Fassung */ }
@@ -1806,7 +1819,8 @@ function hinweiseSeite() {
   return `
     <h2><button class="knopf klein" data-ziel="mehr">‹ Mehr</button><span>🔔 Benachrichtigungen</span></h2>
     <section class="karte">
-      <p style="margin-top:0">Die App kann dich auf dem Handy erinnern: an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.</p>
+      <p style="margin-top:0">Die App kann dich auf dem Handy erinnern: an deine Kurs-Marken, an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.</p>
+      <p class="klein">Ehrlich gesagt: Android prüft im Hintergrund nur alle paar Stunden (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.</p>
       <p class="klein">Das geht nur mit Internet: Android startet die Prüfung alle paar Stunden im Hintergrund. Abgefragt werden nur öffentliche Kurse und Schlagzeilen zu den Namen deiner Werte – nie Beträge, Stückzahlen oder Konten. Die Liste der Werte liegt verschlüsselt auf dem Handy.</p>
       ${aus ? `<p class="klein warn-t">Internet ist in der App aus – im Offline-Modus gibt es keine Benachrichtigungen.</p>
         <button class="knopf" data-ziel="datenschutz" style="width:100%">🌐 Internet erlauben</button>` : ""}
@@ -1814,6 +1828,7 @@ function hinweiseSeite() {
     <section class="karte liste">
       ${zeile("hinweis-an", "Benachrichtigungen an", "ab Werk aus", h.an && !aus)}
       ${zeile("hinweis-kurse", "Starke Kursbewegung", "Veränderung seit dem letzten Schlusskurs", h.kurse)}
+      ${zeile("hinweis-marken", "Kurs-Alarme (Marken)", "Kauf-/Verkaufsmarke aus der Watchlist, Alarm-Marken aus den Positionen", h.marken)}
       ${zeile("hinweis-earnings", "Earnings heute oder morgen", "Termine aus „Kurse & Daten aktualisieren“", h.earnings)}
       ${zeile("hinweis-news", "Neue Schlagzeilen", "Google News, Suche nach dem Namen (ohne ETFs)", h.news)}
     </section>
@@ -1838,6 +1853,7 @@ document.addEventListener("change", (e) => {
   if (id === "hinweis-kurse") h.kurse = e.target.checked;
   if (id === "hinweis-earnings") h.earnings = e.target.checked;
   if (id === "hinweis-news") h.news = e.target.checked;
+  if (id === "hinweis-marken") h.marken = e.target.checked;
   if (id === "hinweis-schwelle") h.schwelle = +e.target.value;
   if (id === "hinweis-stunden") h.stunden = +e.target.value;
   sichern(); wachterAbgleich();

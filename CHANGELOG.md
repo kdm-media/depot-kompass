@@ -2,6 +2,10 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.61 – 17.11.2026
+- **🔔 Kurs-Alarme als Benachrichtigung:** Kaufmarke und Verkaufsmarke aus der Watchlist melden sich jetzt auch aufs Handy, wenn der Kurs sie erreicht – nicht erst beim nächsten Öffnen der App. Neu in jeder Position: **Alarm unter / Alarm über** (z. B. Stop-, Nachkauf- oder Ziel-Marke). Kurse in Dollar, Pfund usw. werden wie in der App in Euro umgerechnet. Jede Marke meldet sich einmal und ist wieder scharf, sobald der Kurs sie verlassen hat.
+- Eigener Schalter „Kurs-Alarme (Marken)“ unter ⚙️ → Mehr → 🔔 Benachrichtigungen. Ehrlicher Hinweis: Android prüft im Hintergrund nur alle paar Stunden – kein Sekunden-Alarm wie in einer Trading-App.
+
 ## 0.60 – 17.11.2026
 - **Benachrichtigungen funktionieren wieder:** Das neue Fehlerprotokoll hat die Ursache gezeigt – Android verlangt für die Hintergrund-Prüfung „nur mit Internet“ die Berechtigung „Netzwerkstatus lesen“ (ACCESS_NETWORK_STATE). Sie fehlte; jetzt ist sie eingetragen (normale Berechtigung, keine Rückfrage, liest nur „Netz da ja/nein“).
 - Fehlerprotokoll erkennt fehlende Berechtigungen als eigenen Fehlercode (DK-09).

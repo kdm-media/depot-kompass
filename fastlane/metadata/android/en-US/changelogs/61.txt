@@ -1,0 +1,1 @@
+Price alerts as notifications: buy/sell marks from the watchlist and new alert marks (below/above) on every position notify you in the background. Android only checks every few hours – no second-by-second alarm.

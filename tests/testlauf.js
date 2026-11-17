@@ -182,6 +182,31 @@ async function rechnen() {
     { const m = document.querySelector('#inhalt a[href^="mailto:"]'); pruefe(m && /DK-04/.test(m.getAttribute("href")), `Mail-Link: ${m ? m.getAttribute("href").slice(0, 200) : "keiner"} | ${document.getElementById("inhalt").innerHTML.slice(0, 300)}`); }
     window.__protokoll = []; zeige("uebersicht");
   }
+  // --- 0.61: Kurs-Alarme - Marken aus Watchlist und Positionen gehen an den Waechter (Werte mit Marken zuerst)
+  {
+    const altW = S.watchlist;
+    S.watchlist = [...(altW || []), { id: "wtest", name: "Testwert", ticker: "TST.DE", kaufMarke: 12.5, verkaufMarke: 20 },
+                   { id: "wtest2", name: "Handkurs", ticker: "HND.DE", kaufMarke: 5, kursHand: true }];
+    let ww = wachterWerte();
+    const e = ww.find((x) => x.ticker === "TST.DE");
+    pruefe(e && e.marken.length === 2 && e.marken[0].art === "kauf" && e.marken[0].wert === 12.5 && e.marken[1].art === "verkauf" && ww[0].marken.length > 0,
+      `Watchlist-Marken fehlen: ${JSON.stringify(e)}`);
+    pruefe(!ww.some((x) => x.ticker === "HND.DE"), "Watchlist mit Handkurs darf nicht in den Wächter");
+    const pos = positionen().liste.find((p) => p.inst) ;
+    pruefe(!!pos, "Keine Position für den Alarm-Test");
+    if (pos) {
+      const tAlt = pos.inst.ticker; if (!tAlt) pos.inst.ticker = "ALM.DE";   // Testdaten haben ggf. keinen Ticker
+      pos.inst.alarmUnter = 1.5; pos.inst.alarmUeber = 99999;
+      ww = wachterWerte();
+      const pe = ww.find((x) => x.ticker === pos.inst.ticker);
+      pruefe(pe && pe.marken.some((m) => m.art === "unter" && m.wert === 1.5) && pe.marken.some((m) => m.art === "ueber" && m.wert === 99999), `Positions-Alarm fehlt: ${JSON.stringify(pe)}`);
+      delete pos.inst.alarmUnter; delete pos.inst.alarmUeber; if (!tAlt) delete pos.inst.ticker;
+    }
+    S.watchlist = altW;
+    ui.seite = "hinweise"; zeichnen();
+    pruefe(!!document.getElementById("hinweis-marken") && /kein Sekunden-Alarm/.test(document.getElementById("inhalt").textContent), "Schalter Kurs-Alarme fehlt");
+    zeige("uebersicht");
+  }
   // --- 0.59: Hinweis ab -35 % (Sollwert Python: 100/0,65-100 = 53,846 %)
   {
     const p40 = { wert: 600, einstand: 1000, gvPct: -40, stueck: 10 }, p30 = { wert: 700, einstand: 1000, gvPct: -30, stueck: 10 };

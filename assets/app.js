@@ -1654,6 +1654,11 @@ function detailSeite(id) {
         <label>Zielgewicht in %<input name="ziel" inputmode="decimal" value="${i.ziel != null ? String(i.ziel).replace(".", ",") : ""}"></label>
       </div>
       <div class="zwei">
+        <label>🔔 Alarm unter € (Kurs ≤)<input name="alarmUnter" inputmode="decimal" value="${i.alarmUnter != null ? String(i.alarmUnter).replace(".", ",") : ""}"></label>
+        <label>🔔 Alarm über € (Kurs ≥)<input name="alarmUeber" inputmode="decimal" value="${i.alarmUeber != null ? String(i.alarmUeber).replace(".", ",") : ""}"></label>
+      </div>
+      <p class="klein" style="margin:0">Kurs-Alarm, z. B. Stop-, Nachkauf- oder Ziel-Marke: Bei eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy, wenn der Kurs die Marke erreicht. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.</p>
+      <div class="zwei">
         <label>Status<select name="status">${Object.entries(STATUS).map(([k, t]) =>
           `<option value="${k}" ${(i.status || "") === k ? "selected" : ""}>${t}</option>`).join("")}</select></label>
         <label>Kurs vom<input value="${i.kursDatum ? datum(i.kursDatum) : "–"}" disabled></label>
@@ -3971,6 +3976,7 @@ document.addEventListener("submit", async (e) => {
     const kurs = zahl(f.get("kurs"));
     if (kurs !== i.kurs) { i.kurs = kurs; i.kursDatum = kurs != null ? heute() : null; }
     i.ziel = zahl(f.get("ziel"));
+    if (f.has("alarmUnter")) { i.alarmUnter = zahl(f.get("alarmUnter")) ?? undefined; i.alarmUeber = zahl(f.get("alarmUeber")) ?? undefined; }
     sichern(); meldung("Gespeichert."); return zeichnen();
   }
   if (e.target.id === "buchung-form") {

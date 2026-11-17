@@ -172,7 +172,10 @@ public class Wachter extends JobService {
         String heute = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date());
         String morgen = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date(System.currentTimeMillis() + 86400000L));
         double schwelle = k.optDouble("schwelle", 5);
-        boolean kurse = k.optBoolean("kurse", true), earnings = k.optBoolean("earnings", true), news = k.optBoolean("news", false);
+        boolean kurse = k.optBoolean("kurse", true), earnings = k.optBoolean("earnings", true), news = k.optBoolean("news", false),
+                markenAn = k.optBoolean("marken", true);
+        java.util.HashMap<String, Double> fx = new java.util.HashMap<>();   // 0.61: Euro-Umrechnung je Waehrung, einmal pro Lauf
+        fx.put("EUR", 1.0);
         Locale ort = "en".equals(k.optString("sprache")) ? Locale.US : Locale.GERMANY;
         long letzteNews = gemeldet.getLong("newsStand", System.currentTimeMillis() - 12 * 3600000L);
         String kanal = t.optString("kanal", "Depot-Kompass");
@@ -195,8 +198,10 @@ public class Wachter extends JobService {
                     }
                 }
             }
-            // 2) Kursbewegung seit dem Vortag (oeffentlicher Kurs, nur der Ticker geht raus)
-            if (kurse && ticker.matches("[A-Za-z0-9.^=-]{1,20}")) {
+            // 2) Kursbewegung seit dem Vortag und (0.61) Kurs-Marken - ein Abruf je Ticker (oeffentlicher Kurs, nur der Ticker geht raus)
+            JSONArray marken = markenAn ? w.optJSONArray("marken") : null;
+            boolean mitMarken = marken != null && marken.length() > 0;
+            if ((kurse || mitMarken) && ticker.matches("[A-Za-z0-9.^=-]{1,20}")) {
                 try {
                     JSONObject meta = new JSONObject(holen("https://query1.finance.yahoo.com/v8/finance/chart/" + Uri.encode(ticker) + "?range=5d&interval=1d"))
                             .getJSONObject("chart").getJSONArray("result").getJSONObject(0).getJSONObject("meta");
@@ -204,10 +209,32 @@ public class Wachter extends JobService {
                     if (meta.has("previousClose")) vorher = meta.optDouble("previousClose", vorher);
                     double pct = (jetzt / vorher - 1) * 100;
                     String schl = "k:" + ticker + ":" + heute;
-                    if (!Double.isNaN(pct) && !Double.isInfinite(pct) && Math.abs(pct) >= schwelle && !gemeldet.getBoolean(schl, false)) {
+                    if (kurse && !Double.isNaN(pct) && !Double.isInfinite(pct) && Math.abs(pct) >= schwelle && !gemeldet.getBoolean(schl, false)) {
                         String zahl = String.format(ort, "%+.1f %%", pct);
                         zeigen(this, kanal, (pct > 0 ? "📈 " : "📉 ") + name, zahl + " " + t.optString("seitGestern", "seit dem letzten Schlusskurs"), nr++);
                         gemeldet.edit().putBoolean(schl, true).apply();
+                    }
+                    if (mitMarken) {
+                        double eur = inEuro(jetzt, meta.optString("currency", "EUR"), fx);
+                        if (!Double.isNaN(eur) && eur > 0) {
+                            for (int j = 0; j < marken.length(); j++) {
+                                JSONObject mk = marken.optJSONObject(j);
+                                if (mk == null) continue;
+                                String art = mk.optString("art");
+                                double wert = mk.optDouble("wert", Double.NaN);
+                                if (Double.isNaN(wert) || wert <= 0) continue;
+                                boolean unten = art.equals("kauf") || art.equals("unter");
+                                boolean erreicht = unten ? eur <= wert : eur >= wert;
+                                String mschl = "m:" + ticker + ":" + art + ":" + wert;
+                                if (erreicht && !gemeldet.getBoolean(mschl, false)) {
+                                    zeigen(this, kanal, (unten ? "🎯 " : "🏁 ") + name,
+                                            t.optString(art, art) + ": " + String.format(ort, "%,.2f €", wert) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + String.format(ort, "%,.2f €", eur), nr++);
+                                    gemeldet.edit().putBoolean(mschl, true).apply();
+                                } else if (!erreicht && gemeldet.getBoolean(mschl, false)) {
+                                    gemeldet.edit().remove(mschl).apply();   // wieder scharf, sobald der Kurs die Marke verlassen hat
+                                }
+                            }
+                        }
                     }
                 } catch (Exception ignored) { }
             }
@@ -239,6 +266,25 @@ public class Wachter extends JobService {
     }
 
     // ------------------------------------------------------------ Hilfen
+    /** 0.61: Kurs in Euro wie in der App (Pence/Cent teilen, Wechselkurs EUR<W>=X von Yahoo). NaN, wenn nicht umrechenbar. */
+    private static double inEuro(double preis, String w, java.util.HashMap<String, Double> fx) {
+        if (Double.isNaN(preis)) return Double.NaN;
+        if (w.equals("GBp") || w.equals("GBX")) { preis /= 100; w = "GBP"; }
+        else if (w.equals("ZAc")) { preis /= 100; w = "ZAR"; }
+        else if (w.equals("ILA")) { preis /= 100; w = "ILS"; }
+        if (!w.matches("[A-Z]{3}")) return Double.NaN;
+        if (!fx.containsKey(w)) {
+            double f = Double.NaN;
+            try {
+                f = new JSONObject(holen("https://query1.finance.yahoo.com/v8/finance/chart/EUR" + w + "=X?range=1d&interval=1d"))
+                        .getJSONObject("chart").getJSONArray("result").getJSONObject(0).getJSONObject("meta").optDouble("regularMarketPrice", Double.NaN);
+            } catch (Exception ignored) { }
+            fx.put(w, f);
+        }
+        double f = fx.get(w);
+        return Double.isNaN(f) || f <= 0 ? Double.NaN : preis / f;
+    }
+
     private static String holen(String adresse) throws Exception {
         HttpURLConnection c = (HttpURLConnection) new URL(adresse).openConnection();
         c.setRequestProperty("User-Agent", "Mozilla/5.0");

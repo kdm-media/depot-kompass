@@ -1,0 +1,1 @@
+Kurs-Alarme als Benachrichtigung: Kauf-/Verkaufsmarke aus der Watchlist und neue Alarm-Marken (unter/über) in jeder Position melden sich im Hintergrund. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.

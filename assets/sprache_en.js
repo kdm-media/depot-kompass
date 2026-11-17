@@ -298,8 +298,8 @@ Object.assign(UEB.en, {
   "💬 Community-Server auf Discord für Fragen, Ideen und Feedback – folgt.": "💬 Community server on Discord for questions, ideas and feedback – coming soon.",
   "Benachrichtigungen": "Notifications", "an · Kurse, Earnings, Schlagzeilen": "on · prices, earnings, headlines", "aus · nur mit Internet": "off · internet only",
   "🔔 Benachrichtigungen": "🔔 Notifications",
-  "Die App kann dich auf dem Handy erinnern: an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.":
-    "The app can remind you on your phone: of earnings dates, strong price moves and new headlines about your securities.",
+  "Die App kann dich auf dem Handy erinnern: an deine Kurs-Marken, an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.":
+    "The app can remind you on your phone: of your price marks, earnings dates, strong price moves and new headlines about your securities.",
   "Das geht nur mit Internet: Android startet die Prüfung alle paar Stunden im Hintergrund. Abgefragt werden nur öffentliche Kurse und Schlagzeilen zu den Namen deiner Werte – nie Beträge, Stückzahlen oder Konten. Die Liste der Werte liegt verschlüsselt auf dem Handy.":
     "This only works with internet: Android starts the check every few hours in the background. Only public prices and headlines for the names of your securities are requested – never amounts, quantities or accounts. The list of securities is stored encrypted on the phone.",
   "Internet ist in der App aus – im Offline-Modus gibt es keine Benachrichtigungen.": "Internet is off in the app – there are no notifications in offline mode.",
@@ -798,4 +798,15 @@ Object.assign(UEB.en, {
   "Jede weitere Tranche senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt.": "Every further tranche lowers the cost basis but raises the stake – the loss grows if the price keeps falling.",
   "z. B. Zweite Tranche bei Rücksetzer": "e.g. second tranche on a pullback",
   "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.": "The four calculators: 🧮 leverage · ⚖️ position size · 📉 buy in tranches · 💰 take profit. Every plan can be saved as a note.",
+  // 0.61: Kurs-Alarme
+  "Kaufmarke erreicht": "Buy mark reached", "Verkaufsmarke erreicht": "Sell mark reached",
+  "Alarm-Marke unterschritten": "Alert mark fallen below", "Alarm-Marke überschritten": "Alert mark exceeded",
+  "Kurs-Alarme (Marken)": "Price alerts (marks)", "Kauf-/Verkaufsmarke aus der Watchlist, Alarm-Marken aus den Positionen": "Buy/sell mark from the watchlist, alert marks from your positions",
+  "🔔 Alarm unter € (Kurs ≤)": "🔔 Alert below € (price ≤)", "🔔 Alarm über € (Kurs ≥)": "🔔 Alert above € (price ≥)",
+  "Kurs-Alarm, z. B. Stop-, Nachkauf- oder Ziel-Marke: Bei eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy, wenn der Kurs die Marke erreicht. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.":
+    "Price alert, e.g. a stop, top-up or target mark: with notifications switched on (⚙️ → More → 🔔) your phone tells you when the price reaches the mark. Android only checks every few hours – no second-by-second alarm.",
+  "Ehrlich gesagt: Android prüft im Hintergrund nur alle paar Stunden (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.":
+    "To be honest: Android only checks in the background every few hours (battery). This is not a second-by-second alarm like in a trading app – for fast stops use the order at your broker.",
+  "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.":
+    "With notifications switched on (⚙️ → More → 🔔) your phone also tells you when a mark is reached – Android checks for this every few hours in the background.",
 });

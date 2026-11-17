@@ -2,6 +2,10 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.61 – 17 Nov 2026
+- **🔔 Price alerts as notifications:** buy and sell marks from the watchlist now also notify you on your phone when the price reaches them – not only the next time you open the app. New on every position: **alert below / alert above** (e.g. a stop, top-up or target mark). Prices in dollars, pounds etc. are converted to euros as in the app. Each mark notifies once and is armed again as soon as the price has left it.
+- Separate switch “Price alerts (marks)” under ⚙️ → More → 🔔 Notifications. Honest note: Android only checks in the background every few hours – no second-by-second alarm like in a trading app.
+
 ## 0.60 – 17 Nov 2026
 - **Notifications work again:** the new error log showed the cause – Android requires the permission "view network state" (ACCESS_NETWORK_STATE) for the background check "only with internet". It was missing; now it is declared (normal permission, no prompt, only reads "network yes/no").
 - The error log recognises missing permissions as its own error code (DK-09).
