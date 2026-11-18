@@ -275,6 +275,18 @@ function kalenderEreignisse(depotIds) {
                    info: `${stk(rund(x.stueck, 8))} Stück, gekauft ${datum(x.kauf)} – danach steuerfrei` });
     } finally { D = vorher; }
   }
+  // 0.64: auch Earnings der Watchlist – nicht ohne Grund beobachtet; doppelte (schon im Depot) weglassen
+  const schonDa = new Set(aus.filter((x) => x.art === "Earnings").map((x) => ((S.depots[x.did]?.instrumente[x.id] || {}).ticker || "") + "|" + x.datum));
+  for (const w of S.watchlist || []) {
+    if (!w.ticker || !w.termine) continue;
+    for (const e of [...(w.termine.earningsGewesen || []), ...(w.termine.earnings || []).filter((d) => d >= h)]) {
+      if (schonDa.has(w.ticker + "|" + e)) continue;
+      schonDa.add(w.ticker + "|" + e);
+      const q = e < h ? earningsErgebnis(w, e) : null;
+      aus.push({ datum: e, art: "Earnings", titel: w.name || w.ticker, id: w.ticker, did: "w", depot: "Watchlist",
+                 info: e >= h ? "Quartalszahlen · antippen für Details" : q ? `Ergebnis je Aktie ${fZahl.format(q.eps)}${q.erwartet != null ? " (erwartet " + fZahl.format(q.erwartet) + ")" : ""}` : "Auswertung noch nicht geladen – antippen" });
+    }
+  }
   aus.push(...steuerTermine());
   for (const x of S.eigeneTermine || []) if (depotIds.includes(x.depot))
     aus.push({ datum: x.datum, art: x.art, titel: x.titel, eigen: x.id, eur: x.betrag ?? undefined, info: esc(x.notiz || ""),
@@ -375,8 +387,13 @@ function earningsErgebnis(i, tag) {
     .sort((a, b) => b.quartal.localeCompare(a.quartal))[0];
   return q || null;
 }
+/** 0.64: Instrument zu einem Earnings-Eintrag – aus einem Depot oder (did "w") aus der Watchlist. */
+function earningsInstrument(e) {
+  if (!e) return null;
+  return e.did === "w" ? (S.watchlist || []).find((w) => w.ticker === e.iid) || null : S.depots[e.did]?.instrumente[e.iid] || null;
+}
 function earningsKarte() {
-  const e = ui.earnings, d = S.depots[e?.did], i = d?.instrumente[e?.iid];
+  const e = ui.earnings, i = earningsInstrument(e);
   if (!i) return "";
   const vorbei = e.datum <= heute(), q = vorbei ? earningsErgebnis(i, e.datum) : null;
   const fin = (i.termine?.finanzen || []).slice(-4), w = i.waehrung && i.waehrung !== "EUR" ? " " + esc(i.waehrung) : "";
@@ -397,14 +414,14 @@ function earningsKarte() {
   </section>`;
 }
 async function earningsAktualisieren() {
-  const e = ui.earnings, i = S.depots[e?.did]?.instrumente[e?.iid];
+  const e = ui.earnings, i = earningsInstrument(e);
   if (!i) return;
   if (!APP) return meldung("Kurse gibt es nur in der App.");
   if (netzGesperrt()) return;
   if (!i.ticker) { meldung("Suche Ticker …"); i.ticker = await tickerSuchen(i) || ""; }
   if (!i.ticker) return meldung("Kein Yahoo-Ticker für diesen Wert – in der Position eintragen.");
   meldung("Hole Earnings …");
-  const gleiche = Object.values(S.depots).flatMap((d) => Object.values(d.instrumente)).filter((x) => x.ticker === i.ticker);
+  const gleiche = [...Object.values(S.depots).flatMap((d) => Object.values(d.instrumente)), ...(S.watchlist || [])].filter((x) => x.ticker === i.ticker);
   await zusatzdaten(i.ticker, gleiche);
   sichernAlle(); zeichnen();
   meldung(earningsErgebnis(i, e.datum) || e.datum > heute() ? "Earnings aktualisiert." : "Noch keine Auswertung bei Yahoo – später nochmal versuchen.");

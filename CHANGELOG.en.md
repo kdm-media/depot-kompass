@@ -2,6 +2,13 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.64 – 18 Nov 2026 – earnings results & notification history
+- **📊 Earnings result as a notification:** on the earnings day and up to 4 days after, the app checks whether the results are out and reports earnings per share against the estimate, e.g. "Results are out: EPS 2.61 · expected 2.49 · beat (+4.8 %)". Applies to holdings and watchlist values with an earnings date; own switch "Earnings result".
+- **🕘 Notification history:** under ⚙️ → More → 🔔 you find every alert of the last 90 days, including dismissed ones – with time, value and text. Plus a **check log**: when Android last checked, how many values and how many alerts. Stored encrypted on the phone only, with "Delete history".
+- **Check more often:** interval now from **1 hour** (previously from 6). New: **move since the last check** (e.g. from 3 %) – in addition to the move since the previous close. Honest note stays: Android decides the exact time itself.
+- **Watchlist earnings in the calendar:** dates and results of watchlist values now appear in the calendar marked "Watchlist" (previously only holdings); tap to see the result.
+- Not included yet: summary of the earnings call (needs a source for the transcript – being checked).
+
 ## 0.63 – 17 Nov 2026 – security update
 - **Lock screen:** notifications no longer show any content on a locked phone (no names, prices or marks) – only "New notice – unlock to view".
 - **Stronger passwords:** backup password now at least 14 characters, sharing a portfolio at least 12 – with letters and numbers, no repetitions. The ZIP export requires a backup password of at least 14 characters because the ZIP format derives its key only weakly.

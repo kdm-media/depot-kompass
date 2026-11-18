@@ -805,8 +805,8 @@ Object.assign(UEB.en, {
   "🔔 Alarm unter € (Kurs ≤)": "🔔 Alert below € (price ≤)", "🔔 Alarm über € (Kurs ≥)": "🔔 Alert above € (price ≥)",
   "Kurs-Alarm, z. B. Stop-, Nachkauf- oder Ziel-Marke: Bei eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy, wenn der Kurs die Marke erreicht. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.":
     "Price alert, e.g. a stop, top-up or target mark: with notifications switched on (⚙️ → More → 🔔) your phone tells you when the price reaches the mark. Android only checks every few hours – no second-by-second alarm.",
-  "Ehrlich gesagt: Android prüft im Hintergrund nur alle paar Stunden (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.":
-    "To be honest: Android only checks in the background every few hours (battery). This is not a second-by-second alarm like in a trading app – for fast stops use the order at your broker.",
+  "Ehrlich gesagt: Android prüft im Hintergrund nur etwa so oft, wie du unten einstellst – frühestens stündlich, manchmal später (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.":
+    "To be honest: Android only checks in the background about as often as you set below – at most hourly, sometimes later (battery). This is not a second-by-second alarm like in a trading app – for fast stops use the order at your broker.",
   "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.":
     "With notifications switched on (⚙️ → More → 🔔) your phone also tells you when a mark is reached – Android checks for this every few hours in the background.",
   // 0.62: Alarme
@@ -856,4 +856,13 @@ Object.assign(UEB.en, {
   "Zu einfach – bitte Buchstaben und Zahlen mischen, keine Wiederholungen.": "Too simple – please mix letters and numbers, no repetitions.",
   "mindestens 14 Zeichen, eigenes Passwort": "at least 14 characters, your own password", "Passwort (mind. 12 Zeichen)": "Password (min. 12 characters)",
   "Datei zu groß (über 50 MB)": "File too large (over 50 MB)", "PDF-Inhalt zu groß": "PDF content too large",
+  // 0.64: Earnings-Ergebnis, Verlauf, Pruefprotokoll
+  "Earnings-Ergebnis": "Earnings result", "sobald die Zahlen da sind: Gewinn je Aktie gegen Erwartung": "as soon as the numbers are out: earnings per share vs. estimate",
+  "Bewegung seit der letzten Prüfung ab": "Move since the last check from", "Häufiges Prüfen braucht etwas mehr Akku und Daten.": "Frequent checks use a bit more battery and data.",
+  "Zahlen sind da": "Results are out", "erwartet": "expected", "über Erwartung": "beat", "unter Erwartung": "miss", "seit der letzten Prüfung": "since the last check",
+  "Verlauf": "History", "Jede Meldung der letzten 90 Tage – auch weggewischte. Liegt verschlüsselt nur auf diesem Handy.": "Every alert of the last 90 days – including dismissed ones. Stored encrypted on this phone only.",
+  "Alle anzeigen": "Show all", "Noch keine Meldungen.": "No alerts yet.", "Prüfprotokoll": "Check log",
+  "Wann Android zuletzt geprüft hat – so siehst du, ob ein Alarm zur richtigen Zeit kam.": "When Android last checked – so you can see whether an alert came at the right time.",
+  "Werte geprüft": "values checked", "Meldungen": "alerts", "ohne Antwort": "without response", "Noch keine Prüfung gelaufen.": "No check has run yet.",
+  "Verlauf löschen": "Delete history", "🕘 Verlauf": "🕘 History", "🗑️ Verlauf löschen": "🗑️ Delete history", "Verlauf und Prüfprotokoll löschen?": "Delete history and check log?", "Verlauf gelöscht.": "History deleted.",
 });

@@ -48,7 +48,10 @@ import javax.crypto.spec.GCMParameterSpec;
  * keine Google-Dienste, kein Push von aussen. Er prueft nur die Werte aus wachter.bin:
  *  - Kursbewegung seit dem Vortag ueber der eingestellten Schwelle (Yahoo, oeffentlicher Kurs),
  *  - Earnings-Termin heute oder morgen (Termine aus der App, ohne Abruf),
- *  - neue Schlagzeilen seit der letzten Pruefung (Google News RSS, Suche nach dem Namen).
+ *  - neue Schlagzeilen seit der letzten Pruefung (Google News RSS, Suche nach dem Namen),
+ *  - (0.64) Earnings-Ergebnis, sobald die Zahlen da sind (Yahoo earningsHistory: EPS Ist gegen Erwartung),
+ *  - (0.64) Kursbewegung seit der letzten Pruefung.
+ * 0.64: Jede Meldung landet zusaetzlich im Verlauf (verlauf.bin, gleicher Keystore-Schluessel, max. 300 Eintraege / 90 Tage).
  * wachter.bin enthaelt nur Namen, Ticker, Termine und Texte - verschluesselt mit einem eigenen
  * Android-Keystore-Schluessel (verlaesst das Geraet nie). Keine Betraege, Stueckzahlen oder Konten.
  */
@@ -82,7 +85,7 @@ public class Wachter extends JobService {
                 ks.deleteEntry(ALIAS);
                 schreiben(datei(c), json);
             }
-            long stunden = Math.max(3, Math.min(24, k.optInt("stunden", 12)));
+            long stunden = Math.max(1, Math.min(24, k.optInt("stunden", 12)));   // 0.64: ab 1 Std. (Android-Minimum 15 Min.)
             if (js != null) {
                 // 0.59: nur neu einplanen, wenn noch nicht (oder mit anderem Abstand) geplant - Android begrenzt,
                 // wie oft eine App schedule() aufrufen darf; nach "Aktualisieren" wurde bei jedem Speichern neu geplant.
@@ -152,6 +155,58 @@ public class Wachter extends JobService {
         nm.notify(nr, b.build());
     }
 
+    // ------------------------------------------------------------ 0.64: Verlauf + Pruefprotokoll
+    static File verlaufDatei(Context c) { return new File(c.getFilesDir(), "verlauf.bin"); }
+    private static final Object VERLAUF_SPERRE = new Object();
+
+    /** Verlauf lesen: {"eintraege":[{"t":ms,"art":"alarm|kurs|lauf|earnings|ergebnis|news","titel","text"}], "laeufe":[{"t","werte","meldungen","fehler"}]} */
+    static String verlaufLesen(Context c) {
+        synchronized (VERLAUF_SPERRE) {
+            try {
+                File f = verlaufDatei(c);
+                if (!f.isFile()) return "{\"eintraege\":[],\"laeufe\":[]}";
+                return lesenDatei(f);
+            } catch (Exception e) {
+                return "{\"eintraege\":[],\"laeufe\":[]}";
+            }
+        }
+    }
+
+    static void verlaufLeeren(Context c) { synchronized (VERLAUF_SPERRE) { verlaufDatei(c).delete(); } }
+
+    /** Eintrag oder Lauf anhaengen; aelter als 90 Tage bzw. mehr als 300/60 Eintraege fallen raus. */
+    private static void verlaufMerken(Context c, JSONObject eintrag, JSONObject lauf) {
+        synchronized (VERLAUF_SPERRE) {
+            try {
+                JSONObject v = new JSONObject(verlaufLesen(c));
+                long grenze = System.currentTimeMillis() - 90L * 86400000L;
+                JSONArray alt = v.optJSONArray("eintraege"), neu = new JSONArray();
+                if (eintrag != null) neu.put(eintrag);
+                for (int i = 0; alt != null && i < alt.length() && neu.length() < 300; i++) {
+                    JSONObject e = alt.optJSONObject(i);
+                    if (e != null && e.optLong("t") >= grenze) neu.put(e);
+                }
+                JSONArray altL = v.optJSONArray("laeufe"), neuL = new JSONArray();
+                if (lauf != null) neuL.put(lauf);
+                for (int i = 0; altL != null && i < altL.length() && neuL.length() < 60; i++) neuL.put(altL.opt(i));
+                v.put("eintraege", neu).put("laeufe", neuL);
+                schreiben(verlaufDatei(c), v.toString());
+            } catch (Exception e) {
+                Protokoll.fehler(c, "Wächter: Verlauf", e);
+            }
+        }
+    }
+
+    private int gemeldetLauf = 0;
+
+    /** Benachrichtigung zeigen und im Verlauf merken. */
+    private void melden(String art, String kanal, String titel, String text, int nr) {
+        zeigen(this, kanal, titel, text, nr);
+        gemeldetLauf++;
+        try { verlaufMerken(this, new JSONObject().put("t", System.currentTimeMillis()).put("art", art).put("titel", titel).put("text", text), null); }
+        catch (Exception ignored) { }
+    }
+
     // ------------------------------------------------------------ Hintergrund-Pruefung
     @Override
     public boolean onStartJob(final JobParameters p) {
@@ -193,11 +248,17 @@ public class Wachter extends JobService {
         sperrText = t.optString("entsperren", sperrText);
         JSONArray werte = k.optJSONArray("werte");
         if (werte == null) return;
-        int nr = 100;
+        int nr = 100, geprueft = 0, fehler = 0;
+        gemeldetLauf = 0;
+        boolean ergebnisse = k.optBoolean("ergebnisse", true);
+        double schwelleLauf = k.optDouble("schwelleLauf", 0);   // 0.64: Bewegung seit der letzten Pruefung (0 = aus)
+        long vorgestern = System.currentTimeMillis() - 4L * 86400000L;
+        String grenzeErgebnis = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date(vorgestern));
         for (int i = 0; i < werte.length() && i < 60; i++) {
             if (Thread.currentThread().isInterrupted()) return;
             JSONObject w = werte.getJSONObject(i);
             String name = w.optString("name"), ticker = w.optString("ticker");
+            geprueft++;
             // 1) Earnings heute/morgen - ohne Abruf, aus den Terminen der App
             if (earnings) {
                 JSONArray e = w.optJSONArray("earnings");
@@ -205,9 +266,38 @@ public class Wachter extends JobService {
                     String d = e.optString(j);
                     String schl = "e:" + name + ":" + d;
                     if ((d.equals(heute) || d.equals(morgen)) && !gemeldet.getBoolean(schl, false)) {
-                        zeigen(this, kanal, "📊 " + name, d.equals(heute) ? t.optString("earningsHeute", "Earnings heute") : t.optString("earningsMorgen", "Earnings morgen"), nr++);
+                        melden("earnings", kanal, "📊 " + name, d.equals(heute) ? t.optString("earningsHeute", "Earnings heute") : t.optString("earningsMorgen", "Earnings morgen"), nr++);
                         gemeldet.edit().putBoolean(schl, true).apply();
                     }
+                }
+            }
+            // 1b) 0.64: Earnings-Ergebnis - Termin heute oder in den letzten 4 Tagen, Zahlen schon da?
+            if (ergebnisse && ticker.matches("[A-Za-z0-9.^=-]{1,20}")) {
+                JSONArray e = w.optJSONArray("earnings");
+                String termin = null;
+                for (int j = 0; e != null && j < e.length(); j++) {
+                    String d = e.optString(j);
+                    if (d.compareTo(grenzeErgebnis) >= 0 && d.compareTo(heute) <= 0) termin = d;
+                }
+                if (termin != null) {
+                    try {
+                        JSONObject erg = ergebnis(ticker, termin);
+                        if (erg != null) {
+                            String schl = "er:" + ticker + ":" + erg.optString("quartal");
+                            if (!gemeldet.getBoolean(schl, false)) {
+                                double ist = erg.optDouble("ist"), soll = erg.optDouble("soll", Double.NaN);
+                                String text = t.optString("zahlenDa", "Zahlen sind da") + ": EPS " + String.format(ort, "%.2f", ist);
+                                if (!Double.isNaN(soll)) {
+                                    double ab = soll != 0 ? (ist / Math.abs(soll) - Math.signum(soll)) * 100 : Double.NaN;
+                                    text += " · " + t.optString("erwartet", "erwartet") + " " + String.format(ort, "%.2f", soll)
+                                            + " · " + (ist >= soll ? t.optString("beat", "über Erwartung") : t.optString("miss", "unter Erwartung"))
+                                            + (Double.isNaN(ab) || Double.isInfinite(ab) ? "" : " (" + String.format(ort, "%+.1f %%", ab) + ")");
+                                }
+                                melden("ergebnis", kanal, "📊 " + name, text, nr++);
+                                gemeldet.edit().putBoolean(schl, true).apply();
+                            }
+                        }
+                    } catch (Exception ex) { fehler++; }
                 }
             }
             // 2) Kursbewegung seit dem Vortag und (0.61) Kurs-Marken - ein Abruf je Ticker (oeffentlicher Kurs, nur der Ticker geht raus)
@@ -223,8 +313,18 @@ public class Wachter extends JobService {
                     String schl = "k:" + ticker + ":" + heute;
                     if (kurse && !Double.isNaN(pct) && !Double.isInfinite(pct) && Math.abs(pct) >= schwelle && !gemeldet.getBoolean(schl, false)) {
                         String zahl = String.format(ort, "%+.1f %%", pct);
-                        zeigen(this, kanal, (pct > 0 ? "📈 " : "📉 ") + name, zahl + " " + t.optString("seitGestern", "seit dem letzten Schlusskurs"), nr++);
+                        melden("kurs", kanal, (pct > 0 ? "📈 " : "📉 ") + name, zahl + " " + t.optString("seitGestern", "seit dem letzten Schlusskurs"), nr++);
                         gemeldet.edit().putBoolean(schl, true).apply();
+                    }
+                    // 0.64: Bewegung seit der letzten Pruefung (Kurs je Ticker gemerkt, nur Marktkurs - keine Bestaende)
+                    if (schwelleLauf > 0 && !Double.isNaN(jetzt) && jetzt > 0) {
+                        float alt = gemeldet.getFloat("p:" + ticker, -1f);
+                        if (alt > 0) {
+                            double seit = (jetzt / alt - 1) * 100;
+                            if (Math.abs(seit) >= schwelleLauf)
+                                melden("kurs", kanal, (seit > 0 ? "⏫ " : "⏬ ") + name, String.format(ort, "%+.1f %%", seit) + " " + t.optString("seitPruefung", "seit der letzten Prüfung"), nr++);
+                        }
+                        gemeldet.edit().putFloat("p:" + ticker, (float) jetzt).apply();
                     }
                     if (mitMarken) {
                         double eur = inEuro(jetzt, meta.optString("currency", "EUR"), fx);
@@ -248,7 +348,7 @@ public class Wachter extends JobService {
                                 String mschl = "m:" + mk.optString("id") + ":" + art + ":" + mk.optString("wert") + ":" + mk.optString("von") + ":" + mk.optString("bis") + ":" + mk.optString("prozent");
                                 if (erreicht && !gemeldet.getBoolean(mschl, false)) {
                                     String alarmName = mk.optString("name", "");
-                                    zeigen(this, kanal, "🔔 " + name + (alarmName.isEmpty() ? "" : " – " + alarmName),
+                                    melden("alarm", kanal, "🔔 " + name + (alarmName.isEmpty() ? "" : " – " + alarmName),
                                             mk.optString("text", art) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + String.format(ort, "%,.2f €", eur), nr++);
                                     gemeldet.edit().putBoolean(mschl, true).apply();
                                 } else if (!erreicht && gemeldet.getBoolean(mschl, false)) {
@@ -257,7 +357,7 @@ public class Wachter extends JobService {
                             }
                         }
                     }
-                } catch (Exception ignored) { }
+                } catch (Exception ex) { fehler++; }
             }
             // 3) Neue Schlagzeilen seit der letzten Pruefung (Google News, Suche nach dem Namen)
             if (news && w.optBoolean("news", true) && !name.isEmpty()) {
@@ -276,17 +376,58 @@ public class Wachter extends JobService {
                             }
                         } catch (Exception ignored) { }
                     }
-                    if (neu > 0) zeigen(this, kanal, "📰 " + name, (neu == 1 ? t.optString("eineSchlagzeile", "1 neue Schlagzeile")
+                    if (neu > 0) melden("news", kanal, "📰 " + name, (neu == 1 ? t.optString("eineSchlagzeile", "1 neue Schlagzeile")
                             : String.format(ort, t.optString("schlagzeilen", "%d neue Schlagzeilen"), neu)) + (erste != null ? ": " + erste : ""), nr++);
                 } catch (Exception ignored) { }
             }
         }
         if (news) gemeldet.edit().putLong("newsStand", System.currentTimeMillis()).apply();
+        try { verlaufMerken(this, null, new JSONObject().put("t", System.currentTimeMillis()).put("werte", geprueft).put("meldungen", gemeldetLauf).put("fehler", fehler)); }
+        catch (Exception ignored) { }
         // alte Merker (aelter als ~2 Wochen) aufraeumen
-        if (gemeldet.getAll().size() > 400) gemeldet.edit().clear().putLong("newsStand", System.currentTimeMillis()).apply();
+        if (gemeldet.getAll().size() > 600) gemeldet.edit().clear().putLong("newsStand", System.currentTimeMillis()).apply();
     }
 
     // ------------------------------------------------------------ Hilfen
+    private static String crumbWert;
+
+    /** Yahoo verlangt fuer quoteSummary Cookie + crumb (wie MainActivity). */
+    private static synchronized String crumb() throws Exception {
+        if (crumbWert != null) return crumbWert;
+        if (java.net.CookieHandler.getDefault() == null) java.net.CookieHandler.setDefault(new java.net.CookieManager());
+        try { holen("https://fc.yahoo.com"); } catch (Exception ignored) { }
+        String c = holen("https://query2.finance.yahoo.com/v1/test/getcrumb").trim();
+        if (c.isEmpty() || c.length() > 40 || c.contains("<")) throw new Exception("kein crumb");
+        crumbWert = c;
+        return c;
+    }
+
+    /** 0.64: juengstes Quartal aus earningsHistory, wenn es zum Termin passt (Quartalsende 0-120 Tage vor dem Termin)
+     *  und schon ein Ist-Wert da ist. {"quartal","ist","soll"} oder null. Nur der Ticker geht raus. */
+    static JSONObject ergebnis(String ticker, String termin) throws Exception {
+        String url = "https://query2.finance.yahoo.com/v10/finance/quoteSummary/" + Uri.encode(ticker) + "?modules=earningsHistory&crumb=" + Uri.encode(crumb());
+        JSONArray h = new JSONObject(holen(url)).getJSONObject("quoteSummary").getJSONArray("result").getJSONObject(0)
+                .getJSONObject("earningsHistory").optJSONArray("history");
+        if (h == null) return null;
+        long t = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).parse(termin).getTime() / 1000;
+        JSONObject best = null;
+        long bestQ = 0;
+        for (int i = 0; i < h.length(); i++) {
+            JSONObject q = h.optJSONObject(i);
+            if (q == null) continue;
+            long qe = q.optJSONObject("quarter") != null ? q.getJSONObject("quarter").optLong("raw") : 0;
+            JSONObject ist = q.optJSONObject("epsActual");
+            if (qe <= 0 || ist == null || !ist.has("raw")) continue;
+            if (qe > t || t - qe > 120L * 86400) continue;
+            if (qe > bestQ) { bestQ = qe; best = q; }
+        }
+        if (best == null) return null;
+        JSONObject r = new JSONObject().put("quartal", bestQ).put("ist", best.getJSONObject("epsActual").getDouble("raw"));
+        JSONObject soll = best.optJSONObject("epsEstimate");
+        if (soll != null && soll.has("raw")) r.put("soll", soll.getDouble("raw"));
+        return r;
+    }
+
     /** 0.61: Kurs in Euro wie in der App (Pence/Cent teilen, Wechselkurs EUR<W>=X von Yahoo). NaN, wenn nicht umrechenbar. */
     private static double inEuro(double preis, String w, java.util.HashMap<String, Double> fx) {
         if (Double.isNaN(preis)) return Double.NaN;

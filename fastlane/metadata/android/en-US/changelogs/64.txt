@@ -1,0 +1,1 @@
+Earnings result as a notification (EPS vs. estimate), notification history of the last 90 days with check log, check interval from 1 hour and alerts for moves since the last check.

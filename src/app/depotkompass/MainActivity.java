@@ -447,6 +447,13 @@ public class MainActivity extends Activity {
             });
         }
 
+        /** 0.64: Benachrichtigungsverlauf + Pruefprotokoll (verschluesselt auf dem Geraet). */
+        @JavascriptInterface
+        public String wachterVerlauf() { return Wachter.verlaufLesen(MainActivity.this); }
+
+        @JavascriptInterface
+        public void wachterVerlaufLeeren() { Wachter.verlaufLeeren(MainActivity.this); }
+
         /** Beispiel-Benachrichtigung sofort zeigen. */
         @JavascriptInterface
         public void wachterTest(String kanal, String titel, String text) {

@@ -2,6 +2,13 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.64 – 18.11.2026 – Earnings-Ergebnis & Benachrichtigungsverlauf
+- **📊 Earnings-Ergebnis als Benachrichtigung:** Am Earnings-Tag und bis zu 4 Tage danach prüft die App, ob die Zahlen da sind, und meldet den Gewinn je Aktie gegen die Erwartung, z. B. „Zahlen sind da: EPS 2,61 · erwartet 2,49 · über Erwartung (+4,8 %)“. Gilt für Werte aus Depots und Watchlist mit Earnings-Termin; eigener Schalter „Earnings-Ergebnis“.
+- **🕘 Benachrichtigungsverlauf:** Unter ⚙️ → Mehr → 🔔 steht jede Meldung der letzten 90 Tage, auch weggewischte – mit Zeit, Wert und Text. Dazu ein **Prüfprotokoll**: wann Android zuletzt geprüft hat, wie viele Werte und wie viele Meldungen. Liegt verschlüsselt nur auf dem Handy, mit „Verlauf löschen“.
+- **Häufiger prüfen:** Prüfabstand jetzt wählbar ab **1 Stunde** (vorher ab 6). Neu: **Bewegung seit der letzten Prüfung** (z. B. ab 3 %) – zusätzlich zur Bewegung seit dem Vortag. Ehrlicher Hinweis bleibt: Android legt den genauen Zeitpunkt selbst fest.
+- **Earnings der Watchlist im Kalender:** Termine und Ergebnisse von Watchlist-Werten stehen jetzt mit „Watchlist“ im Kalender (vorher nur Depot-Werte), antippen zeigt die Auswertung.
+- Noch nicht dabei: Zusammenfassung des Earnings-Calls (braucht eine Quelle für das Gesprächsprotokoll – wird geprüft).
+
 ## 0.63 – 17.11.2026 – Sicherheits-Update
 - **Sperrbildschirm:** Benachrichtigungen zeigen auf dem gesperrten Handy keine Inhalte mehr (keine Namen, Kurse oder Marken) – nur „Neuer Hinweis – zum Ansehen entsperren“.
 - **Stärkere Passwörter:** Sicherungs-Passwort jetzt mindestens 14 Zeichen, Depot teilen mindestens 12 – jeweils mit Buchstaben und Zahlen, ohne Wiederholungen. Der ZIP-Export verlangt ein Sicherungs-Passwort mit mindestens 14 Zeichen, weil das ZIP-Format den Schlüssel nur schwach ableitet.

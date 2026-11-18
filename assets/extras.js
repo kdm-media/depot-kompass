@@ -1767,11 +1767,14 @@ document.addEventListener("input", (ev) => { if (ev.target.id === "ki-rueck") ui
 // ------------------------------------------------------------ Benachrichtigungen (ab 0.46, nur online, ab Werk aus)
 // Android prueft alle paar Stunden im Hintergrund (Java: Wachter). Uebergeben werden nur Namen, Ticker und Termine -
 // verschluesselt im App-Speicher. Keine Betraege, Stueckzahlen oder Konten.
-const HINWEIS_STD = { an: false, kurse: true, schwelle: 5, earnings: true, news: false, marken: true, stunden: 12 };
+const HINWEIS_STD = { an: false, kurse: true, schwelle: 5, earnings: true, ergebnisse: true, news: false, marken: true, stunden: 12, schwelleLauf: 0 };
 const hinweise = () => ({ ...HINWEIS_STD, ...(EIN().hinweise || {}) });
 
 /** Alle Werte aus allen Depots (mit Bestand) und der Watchlist - Name, Ticker, kommende Earnings - plus (0.62) alle
  *  eingeschalteten Alarme mit Yahoo-Ticker als "marken": { id, name, art: unter|ueber|zone|prozent, wert, von, bis, prozent, basis, text }. */
+/** Datum (JJJJ-MM-TT) vor n Tagen. */
+function vorTagen(n) { const d = new Date(Date.now() - n * 864e5); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+
 function wachterWerte() {
   const m = new Map(), offen = D;
   try {
@@ -1781,13 +1784,14 @@ function wachterWerte() {
       for (const p of positionen().liste) {
         const i = p.inst || {};
         if (!i.ticker && !(i.termine?.earnings || []).length) continue;
-        m.set(i.ticker || p.name, { name: p.name, ticker: i.ticker || "", earnings: (i.termine?.earnings || []).filter((x) => x >= heute()).slice(0, 4),
+        m.set(i.ticker || p.name, { name: p.name, ticker: i.ticker || "", earnings: [...new Set([...(i.termine?.earningsGewesen || []), ...(i.termine?.earnings || [])].filter((x) => x >= vorTagen(4)))].sort().slice(0, 6),
           suche: typeof newsBegriff === "function" ? newsBegriff(p.name) : p.name, news: !["ETF", "Fonds"].includes(i.art), marken: [] });
       }
     }
   } finally { D = offen; }
   for (const w of S.watchlist || []) if (w.ticker && !w.kursHand && !m.has(w.ticker))
-    m.set(w.ticker, { name: w.name, ticker: w.ticker, earnings: [], suche: newsBegriff(w.name), news: true, marken: [] });
+    m.set(w.ticker, { name: w.name, ticker: w.ticker, suche: newsBegriff(w.name), news: true, marken: [],
+      earnings: [...new Set([...(w.termine?.earningsGewesen || []), ...(w.termine?.earnings || [])].filter((x) => x >= vorTagen(4)))].sort().slice(0, 6) });
   for (const a of alarme()) {
     if (a.an === false) continue;
     const w = alarmWert(a.bezug);
@@ -1804,10 +1808,11 @@ function wachterAbgleich() {
   if (!APP || !APP.wachterSetzen) return;
   const h = hinweise();
   if (!h.an || sicherheitStatus().netzAus) { APP.wachterSetzen(""); return; }
-  const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, kurse: h.kurse, earnings: h.earnings, news: h.news, marken: h.marken, sprache: sprache(),
+  const ok = APP.wachterSetzen(JSON.stringify({ stunden: h.stunden, schwelle: h.schwelle, schwelleLauf: h.schwelleLauf, kurse: h.kurse, earnings: h.earnings, ergebnisse: h.ergebnisse, news: h.news, marken: h.marken, sprache: sprache(),
     texte: { kanal: tr("Depot-Kompass – Hinweise"), earningsHeute: tr("Earnings heute"), earningsMorgen: tr("Earnings morgen"), seitGestern: tr("seit dem letzten Schlusskurs"),
       eineSchlagzeile: tr("1 neue Schlagzeile"), schlagzeilen: tr("%d neue Schlagzeilen"),
-      kursJetzt: tr("Kurs jetzt"), entsperren: tr("Neuer Hinweis – zum Ansehen entsperren") },
+      kursJetzt: tr("Kurs jetzt"), entsperren: tr("Neuer Hinweis – zum Ansehen entsperren"),
+      zahlenDa: tr("Zahlen sind da"), erwartet: tr("erwartet"), beat: tr("über Erwartung"), miss: tr("unter Erwartung"), seitPruefung: tr("seit der letzten Prüfung") },
     werte: wachterWerte() }));
   if (!ok) {
     let grund = ""; try { grund = APP.wachterFehler ? APP.wachterFehler() : ""; } catch { /* alte Fassung */ }
@@ -1830,7 +1835,7 @@ function hinweiseSeite() {
     <h2><button class="knopf klein" data-ziel="mehr">‹ Mehr</button><span>🔔 Benachrichtigungen</span></h2>
     <section class="karte">
       <p style="margin-top:0">Die App kann dich auf dem Handy erinnern: an deine Kurs-Marken, an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.</p>
-      <p class="klein">Ehrlich gesagt: Android prüft im Hintergrund nur alle paar Stunden (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.</p>
+      <p class="klein">Ehrlich gesagt: Android prüft im Hintergrund nur etwa so oft, wie du unten einstellst – frühestens stündlich, manchmal später (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.</p>
       <p class="klein">Das geht nur mit Internet: Android startet die Prüfung alle paar Stunden im Hintergrund. Abgefragt werden nur öffentliche Kurse und Schlagzeilen zu den Namen deiner Werte – nie Beträge, Stückzahlen oder Konten. Die Liste der Werte liegt verschlüsselt auf dem Handy.</p>
       ${aus ? `<p class="klein warn-t">Internet ist in der App aus – im Offline-Modus gibt es keine Benachrichtigungen.</p>
         <button class="knopf" data-ziel="datenschutz" style="width:100%">🌐 Internet erlauben</button>` : ""}
@@ -1840,11 +1845,14 @@ function hinweiseSeite() {
       ${zeile("hinweis-kurse", "Starke Kursbewegung", "Veränderung seit dem letzten Schlusskurs", h.kurse)}
       ${zeile("hinweis-marken", "Alarme", "deine Alarme aus Watchlist → 🔔 Alarme (Marken, Zonen, Bewegung in %)", h.marken)}
       ${zeile("hinweis-earnings", "Earnings heute oder morgen", "Termine aus „Kurse & Daten aktualisieren“", h.earnings)}
+      ${zeile("hinweis-ergebnisse", "Earnings-Ergebnis", "sobald die Zahlen da sind: Gewinn je Aktie gegen Erwartung", h.ergebnisse)}
       ${zeile("hinweis-news", "Neue Schlagzeilen", "Google News, Suche nach dem Namen (ohne ETFs)", h.news)}
     </section>
     <section class="karte formular">
       <label>Kursbewegung ab<select id="hinweis-schwelle" ${aus ? "disabled" : ""}>${opt([3, 5, 8, 10, 15], h.schwelle, "%")}</select></label>
-      <label>Prüfen etwa alle<select id="hinweis-stunden" ${aus ? "disabled" : ""}>${opt([6, 12, 24], h.stunden, "Std.")}</select></label>
+      <label>Bewegung seit der letzten Prüfung ab<select id="hinweis-schwellelauf" ${aus ? "disabled" : ""}><option value="0" ${!h.schwelleLauf ? "selected" : ""}>aus</option>${opt([2, 3, 5], h.schwelleLauf, "%")}</select></label>
+      <label>Prüfen etwa alle<select id="hinweis-stunden" ${aus ? "disabled" : ""}>${opt([1, 3, 6, 12, 24], h.stunden, "Std.")}</select></label>
+      ${h.stunden <= 3 ? `<p class="klein" style="margin:0">Häufiges Prüfen braucht etwas mehr Akku und Daten.</p>` : ""}
       <p class="klein" style="margin:0">Android legt den genauen Zeitpunkt selbst fest (Akku sparen). Es werden höchstens 60 Werte geprüft.</p>
     </section>
     ${h.an && !aus ? `<section class="karte">
@@ -1852,7 +1860,8 @@ function hinweiseSeite() {
       ${!st.erlaubt ? `<button class="knopf" data-los="hinweis-einstellungen" style="width:100%;margin-bottom:8px">⚙️ Android-Einstellungen öffnen</button>` : ""}
       ${h.an && !aus && !st.geplant ? `<p class="klein warn-t" style="margin-top:0">⚠️ Die Hintergrund-Prüfung ist nicht eingeplant. Schalte Benachrichtigungen einmal aus und wieder an – kommt dann eine Meldung mit „Grund“, schick sie uns.</p>` : ""}
       <p class="klein">${st.geplant ? "✓ Prüfung ist eingeplant" : "Prüfung noch nicht eingeplant"}</p>
-      <button class="knopf" data-los="hinweis-test" style="width:100%">🔔 Test-Benachrichtigung</button></section>` : ""}`;
+      <button class="knopf" data-los="hinweis-test" style="width:100%">🔔 Test-Benachrichtigung</button></section>` : ""}
+    ${verlaufKarte()}`;
 }
 
 document.addEventListener("change", (e) => {
@@ -1866,6 +1875,8 @@ document.addEventListener("change", (e) => {
   if (id === "hinweis-marken") h.marken = e.target.checked;
   if (id === "hinweis-schwelle") h.schwelle = +e.target.value;
   if (id === "hinweis-stunden") h.stunden = +e.target.value;
+  if (id === "hinweis-ergebnisse") h.ergebnisse = e.target.checked;
+  if (id === "hinweis-schwellelauf") h.schwelleLauf = +e.target.value;
   sichern(); wachterAbgleich();
   if (id === "hinweis-an") meldung(h.an ? "Benachrichtigungen eingeschaltet." : "Benachrichtigungen ausgeschaltet.");
   zeichnen();
@@ -1875,6 +1886,40 @@ document.addEventListener("click", (ev) => {
   if (!ev.target.closest('[data-los="hinweis-test"]')) return;
   if (!APP || !APP.wachterTest) return meldung("Nur in der App.");
   APP.wachterTest(tr("Depot-Kompass – Hinweise"), "📊 Depot-Kompass", tr("So sieht eine Benachrichtigung aus."));
+});
+
+// ------------------------------------------------------------ 0.64: Benachrichtigungsverlauf + Pruefprotokoll
+// Kommt verschluesselt aus dem Wachter (verlauf.bin). Zeigt jede Meldung (auch weggewischte) und jede Hintergrund-Pruefung.
+const VERLAUF_ART = { alarm: "🔔", kurs: "📈", earnings: "📅", ergebnis: "📊", news: "📰" };
+function verlaufDaten() {
+  try { if (APP && APP.wachterVerlauf) return JSON.parse(APP.wachterVerlauf()); } catch { /* alte Fassung */ }
+  return window.__verlaufTest || { eintraege: [], laeufe: [] };
+}
+function verlaufKarte() {
+  const v = verlaufDaten(), e = v.eintraege || [], l = v.laeufe || [];
+  const zeit = (t) => new Date(t).toLocaleString(sprache() === "en" ? "en-GB" : "de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const offen = ui.verlaufAlle ? e : e.slice(0, 20);
+  return `<section class="karte">
+      <h3 style="margin-top:0">${tr("🕘 Verlauf")}</h3>
+      <p class="klein" style="margin-top:0">${tr("Jede Meldung der letzten 90 Tage – auch weggewischte. Liegt verschlüsselt nur auf diesem Handy.")}</p>
+      ${e.length ? `<div class="liste">${offen.map((x) => `<div class="zeile" style="grid-template-columns:auto minmax(0,1fr)"><span>${VERLAUF_ART[x.art] || "🔔"}</span>
+        <span style="min-width:0"><span class="titel">${esc(x.titel || "")}</span><span class="unter">${esc(zeit(x.t))} · ${esc(x.text || "")}</span></span></div>`).join("")}</div>
+        ${e.length > 20 && !ui.verlaufAlle ? `<button class="knopf klein" data-los="verlauf-alle">${tr("Alle anzeigen")} (${e.length})</button>` : ""}`
+        : `<p class="klein">${tr("Noch keine Meldungen.")}</p>`}
+      <h3>${tr("Prüfprotokoll")}</h3>
+      <p class="klein" style="margin-top:0">${tr("Wann Android zuletzt geprüft hat – so siehst du, ob ein Alarm zur richtigen Zeit kam.")}</p>
+      ${l.length ? `<div class="klein">${l.slice(0, 10).map((x) => `${esc(zeit(x.t))} · ${x.werte} ${tr("Werte geprüft")} · ${x.meldungen} ${tr("Meldungen")}${x.fehler ? ` · ${x.fehler} ${tr("ohne Antwort")}` : ""}`).join("<br>")}</div>`
+        : `<p class="klein">${tr("Noch keine Prüfung gelaufen.")}</p>`}
+      ${e.length || l.length ? `<button class="knopf" data-los="verlauf-leeren" style="width:100%;margin-top:10px">${tr("🗑️ Verlauf löschen")}</button>` : ""}
+    </section>`;
+}
+document.addEventListener("click", (ev) => {
+  if (ev.target.closest('[data-los="verlauf-alle"]')) { ui.verlaufAlle = true; zeichnen(); return; }
+  if (!ev.target.closest('[data-los="verlauf-leeren"]')) return;
+  if (!confirm(tr("Verlauf und Prüfprotokoll löschen?"))) return;
+  try { if (APP && APP.wachterVerlaufLeeren) APP.wachterVerlaufLeeren(); } catch { /* alte Fassung */ }
+  window.__verlaufTest = { eintraege: [], laeufe: [] };
+  meldung(tr("Verlauf gelöscht.")); zeichnen();
 });
 
 // ------------------------------------------------------------ Depot verschluesselt teilen / empfangen (ab 0.47)
