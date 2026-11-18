@@ -2,6 +2,10 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.65 – 19.11.2026 – Positionsgröße im Verhältnis zum ganzen Portfolio
+- **⚖️ Anteil am Gesamtportfolio:** Der Positionsgrößen-Rechner zeigt jetzt automatisch, wie viel Prozent deines gesamten Portfolios (alle eigenen Depots inkl. Cash) die geplante Position ausmacht – ohne dass du das Kapital eintragen musst. Ab 20 % kommt ein Hinweis auf Klumpenrisiko. Nur Rechnung, keine Anlageberatung.
+- Zu finden unter Notizen → ⚖️ Positionsgrößen-Rechner oder direkt in jeder Position über „⚖️ Positionsgröße“.
+
 ## 0.64 – 18.11.2026 – Earnings-Ergebnis & Benachrichtigungsverlauf
 - **📊 Earnings-Ergebnis als Benachrichtigung:** Am Earnings-Tag und bis zu 4 Tage danach prüft die App, ob die Zahlen da sind, und meldet den Gewinn je Aktie gegen die Erwartung, z. B. „Zahlen sind da: EPS 2,61 · erwartet 2,49 · über Erwartung (+4,8 %)“. Gilt für Werte aus Depots und Watchlist mit Earnings-Termin; eigener Schalter „Earnings-Ergebnis“.
 - **🕘 Benachrichtigungsverlauf:** Unter ⚙️ → Mehr → 🔔 steht jede Meldung der letzten 90 Tage, auch weggewischte – mit Zeit, Wert und Text. Dazu ein **Prüfprotokoll**: wann Android zuletzt geprüft hat, wie viele Werte und wie viele Meldungen. Liegt verschlüsselt nur auf dem Handy, mit „Verlauf löschen“.

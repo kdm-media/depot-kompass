@@ -392,12 +392,21 @@ const rechnerWahl = (attr, r) => (feld, wert, text, std) => `<button type="butto
 const rechnerGeheim = () => ui.verdeckt ? ' style="-webkit-text-security:disc"' : "";
 const rechnerStk = (st) => (v) => ui.verdeckt ? "•••" : v == null ? "–" : fmt({ maximumFractionDigits: st }).format(v);
 
+/** 0.65 (Vorgabe 19.11.): Positionsgroesse automatisch als Anteil am GESAMTportfolio (alle eigenen Depots inkl. Cash),
+ *  unabhaengig vom Feld "Kapital". Nur Euro-Rechnungen; ohne Depotwert -> null. */
+const POSGR_KLUMPEN = 20;
+function anteilGesamtportfolio(groesse, r) {
+  if (!(groesse > 0) || (r && r.waehrung === "usd") || typeof eigeneDepots !== "function" || typeof depotWerte !== "function") return null;
+  const summe = eigeneDepots().map(depotWerte).reduce((a, d) => a + (d.gesamt || 0), 0);
+  return summe > 0 ? groesse / summe * 100 : null;
+}
+
 function posgrErgebnis(r = ui.posgr || {}) {
   NK_W = r.waehrung === "usd" ? "usd" : "eur";
   const x = positionRechnen(r);
   if (x.fehler.length) return `<p class="klein" style="margin:8px 0 0">${x.fehler.map(esc).join("<br>")}</p>`;
   const s = rechnerStk(x.st), basis = typeof hebelBasisListe === "function" ? hebelBasisListe().find((b) => b.key === r.basis) : null, sw = basis ? schwankung(basis.punkte) : null;
-  const ab = Math.abs(x.stopAbstand);
+  const ab = Math.abs(x.stopAbstand), gp = anteilGesamtportfolio(x.groesse, r);
   return `
     ${markenChart([["Ziel", x.ziel, "var(--plus)"], ["Einstieg", x.einstieg, "var(--text)"], ["Stop", x.stop, "var(--minus)", 1]], x.einstieg,
                   [[x.einstieg, x.stop, "var(--minus)"], x.ziel ? [x.einstieg, x.ziel, "var(--plus)"] : null], basis ? basis.punkte.slice(-26).map((p) => p[1]) : [], "Positions-Chart mit Marken")}
@@ -406,10 +415,12 @@ function posgrErgebnis(r = ui.posgr || {}) {
       <div><small>Verlust am Stop</small><b class="minus-t">${geldVz(-x.maxVerlust)}</b><small>Stop ${pct(x.stopAbstand)} entfernt</small></div>
       <div><small>Chance : Risiko</small><b>${x.crv != null ? fPct.format(x.crv) + " : 1" : "–"}</b>${x.gewinn != null ? `<small class="plus-t">${geldVz(x.gewinn)} am Ziel</small>` : ""}</div>
       ${x.anteil != null ? `<div><small>Anteil am Kapital</small><b>${ant(x.anteil)}</b><small>Risiko ${ant(x.risikoPct)}</small></div>` : ""}
+      ${gp != null ? `<div><small>Anteil am Gesamtportfolio</small><b class="${gp >= POSGR_KLUMPEN ? "warn-t" : ""}">${ant(gp)}</b><small>alle Depots zusammen</small></div>` : ""}
       ${x.gebuehrPct > 0 ? `<div><small>Gebühren (rein + raus)</small><b>${geld(x.gebuehren)}</b><small>im Verlust enthalten</small></div>` : ""}
     </div>
     ${inEuro(r, ["Position", x.groesse], ["Verlust am Stop", x.maxVerlust], ["Gewinn am Ziel", x.gewinn])}
     ${x.warnungen.map((w) => `<p class="warn-t klein"><b>⚠ ${esc(w)}</b></p>`).join("")}
+    ${gp != null && gp >= POSGR_KLUMPEN ? `<p class="warn-t klein"><b>⚠ Mehr als ${fZahl.format(POSGR_KLUMPEN)} % deines Gesamtportfolios in einem Wert – Klumpenrisiko. Nur Rechnung, keine Anlageberatung.</b></p>` : ""}
     ${sw ? `<p class="klein nk-hinweis">${esc(basis.name)}: übliche Wochenbewegung ±${fPct.format(sw.woche)} %, größter Rücksetzer −${fPct.format(sw.ruecksetzer)} % (${sw.wochen} Wochen).
       ${ab < sw.woche ? "<b>Dein Stop liegt innerhalb einer normalen Wochenbewegung – er kann leicht ausgelöst werden.</b>" : "Dein Stop liegt außerhalb einer normalen Wochenbewegung."}</p>` : ""}
     <h3 class="nk-titel">Gleiches Risiko, anderer Stop-Abstand</h3>

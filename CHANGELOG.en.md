@@ -2,6 +2,10 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.65 – 19 Nov 2026 – Position size relative to your whole portfolio
+- **⚖️ Share of total portfolio:** The position size calculator now automatically shows what percentage of your entire portfolio (all your own portfolios incl. cash) the planned position would be – no need to enter your capital. From 20 % a concentration-risk notice appears. Calculation only, not investment advice.
+- Find it under Notes → ⚖️ Position size calculator or directly in any position via “⚖️ Position size”.
+
 ## 0.64 – 18 Nov 2026 – earnings results & notification history
 - **📊 Earnings result as a notification:** on the earnings day and up to 4 days after, the app checks whether the results are out and reports earnings per share against the estimate, e.g. "Results are out: EPS 2.61 · expected 2.49 · beat (+4.8 %)". Applies to holdings and watchlist values with an earnings date; own switch "Earnings result".
 - **🕘 Notification history:** under ⚙️ → More → 🔔 you find every alert of the last 90 days, including dismissed ones – with time, value and text. Plus a **check log**: when Android last checked, how many values and how many alerts. Stored encrypted on the phone only, with "Delete history".

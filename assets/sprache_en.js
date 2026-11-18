@@ -668,7 +668,8 @@ Object.assign(UEB.en, {
   "Einstieg €": "Entry €", "Stop-Loss €": "Stop loss €", "Verlust in €": "Loss in €", "Verlust in % vom Kapital": "Loss in % of capital", "Risiko % vom Kapital": "Risk % of capital",
   "Max. Verlust €": "Max. loss €", "Kapital €": "Capital €", "Kapital € (optional)": "Capital € (optional)", "Depotwert als Kapital übernehmen": "Use portfolio value as capital",
   "Ziel € (optional)": "Target € (optional)", "Schwankung prüfen (optional)": "Check volatility (optional)", "– ohne –": "– none –",
-  "Positionsgröße": "Position size", "Verlust am Stop": "Loss at stop", "Stop # % entfernt": "Stop # % away", "# € am Ziel": "# € at target", "Anteil am Kapital": "Share of capital",
+  "Positionsgröße": "Position size", "Verlust am Stop": "Loss at stop", "Stop # % entfernt": "Stop # % away", "# € am Ziel": "# € at target", "Anteil am Kapital": "Share of capital", "Anteil am Gesamtportfolio": "Share of total portfolio", "alle Depots zusammen": "all portfolios combined",
+  "⚠ Mehr als # % deines Gesamtportfolios in einem Wert – Klumpenrisiko. Nur Rechnung, keine Anlageberatung.": "⚠ More than # % of your total portfolio in one holding – concentration risk. Calculation only, not investment advice.",
   "Risiko # %": "Risk # %", "Gebühren (rein + raus)": "Fees (in + out)", "im Verlust enthalten": "included in the loss",
   "Gleiches Risiko, anderer Stop-Abstand": "Same risk, different stop distance", "Abstand": "Distance", "Position": "Position", "Stück": "Units",
   "Enger Stop = größere Position, weiter Stop = kleinere – der Verlust am Stop bleibt gleich. Ohne Slippage und Kurslücken; der echte Verlust kann größer sein.":

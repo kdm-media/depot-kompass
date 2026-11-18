@@ -513,6 +513,12 @@ async function rechnen() {
       pruefe(/Position ≈ 800,00\s€/.test(document.getElementById("posgr-ergebnis").textContent) && /1,25 \(vom/.test(document.querySelector('[data-posgr="usdKurs"]').placeholder), "Gemerkter Euro-Dollar-Kurs wird nicht genutzt");
       document.querySelector('[data-posgr-wahl="waehrung"][data-wert="eur"]').click();
       pruefe(/1\.000,00\s€/.test(document.getElementById("posgr-ergebnis").textContent) && !document.querySelector('[data-posgr="usdKurs"]') && !/≈/.test(document.getElementById("posgr-ergebnis").textContent), "Zurück auf Euro klappt nicht");
+      // 0.65: Anteil am Gesamtportfolio (alle eigenen Depots) – automatisch, ohne Kapital-Feld; Klumpen-Warnung ab 20 %
+      { const ges = eigeneDepots().map(depotWerte).reduce((a, d) => a + (d.gesamt || 0), 0), txt = document.getElementById("posgr-ergebnis").textContent;
+        if (ges > 0) { const soll = fPct.format(1000 / ges * 100) + " %";
+          pruefe(/Anteil am Gesamtportfolio/.test(txt) && txt.includes(soll), `Anteil am Gesamtportfolio fehlt/falsch (soll ${soll}): ${txt.slice(0, 300)}`);
+          pruefe((1000 / ges * 100 >= 20) === /Klumpenrisiko/.test(txt), "Klumpen-Warnung passt nicht zum Anteil"); }
+        pruefe(anteilGesamtportfolio(1000, { waehrung: "usd" }) === null && anteilGesamtportfolio(0, {}) === null, "Gesamtportfolio-Anteil: Dollar/0 muss leer bleiben"); }
       ui.gewinn = { art: "aktie", modus: "betrag", waehrung: "usd", usdKurs: "1,25", bestand: "1", einstand: "500", k1: "1.022", b1: "500" }; ui.gewinnOffen = true; zeichnen();
       e = document.getElementById("gewinn-ergebnis").textContent;
       pruefe(/500,00\s\$/.test(e) && /Du nimmst raus ≈ 400,00\s€/.test(e) && /Stufe 1: Betrag \$/.test(document.getElementById("gewinn").textContent), `Dollar Gewinnmitnahme: ${e.slice(0, 200)}`);
