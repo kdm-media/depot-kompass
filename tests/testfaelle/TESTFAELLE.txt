@@ -1,0 +1,48 @@
+TESTFÄLLE – Depot-Kompass (erfundene Daten)
+Am besten NACH dem großen Test. Für die Fälle 2–10 im Import-Feld „Konto für diese Datei“
+jeweils  Test 2,  Test 3 …  eintragen → jeder Fall bekommt sein eigenes Depot (danach löschbar).
+
+ 1  Doppelt importieren    6_traderepublic_daytrading.csv (großer Test) NOCHMAL importieren (Konto NICHT ändern)
+                           → Vorschau: alle Zeilen „schon importiert“, 0 neue Buchungen.
+ 2  Excel-Datei            02_excel_umgespeichert.csv (Semikolon, Komma, so speichert Excel)
+                           → wird als Trade Republic erkannt; realisiert 24,25 €, Konto 223,25 €, 0,0125 BTC
+ 3  Sonderzeichen/Angriff  03_sonderzeichen_und_angriff.csv – Name enthält HTML-Code
+                           → Name steht als Text da (Müller & Söhne …), nichts passiert, kein Bild, kein Popup
+ 4  Mehr verkauft als da   04_mehr_verkauft_als_gekauft.csv (Kauf fehlt in der Datei)
+                           → Warnung in der Übersicht, kein Minus-Bestand, realisiert 98,00 € (nur auf den vorhandenen 10 Stück)
+ 5  Neu gekauft            05_verkauft_und_neu_gekauft.csv
+                           → 8 Stück, Ø Kaufkurs 47,62 € (fängt neu an), realisiert 246,00 €
+ 6  Storno/Steuer/Dividende 06_storno_steuer_dividende.csv (Smartbroker)
+                           → Storno übersprungen; 25 Stück, Einstand 3.140,56 €, realisiert 158,46 €, Dividende netto 26,50 €
+ 7  Leere Datei            07_leer_nur_kopfzeile.csv → Meldung „keine Buchungen“, kein Absturz
+ 8  Kontoauszug           08_falsches_format_kontoauszug.csv → Seite „Spalten zuordnen“ (Vorschlag passt), als Kontoauszug: Konto −89,00 €
+12  Unbekannter Broker     12_unbekannter_broker.csv → „Spalten zuordnen“: Vorschlag übernehmen, „Depotentgelt“ = Gebühr
+                           → 18 Stück, Dividende netto 26,50 €; beim zweiten Mal erkennt die App das Format von selbst
+ 9  Riesendatei            09_riesendatei_20000_zeilen.csv (20.000 Zeilen, 10 Jahre Daytrading)
+                           → dauert ein paar Sekunden; realisiert -20.000,00 €; Kalender „Gewinn/Verlust je Tag“ blättern
+11  Kraken-App         11_kraken_app_aktivitaeten.csv (Konto „Test 11“) – Vorschau „Transfers als Verlust“
+                           → Konto 12,00 €, Verluste (Transfers) 60,00 €, Gutschriften 20,00 €, Challenge in $: realisiert −18,00 €; eingesetzt 70 €
+13  Bestand + Historie    13a_bestand_stichtag.csv, dann 13b_aeltere_transaktionen.csv INS SELBE Depot („Test 13“)
+                           → „Bestand zurückrechnen“: 15 Stück wie im Bestand, Verlauf ab 09.01.2025, realisiert +15,24 €
+14  Kraken-PDF            14_kraken_kontoauszug.pdf (Konto „Test 14“) – Kontoauszug als PDF, wie ihn die Kraken-App liefert
+                           → 9 Buchungen: Anfangsbestand + Erträge + Transfers; 0,010024 BTC, 0,5 ETH, Konto 80,00 €, Verluste 10,00 €, Dollar-Transfer: realisiert −60,00 €
+15  Bank-PDF              15a_bank_kontoauszug_einfach.pdf oder 15b_bank_kontoauszug_gepackt.pdf → wird direkt als Kontoauszug erkannt: Konto 449,50 €
+17  Bank-PDF, 2-zeiliger Kopf  17_bank_zweizeiliger_kopf.pdf → Konto 64,51 €, Vorschau: „Gegenprobe … stimmt“
+18  Broker-Konto als PDF  18_broker_verrechnungskonto.pdf → 2 Stück Test AG, realisiert +10,00 €, Dividende 6,00 €, Konto 414,50 €
+20  Trade Republic PDF    20_traderepublic_kontoauszug.pdf (Kontoauszug aus der TR-App, 2 Seiten)
+23  Einzel-Abrechnungen  23a Scalable Kauf · 23b Smartbroker+ Verkauf mit Steuern · 23c Baader Kauf · 23d Trade Republic Verkauf · 23e Revolut Kauf (PDF)
+                           → 3 Stück Test AG, 0,5 ETF, realisiert +10,00 €, Dividende 5,00 €, Konto 651,10 €
+22  Screenshots (TR)     22a_…png (Kauf), 22b_…png (Verkauf) ins Depot „Test 22“, danach 22c_traderepublic_export.csv
+                           → 2,5 Stück Test Energy; der Export ersetzt die Screenshot-Buchungen (keine Doppelten)
+19  Kraken-PDF doppelt    19a_kraken_ledger.pdf, danach 19b_kraken_kaufbeleg.pdf (beide Konto „Test 19“)
+                           → beim Beleg: 0 neue („vermutlich schon da“); 5,7572 ADA, Konto 4,00 €
+16  PDF geht nicht        16a_scan_ohne_text.pdf → Meldung „kein lesbarer Text“; 16b_passwort.pdf → Meldung „passwortgeschützt“
+25  Binance (0.78)       25a_binance_handelsverlauf.csv (neues Format) → 0,00599 BTC (Einstand 359,40 €), 0,2 ETH (500,00 €),
+                           realisiert +39,72 €; SOL/USDT wird übersprungen (nur Euro-Paare), Gebühr in BNB als Notiz
+                         25b_binance_alt.csv (altes Format) → 599 ADA (Einstand 299,50 €), realisiert +39,76 €
+10  Kraken doppelt         10a_kraken_ledgers.csv, danach 10b_kraken_trades.csv (beide Konto „Test 10“)
+                           → beim zweiten: 0 neue (gleiche Trades); 0,2 ETH, realisiert 28,36 €, Konto 1.426,80 €
+
+Danach Internet an: Mehr → Datenschutz → Internet erlauben, dann Import → „Kurse & Daten aktualisieren“.
+Erwartung: echte Kurse, % seit Kauf, Charts, Earnings-/Dividenden-Termine im Kalender (nur für echte ISINs –
+die TEST-ISINs aus 2–10 und die Kursliste-Werte bleiben ohne Treffer bzw. bekommen echte Kurse).

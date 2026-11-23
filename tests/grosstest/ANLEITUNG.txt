@@ -1,0 +1,37 @@
+GROSSER TEST – Depot-Kompass 0.30
+Erfundenes Vermögen: 750.000 € auf 6 Broker, 2 Jahre (11.11.2024 bis 02.11.2026).
+Alles ausgedacht – Namen und ISINs sehen nur echt aus, die Kurse sind erfunden,
+aber realistisch (Krypto schwankt stark, ETFs ruhig, Daytrading leicht im Plus).
+
+VORHER
+ - Beim ersten Start „📴 Offline starten“ wählen (oder ⚙️ → Datenschutz → Internet aus).
+   Sonst holt „Kurse aktualisieren“ echte Kurse und die Sollwerte passen nicht mehr.
+
+IMPORT – am einfachsten: Übersicht → „📄 Dateien wählen“ → alle Test_*.csv auf einmal markieren.
+       Jede Datei kommt nacheinander in die Vorschau: „Alles“ wählen und übernehmen.
+       (Oder einzeln über ⚙️ → Import, dann in dieser Reihenfolge:)
+ 1  Test_1_kraken_krypto_halten_ledgers.csv  → Depot „Kraken“          (Krypto halten, Staking)
+ 2  Test_2_bitvavo_krypto_sparplan.csv       → Depot „Bitvavo“         (1 abgebrochener Kauf wird übersprungen)
+ 3  Test_3_okx_krypto_handel.csv             → Depot „OKX“             (USDT-Paar und Perpetual werden übersprungen)
+ 4  Test_4_scalable_etf_sparplan.csv         → Depot „Scalable“        (1 Storno wird übersprungen)
+ 5  Test_5_smartbroker_einzelwerte.csv       → Depot „Smartbroker“     (1 Storno wird übersprungen)
+ 6  Test_6_traderepublic_daytrading.csv      → Depot „Trade Republic“
+ 7  Test_7_kursliste_wochenkurse.csv         → keine Vorschau, setzt die Wochenkurse in allen Depots
+
+PRÜFEN – die richtigen Zahlen stehen in Test_SOLLWERTE.txt (unabhängig in Python gerechnet)
+ - Schon OHNE Test_7 (Kursliste) zeigt die Übersicht Chart, Wert und Gewinn – aus deinen Kauf-/Verkaufskursen.
+   Zahlen dafür: Zeile „OHNE Kursliste“ in Test_SOLLWERTE.txt. Mit Test_7 kommen die Wochenkurse dazu.
+ - Übersicht (Reiter „Alle“): Gesamtvermögen, Depots, Wertentwicklung → Rendite, Drawdown, Hoch, Tief
+ - Je Depot (oben auf den Namen tippen): Realisiert, Dividenden, Konto, Positionen, Streuung & Klumpen
+ - Kalender: Monat zurückblättern → erhaltene Dividenden (Smartbroker, Scalable) mit % auf den Einsatz
+ - Kalender → „Gewinn/Verlust je Tag“ im Depot Trade Republic
+ - Smartbroker: Gold und Silber stehen als „ETC“, Scalable alles als „ETF“
+ - Auge oben rechts: Beträge weg, Prozente bleiben
+
+DANACH MIT INTERNET
+ - ⚙️ → Datenschutz → Internet an, dann ⚙️ → Import → „Kurse & Daten aktualisieren“.
+   Echte ISINs bekommen echte Kurse, Termine (Earnings, Ex-Tage) und Charts.
+   Dann stimmen die Sollwerte natürlich nicht mehr – das ist gewollt.
+
+Hinweis: OKX, Scalable und Smartbroker haben keine Kontodatei – dort zählt der Chart die
+Wertpapiere, bei Kraken, Bitvavo und Trade Republic Wertpapiere + Cash.

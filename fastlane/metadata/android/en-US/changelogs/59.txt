@@ -1,0 +1,1 @@
+New error log with analysis, notifications after "Refresh" fixed (Android limit), note from −35 %, "Inspiration" credits, desktop with the same version number.

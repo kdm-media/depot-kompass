@@ -1,0 +1,10 @@
+<!doctype html><meta charset="utf-8"><title>WARTE</title>
+<body style="margin:0"><script>
+// Zeigt die Testseite in fester Handy-Breite (headless Chromium kann nicht schmaler als 500 px).
+const q = new URLSearchParams(location.search);
+const f = document.createElement("iframe");
+f.style.cssText = `width:${q.get("w")}px;height:${q.get("h")}px;border:0`;
+f.src = "testseite.html?modus=seite&" + q.get("p");
+document.body.append(f);
+addEventListener("message", (e) => { document.title = e.data; });
+</script>

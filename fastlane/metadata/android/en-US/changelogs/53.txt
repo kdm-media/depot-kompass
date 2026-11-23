@@ -1,0 +1,5 @@
+New since 0.49:
+- Four calculators: position size from a fixed loss, take profit by amount, averaging down with break-even, leverage – in euros or dollars, with chart and a short explanation
+- Save calculator plans as notes and keep editing them later
+- Key status light: shows whether an API key is valid
+- Update button at the top next to settings

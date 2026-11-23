@@ -1,0 +1,1592 @@
+"use strict";
+/* Englisch (ab 0.38). Schluessel = deutscher Text wie angezeigt, Zahlen als "#".
+ * Neue Texte: tests/texte_sammeln.sh zeigt, was noch fehlt. Eigene Namen nicht eintragen. */
+const NB = " ";
+Object.assign(UEB.en, {
+  // ---------------------------------------------------------------- Leiste, Kopf, allgemein
+  "Übersicht": "Overview", "Positionen": "Positions", "Position": "Position", "Kalender": "Calendar", "News": "News", "Notizen": "Notes", "KI": "AI",
+  "Mehr": "More", "Mehr: Import, Einstellungen, Sicherheit": "More: import, settings, security", "Beträge ausblenden": "Hide amounts",
+  "Hinzufügen": "Add", "Hinzufügen: Datei, Depot, Buchung, Sachwert": "Add: file, portfolio, transaction, asset",
+  "Neue Buchung": "New transaction", "Speichern": "Save", "Abbrechen": "Cancel", "‹ Abbrechen": "‹ Cancel", "‹ Mehr": "‹ More", "‹ Zurück": "‹ Back",
+  "schließen": "close", "Löschen": "Delete", "Entfernen": "Remove", "ändern": "edit", "OK": "OK", "Anlegen": "Create", "Suchen …": "Search …",
+  "Überspringen": "Skip", "optional": "optional", "heute": "today", "neu": "new", "offen": "open", "prüfen": "check", "fehlt": "missing",
+  "aus": "off", "alles": "all", "Alles": "All", "alles:": "all:", "Start": "Start", "Gesamt": "Total", "Monat": "Month", "Was": "What",
+  "Vorherige Ansicht": "Previous view", "Nächste Ansicht": "Next view", "# / # · wischen oder antippen": "# / # · swipe or tap",
+  "Alle Depots": "All portfolios", "👪 Haushalt": "👪 Household", "Haushalt": "Household",
+  "Keine Anlageberatung · keine Garantie. Kurse, Termine und Schätzungen können falsch oder veraltet sein – sicher sind nur deine eigenen Buchungen.":
+    "Not investment advice · no guarantee. Prices, dates and estimates can be wrong or out of date – only your own transactions are certain.",
+  "Gespeichert.": "Saved.", "Notiz gespeichert.": "Note saved.", "Nur in der App.": "Only in the app.",
+  "Mo": "Mo", "Di": "Tu", "Mi": "We", "Do": "Th", "Fr": "Fr", "Sa": "Sa", "So": "Su",
+
+  // ---------------------------------------------------------------- Uebersicht
+  "Depotwert": "Portfolio value", "Cash": "Cash", "Einstand": "Cost basis", "Realisiert": "Realised", "Dividenden": "Dividends", "Gewinn": "Profit",
+  "Gesamtvermögen (Depot + Cash)": "Net worth (portfolio + cash)", "Gesamtvermögen (Depots + Cash + Sachwerte)": "Net worth (portfolios + cash + assets)",
+  "Gesamtvermögen · # Depots": "Net worth · # portfolios", "Gesamtvermögen · # Depots + Sachwerte": "Net worth · # portfolios + assets",
+  "Haushalt · Gesamtvermögen · # Depots": "Household · net worth · # portfolios", "Haushalt · Gesamtvermögen · # Depots + Sachwerte": "Household · net worth · # portfolios + assets",
+  "Depot #\u00a0€ · # %": "Portfolio #\u00a0€ · # %", "Depot #\u00a0€ · –": "Portfolio #\u00a0€ · –",
+  "Wertpapiere #\u00a0€ · # %": "Securities #\u00a0€ · # %", "Wertpapiere ••••• € · # %": "Securities ••••• € · # %",
+  "Depots + Cash #\u00a0€ ·": "Portfolios + cash #\u00a0€ ·", "Depots + Cash ••••• € ·": "Portfolios + cash ••••• € ·",
+  "Sachwerte #\u00a0€": "Assets #\u00a0€", "Sachwerte ••••• €": "Assets ••••• €",
+  "Gesamt": "Total", "Depots einzeln": "Portfolios separately", "Depots einzeln in Prozent": "Portfolios separately in percent",
+  "Alle eigenen Depots übereinander": "All own portfolios stacked", "Eigene Depots zusammen (inkl. Cash)": "Own portfolios combined (incl. cash)",
+  "Gesamtwert aller Depots (ohne Sachwerte).": "Total value of all portfolios (without assets).",
+  "Gesamtwert aller Depots (ohne Sachwerte). Offline aus deinen Kauf-/Verkaufskursen.": "Total value of all portfolios (without assets). Offline from your buy/sell prices.",
+  "Jedes Depot in % seit Beginn des Zeitraums (Ein-/Auszahlungen herausgerechnet).": "Each portfolio in % since the start of the period (deposits/withdrawals excluded).",
+  "Jedes Depot in % seit Beginn des Zeitraums (Ein-/Auszahlungen herausgerechnet). Offline aus deinen Kauf-/Verkaufskursen.": "Each portfolio in % since the start of the period (deposits/withdrawals excluded). Offline from your buy/sell prices.",
+  "Kennzahlen je Depot": "Key figures per portfolio", "Wertentwicklung": "Performance", "max. Drawdown": "max. drawdown", "Im Zeitraum": "In period",
+  "Einstand + Cash": "Cost basis + cash", "Eingesetzt": "Invested", "Eingesetztes Geld": "Money invested", "Gesamtwert": "Total value", "Wert heute": "Value today",
+  "Eingesetztes Geld laut deinen Buchungen. Den Wertverlauf zeigt der Chart, sobald Kurse da sind: ⚙️ → Import → „Kurse & Daten aktualisieren“ (Internet) oder eine Kursliste.":
+    "Money invested according to your transactions. The chart shows the value history once prices are available: ⚙️ → Import → “Update prices & data” (internet) or a price list.",
+  "Noch kein Chart – unter Import „Kurse & Daten aktualisieren“.": "No chart yet – under Import “Update prices & data”.",
+  "Noch kein Verlauf. Dafür einmal ⚙️ → Import → „Kurse & Daten aktualisieren“.": "No history yet. Run ⚙️ → Import → “Update prices & data” once.",
+  "Noch keine Historie – nur Einstand und heutiger Wert. Den Verlauf bringen Transaktionen des Brokers oder ⚙️ → Import → „Kurse & Daten aktualisieren“.":
+    "No history yet – only cost basis and today's value. Broker transactions or ⚙️ → Import → “Update prices & data” provide the history.",
+  "Einstand und Wert heute": "Cost basis and value today", "Verlauf des heutigen Bestands": "History of today's holdings", "So hätte sich dein": "This is how your",
+  "heutiger Bestand": "current holdings",
+  "entwickelt (# Werte mit Kursverlauf). Frühere Käufe und Verkäufe kennt die App nicht – dafür die Transaktionen des Brokers importieren.":
+    "would have developed (# securities with price history). The app does not know earlier buys and sells – import the broker's transactions for that.",
+  "Start = # Ein- und Auszahlungen sind herausgerechnet, nur die Entwicklung zählt.": "Start = # Deposits and withdrawals are excluded, only performance counts.",
+  "heute · Start = #": "today · start = #",
+  "Kein Cash hinterlegt – über ✏️ Depot bearbeiten eintragen oder Kontobewegungen importieren.": "No cash entered – add it via ✏️ Edit portfolio or import account movements.",
+  "Cash aus Kontobewegungen": "Cash from account movements", "Cash aus Kontobewegungen ·": "Cash from account movements ·", "Cash über alle Depots": "Cash across all portfolios",
+  "Cash gesamt · Cashquote # %": "Total cash · cash ratio # %", "Cash · # %": "Cash · # %", "kommt aus den Kontobewegungen": "comes from the account movements",
+  "Kontostand (laut Buchungen)": "Account balance (from transactions)", "Eingezahlt": "Deposited", "Ausgezahlt": "Withdrawn", "Karte": "Card",
+  "Kontogebühren #\u00a0€ · Gutschriften #\u00a0€": "Account fees #\u00a0€ · credits #\u00a0€",
+  "· Kontogebühren #\u00a0€ · Gutschriften #\u00a0€": "· account fees #\u00a0€ · credits #\u00a0€",
+  "Verluste (z. B. Challenges) #\u00a0€": "Losses (e.g. challenges) #\u00a0€",
+  "# ohne Kurs (Wert = Einstand)": "# without price (value = cost basis)",
+  "Kurse: noch nie aus dem Internet geladen – Werte aus den Importen.": "Prices: never loaded from the internet – values from the imports.",
+  "Wo das Geld steckt": "Where the money is", "Gewichtung im Depot": "Weighting in portfolio", "Gewichtung über alle Depots": "Weighting across all portfolios",
+  "Anlageart": "Asset class", "Branche": "Sector", "Konto": "Account", "Depot": "Portfolio", "Depots": "Portfolios", "Nach Depot:": "By portfolio:", "Nach Anlageart:": "By asset class:",
+  "Streuung & Klumpen": "Diversification & concentration", "Effektiv gestreut": "Effectively diversified", "Top #": "Top #", "Wo am meisten:": "Largest:",
+  "„Effektiv gestreut“: so viele gleich große Positionen würden dasselbe Risiko streuen.": "“Effectively diversified”: this many equally sized positions would spread the same risk.",
+  "Keine Klumpen über den Grenzen (Einzelwert # %, Branche # %, Krypto # %).": "No concentration above the limits (single security # %, sector # %, crypto # %).",
+  "Krypto: # % (über # %)": "Crypto: # % (above # %)", "Offene Punkte": "Open items", "Nichts offen. Status und Zielgewicht setzt du in der Position.": "Nothing open. Set status and target weight in the position.",
+  "Demnächst": "Coming up", "Kalender ›": "Calendar ›", "Heatmap": "Heatmap", "Liste": "List",
+  "Farbe = seit Kauf (grün plus, rot minus) · untere Zahl = Anteil am Gesamtvermögen": "Colour = since purchase (green plus, red minus) · lower number = share of net worth",
+  "Farbe = seit Kauf (grün plus, rot minus) · untere Zahl = Anteil am Gesamtvermögen inkl. Cash": "Colour = since purchase (green plus, red minus) · lower number = share of net worth incl. cash",
+  "Noch leer": "Still empty", "Wähle die CSV-Exporte deiner Broker – gern": "Choose your brokers' CSV exports – preferably",
+  "alle auf einmal": "all at once", ". Jeder Broker bekommt sein eigenes Depot, die Übersicht zeigt danach alles zusammen.": ". Each broker gets its own portfolio, the overview then shows everything together.",
+  "📄 Dateien wählen": "📄 Choose files", "🗂️ Leeres Depot anlegen": "🗂️ Create empty portfolio", "✍️ Von Hand eintragen": "✍️ Enter manually",
+  "✏️ Depot bearbeiten": "✏️ Edit portfolio", "👁 beobachtete Depots zählen nicht zum Vermögen.": "👁 watched portfolios do not count towards net worth.",
+  "👁 = beobachtetes Depot, zählt nicht zum eigenen Vermögen.": "👁 = watched portfolio, does not count towards your own net worth.",
+  "Sachwerte zusammen (geschätzt)": "Assets combined (estimated)", "Geschätzte Werte – zählen im Gesamtvermögen mit.": "Estimated values – included in net worth.",
+  "⚠ Lücken AG (#): Verkauf über dem Bestand – fehlt ein Kauf in der Datei? Gewinn zählt nur auf den vorhandenen Bestand.": null,
+
+  // ---------------------------------------------------------------- Positionen, Detail, Watchlist
+  "Watchlist": "Watchlist", "Nach Wert": "By value", "Beste zuerst": "Best first", "Abweichung vom Ziel": "Deviation from target", "Name": "Name",
+  "Stück": "Shares", "Kurs": "Price", "Wert": "Value", "Gewicht": "Weight", "Seit Kauf": "Since purchase", "Seit Aktualisierung": "Since update", "Ø Kaufkurs": "Avg. buy price",
+  "Kurs jetzt": "Price now", "Kurs vom": "Price from", "Gekauft": "Bought", "Verkauft": "Sold", "Gekauft am": "Bought on", "Veränderung": "Change",
+  "Abstand zum Hoch": "Distance to high", "Hoch (Wert)": "High (value)", "Tief (Wert)": "Low (value)", "Tief # · Hoch # EUR": "Low # · high # EUR",
+  "Ticker": "Ticker", "Ticker (Yahoo)": "Ticker (Yahoo)", "Ticker wählen": "Choose ticker", "ISIN": "ISIN", "Art": "Type", "Status": "Status", "Notiz": "Note",
+  "Zielgewicht in %": "Target weight in %", "Notiz / was zu ändern ist": "Note / what to change", "+ Buchung": "+ Transaction", "+ Notiz": "+ Note", "+ Kurse": "+ Prices", "+ Kurse:": "+ prices:",
+  "Aktueller Kurs in €": "Current price in €", "Kurs € (leer = automatisch)": "Price € (empty = automatic)", "über „Ticker suchen“ wählen": "choose via “Search ticker”",
+  "🔎 Ticker suchen (Name, ISIN oder WKN)": "🔎 Search ticker (name, ISIN or WKN)", "Zertifikate ohne Kurs: Kurs von Hand eintragen.": "Certificates without a price: enter the price manually.",
+  "Haltefristen": "Holding periods", "frei ab #": "tax-free from #", "steuerfrei": "tax-free", "(nach # Jahr steuerfrei)": "(tax-free after # year)",
+  "Noch leer. Unten rechts auf + tippen und Aktien, ETFs, Zertifikate (WKN/ISIN) oder Krypto eintragen.": "Still empty. Tap + at the bottom right and add shares, ETFs, certificates (WKN/ISIN) or crypto.",
+  "Zur Watchlist": "To watchlist", "Zur Watchlist hinzufügen": "Add to watchlist", "Warum beobachte ich das?": "Why am I watching this?",
+  "Kaufmarke € (Kurs ≤)": "Buy mark € (price ≤)", "Verkaufsmarke € (Kurs ≥)": "Sell mark € (price ≥)", "WKN, ISIN oder Ticker": "WKN, ISIN or ticker",
+  "z. B. Einstieg geplant, Earnings abwarten": "e.g. entry planned, wait for earnings", "z. B. Siemens, Bitcoin, Turbo auf DAX": "e.g. Siemens, Bitcoin, turbo on DAX",
+  "– nur Marken –": "– marks only –",
+  "Aktie": "Share", "ETF": "ETF", "ETC": "ETC", "Krypto": "Crypto", "Fonds": "Fund", "Anleihe": "Bond", "Zertifikat": "Certificate", "Optionsschein": "Warrant",
+  "Rohstoff": "Commodity", "Index": "Index", "Sonstiges": "Other", "ETF/Fonds": "ETF/fund", "ETF, ETC, Fonds …": "ETF, ETC, fund …",
+  "Aktie · # %": "Share · # %", "ETF · # %": "ETF · # %", "ETC · # %": "ETC · # %", "Krypto · # %": "Crypto · # %",
+
+  // ---------------------------------------------------------------- Buchungen
+  "Buchungen": "Transactions", "# Buchungen": "# transactions", "Keine Buchungen.": "No transactions.", "Buchung von Hand": "Manual transaction",
+  "Kauf": "Buy", "Verkauf": "Sell", "Dividende": "Dividend", "Einzahlung": "Deposit", "Auszahlung": "Withdrawal", "Kartenzahlung": "Card payment",
+  "Zinsen": "Interest", "Kontogebühr": "Account fee", "Gebühr": "Fee", "Bonus/Gutschrift": "Bonus/credit", "Gutschrift": "Credit", "Verlust": "Loss",
+  "Verlust (z. B. Challenge)": "Loss (e.g. challenge)", "Ausbuchung": "Removal", "Einbuchung (Startbestand)": "Opening position", "Überweisung": "Transfer",
+  "Steuer": "Tax", "Steuern": "Taxes", "Steuern €": "Taxes €", "Gebühren €": "Fees €", "Betrag": "Amount", "Datum": "Date", "Text": "Text", "Titel": "Title",
+  "Wertpapier (vorhandenes wählen oder neuen Namen tippen)": "Security (choose existing or type a new name)", "Kurs je Stück in €": "Price per share in €",
+  "Betrag € (Dividende, Ein-/Auszahlung, Karte: − = raus)": "Amount € (dividend, deposit/withdrawal, card: − = out)",
+  "Einstand gesamt € (nur Einbuchung)": "Total cost basis € (opening position only)", "Konto / Depot": "Account / portfolio", "Beleg / Screenshot": "Receipt / screenshot",
+  "Kauf · schon importiert": "Buy · already imported", "Verkauf · schon importiert": "Sell · already imported", "Dividende · schon importiert": "Dividend · already imported",
+  "Einzahlung · schon importiert": "Deposit · already imported", "Auszahlung · schon importiert": "Withdrawal · already imported", "Zinsen · schon importiert": "Interest · already imported",
+  "Kartenzahlung · schon importiert": "Card payment · already imported", "Bonus/Gutschrift · schon importiert": "Bonus/credit · already imported",
+  "Einbuchung (Startbestand) · schon importiert": "Opening position · already imported", "Verlust (z. B. Challenge) · schon importiert": "Loss (e.g. challenge) · already imported",
+  "Kauf · storniert": "Buy · cancelled", "Kauf · Status Cancelled": "Buy · status cancelled", "Kauf · Status Canceled": "Buy · status cancelled",
+  "Kauf · Derivat – noch nicht unterstützt": "Buy · derivative – not supported yet", "Kauf · Paar gegen USDT – nur Euro-Paare": "Buy · pair against USDT – euro pairs only",
+  "Transfer an anderes Konto": "Transfer to another account", "Transfer von anderem Konto": "Transfer from another account",
+  "Anfangsbestand laut Kontoauszug": "Opening balance according to statement",
+
+  // ---------------------------------------------------------------- Kalender
+  "Gewinn/Verlust je Tag": "Profit/loss per day", "Dividenden November": null, "netto, gebucht": "net, booked", "# erhalten": "# received",
+  "Nichts in diesem Monat.": "Nothing this month.", "Nichts in diesem Tag.": "Nothing on this day.", "Eigenen Termin eintragen": "Add own event",
+  "Gewinntage": "Winning days", "Verlusttage": "Losing days", "Trefferquote": "Hit rate", "Bester Tag": "Best day", "Schlechtester": "Worst",
+  "Gewinn/Verlust aus Verkäufen, nach Gebühren und Steuern. „T.“ = Verkäufe.": "Profit/loss from sales, after fees and taxes. “T.” = sales.",
+  "Earnings": "Earnings", "Ex-Dividende": "Ex-dividend", "Haltefrist endet": "Holding period ends", "Erinnerung": "Reminder",
+  "# Stück · Ø #\u00a0€ (inkl. Gebühr)": "# shares · avg. #\u00a0€ (incl. fee)", "# Stück · Ø #\u00a0€ (nach Kosten)": "# shares · avg. #\u00a0€ (after costs)",
+  "# Käufe · # Stück · Ø #\u00a0€ (inkl. Gebühr)": "# buys · # shares · avg. #\u00a0€ (incl. fee)",
+  "# Verkäufe · # Stück · Ø #\u00a0€ (nach Kosten)": "# sells · # shares · avg. #\u00a0€ (after costs)",
+  "# Stück, gekauft # – danach steuerfrei": "# units, bought # – tax-free afterwards", "Quartalszahlen": "Quarterly results",
+  "Zahltag laut Yahoo · Höhe steht noch nicht fest": "Payment date according to Yahoo · amount not yet known",
+  "💶 Dividenden (erhalten, Zahltag)": "💶 Dividends (received, payment date)", "✂️ Ex-Tage mit Berechtigung": "✂️ Ex-dates with entitlement",
+  "📊 Earnings (Quartalszahlen)": "📊 Earnings (quarterly results)", "⏳ Haltefrist Krypto": "⏳ Crypto holding period", "🛒 Käufe": "🛒 Buys", "🏷️ Verkäufe": "🏷️ Sells",
+  "📌 eigene Termine": "📌 own events", "So weit schaut der Kalender voraus.": "How far ahead the calendar looks.",
+  "Januar #": "January #", "Februar #": "February #", "März #": "March #", "April #": "April #", "Mai #": "May #", "Juni #": "June #", "Juli #": "July #",
+  "August #": "August #", "September #": "September #", "Oktober #": "October #", "November #": "November #", "Dezember #": "December #",
+  "#J": "#Y", "#W": "#W", "#M": "#M", "Alle": "All",   "Jan. #": "Jan #", "Feb. #": "Feb #", "Apr. #": "Apr #", "Aug. #": "Aug #", "Sept. #": "Sep #", "Okt. #": "Oct #", "Nov. #": "Nov #", "Dez. #": "Dec #",
+
+  // ---------------------------------------------------------------- Import
+  "Importieren": "Import", "Datei wählen": "Choose file", "CSV- und PDF-Dateien werden automatisch erkannt:": "CSV and PDF files are recognised automatically:",
+  "Trade Republic – Transaktionsexport (Transaktionsexport.csv)": "Trade Republic – transaction export (Transaktionsexport.csv)",
+  "Kraken / Kraken Pro – Ledger oder Trades": "Kraken / Kraken Pro – ledger or trades", "Bitvavo – Transaktionsverlauf": "Bitvavo – transaction history",
+  "OKX – Handelsverlauf (Spot gegen Euro)": "OKX – trade history (spot against euro)", "Scalable Capital – Transaktionen (Broker-Transactions.csv)": "Scalable Capital – transactions (Broker-Transactions.csv)",
+  "Smartbroker+ – Depotbestand und Transaktionen": "Smartbroker+ – holdings and transactions", "Kraken-App – Aktivitäten (CSV)": "Kraken app – activities (CSV)",
+  "PDF:": "PDF:", "Kraken (Kontoauszug, Ledger, Balance Report, Kaufbeleg), Kontoauszüge von Revolut, Smartbroker+, Scalable, Trade Republic, Sparkasse und anderen Banken":
+    "Kraken (account statement, ledger, balance report, purchase receipt), statements from Revolut, Smartbroker+, Scalable, Trade Republic, Sparkasse and other banks",
+  "Depot-Bestand (bestand.csv) und Kursliste (Wochenkurse)": "Portfolio holdings (bestand.csv) and price list (weekly prices)", "Sicherung dieser App (.dksafe, ältere .json)": "Backup of this app (.dksafe, older .json)",
+  "Jede andere CSV": "Any other CSV", "– auch Kontoauszüge: Spalten einmal zuordnen, die App merkt es sich": "– bank statements too: map the columns once, the app remembers",
+  "Andere PDF": "Other PDF", "mit einer Tabelle: Spalten einmal zuordnen. PDFs werden nur auf dem Gerät gelesen. Scans/Fotos gehen nicht.": "with a table: map the columns once. PDFs are only read on the device. Scans/photos do not work.",
+  "Mehrere Dateien auf einmal gehen auch – jede kommt nacheinander in die Vorschau.": "Several files at once work too – each one comes to the preview in turn.",
+  "Aus dem Internet laden": "Load from the internet", "Kurse & Daten aktualisieren": "Update prices & data", "Kurse & Daten aktualisieren:": "Update prices & data:",
+  "Die App arbeitet offline. Dieser Knopf holt von Yahoo für alle Wertpapiere – in allen Depots – den letzten Kurs (in Euro), den Jahres-Chart, Dividenden, Earnings-Termine und Quartalszahlen. Fehlende Ticker sucht er über die ISIN. Ca. #–# KB je Titel.":
+    "The app works offline. This button fetches from Yahoo, for all securities in all portfolios, the latest price (in euro), the one-year chart, dividends, earnings dates and quarterly figures. Missing tickers are searched by ISIN. Approx. #–# KB per security.",
+  "Sichern": "Back up", "🔒 Verschlüsselte Sicherung": "🔒 Encrypted backup",
+  "Jede Datei landet automatisch im passenden Depot – in der Vorschau kannst du das ändern. Offenes Depot:": "Each file automatically goes into the matching portfolio – you can change this in the preview. Open portfolio:",
+  "Offenes Depot:": "Open portfolio:", "In welches Depot?": "Into which portfolio?", "Konto für diese Datei": "Account for this file",
+  "Anderer Name = eigenes Depot (z. B. zweites Konto beim selben Broker).": "Different name = separate portfolio (e.g. second account at the same broker).",
+  "Nur Broker": "Broker only", "Alles inkl. Konto & Karte": "Everything incl. account & card", "als Verlust (z. B. Challenge)": "as loss (e.g. challenge)", "als Aus-/Einzahlung": "as withdrawal/deposit",
+  "Transfers an andere Konten (#):": "Transfers to other accounts (#):",
+  "# Kontobewegungen in der Datei\n        (Ein-/Auszahlungen, Karte, Zinsen). „Alles“ zeigt zusätzlich Kontostand und Kartenausgaben.": "# account movements in the file\n        (deposits/withdrawals, card, interest). “All” also shows account balance and card spending.",
+  "# von # Buchungen werden übernommen.\n        Durchgestrichen: schon vorhanden, storniert, vor dem Startbestand oder Kontobewegung bei „Nur Broker“.": "# of # transactions will be imported.\n        Struck through: already present, cancelled, before the opening position or account movement with “Broker only”.",
+  "# übernehmen": "Import #", "# Buchungen übernommen.": "# transactions imported.", "# Buchungen übernommen, Startbestand von # Wertpapieren zurückgerechnet.": "# transactions imported, opening position of # securities recalculated.",
+  "Alle Dateien übernommen.": "All files imported.", "Kursliste: # Wertpapiere aktualisiert.": "Price list: # securities updated.",
+  "Spalten zuordnen": "Map columns", "Dieses Format kennt die App noch nicht. Ordne einmal die Spalten zu – die App merkt sich das für diesen Broker.": "The app does not know this format yet. Map the columns once – the app remembers it for this broker.",
+  "Art der Buchung": "Transaction type", "Name / Wertpapier": "Name / security", "ISIN / Kürzel": "ISIN / symbol", "Verwendungszweck / Text": "Reference / text",
+  "Was bedeuten die Arten in der Datei?": "What do the types in the file mean?", "automatisch (Vorzeichen)": "automatic (sign)", "nicht übernehmen": "do not import",
+  "Konto / Depot-Name": "Account / portfolio name", "Zuordnung für diesen Broker merken": "Remember mapping for this broker", "Weiter zur Vorschau": "Continue to preview",
+  "Wertpapier-Buchungen: Kauf/Verkauf über die Art oder das Vorzeichen.": "Securities transactions: buy/sell via type or sign.",
+  "Eigene Zuordnung": "Own mapping", "Bank – Kontoauszug (PDF)": "Bank – statement (PDF)", "Revolut – Kontoauszug (PDF)": "Revolut – statement (PDF)",
+  "Kraken – Kontoauszug (PDF)": "Kraken – account statement (PDF)", "Kraken – Ledger (PDF)": "Kraken – ledger (PDF)", "Trade Republic – Kontoauszug (PDF)": "Trade Republic – statement (PDF)",
+  "Kraken – Aktivitäten (App)": "Kraken – activities (app)", "Trade Republic – Transaktionsexport": "Trade Republic – transaction export",
+  "Smartbroker+ – Transaktionen": "Smartbroker+ – transactions", "Scalable Capital – Transaktionen": "Scalable Capital – transactions",
+  "Bitvavo – Transaktionen": "Bitvavo – transactions", "OKX – Handelsverlauf": "OKX – trade history", "Depot-Bestand (bestand.csv)": "Portfolio holdings (bestand.csv)",
+  "Gegenprobe: Kontostand laut Auszug #\u00a0€ – stimmt mit den Buchungen überein.": "Cross-check: balance on statement #\u00a0€ – matches the transactions.",
+  "Das Ledger-PDF rundet Stückzahlen auf # Stellen. Genauer ist der Kontoauszug („Account Statement“).": "The ledger PDF rounds quantities to # decimals. The account statement is more precise.",
+  "Diese PDF enthält keinen lesbaren Text – vermutlich ein Scan oder Foto. Bitte die Original-PDF vom Anbieter nehmen (nicht abfotografiert).":
+    "This PDF contains no readable text – probably a scan or photo. Please use the original PDF from the provider (not photographed).",
+  "Diese PDF ist passwortgeschützt – bitte ohne Passwort speichern (z. B. „Drucken → als PDF speichern“) und noch einmal wählen.":
+    "This PDF is password protected – please save it without password (e.g. “Print → save as PDF”) and choose it again.",
+  "Betrag (EUR) (z. B. #)": "Amount (EUR) (e.g. #)", "Buchungstag (z. B. #)": "Booking date (e.g. #)", "Geschäftsart (z. B. Kauf)": "Transaction type (e.g. buy)",
+  "ISIN (z. B. DE#TEST#)": "ISIN (e.g. DE#TEST#)", "Kurs (z. B. #)": "Price (e.g. #)", "Provision (z. B. #)": "Commission (e.g. #)", "Stück/Nominale (z. B. #)": "Quantity (e.g. #)",
+  "Wertpapierbezeichnung (z. B. Beispiel Werke AG)": "Security name (e.g. Beispiel Werke AG)", "Depotentgelt": "Custody fee", "Kapitalertragssteuer": "Capital gains tax",
+
+  // ---------------------------------------------------------------- Depots, Personen
+  "Depots verwalten": "Manage portfolios", "alle Depots als Liste, Cash je Depot, anlegen": "all portfolios as a list, cash per portfolio, create",
+  "Neues Depot": "New portfolio", "Neues Depot anlegen": "Create new portfolio", "Mein Depot": "My portfolio", "Mein Depot (leer)": "My portfolio (empty)",
+  "Zählt zum Vermögen?": "Counts towards net worth?", "mein Depot – zählt zum Vermögen": "my portfolio – counts towards net worth",
+  "beobachtet (z. B. von jemand anderem) – zählt nicht mit": "watched (e.g. someone else's) – does not count", "beobachtet": "watched",
+  "Person": "Person", "Person (Familie/Haushalt)": "Person (family/household)", "leer = Ich, z. B. Partner": "empty = me, e.g. partner", "leer = Ich, z. B. Partner, Kind": "empty = me, e.g. partner, child",
+  "z. B. Kinderdepot, Depot Oma": "e.g. child's portfolio, grandma's portfolio", "z. B. Scalable": "e.g. Scalable", "leer, z. B. Kinderdepot – danach Datei importieren": "empty, e.g. child's portfolio – then import a file",
+  "Broker-Export – landet automatisch im passenden oder in einem neuen Depot": "Broker export – goes automatically into the matching or a new portfolio",
+  "CSV-Datei importieren": "Import CSV file", "Cash / Guthaben in €": "Cash / balance in €", "Cash / Guthaben in € (nur nötig ohne importierte Kontobewegungen)": "Cash / balance in € (only needed without imported account movements)",
+  "Depot löschen": "Delete portfolio", "Leeren & neu einlesen": "Clear & re-import", "angelegt – jetzt Daten importieren.": "created – now import data.",
+  "zählt zum Vermögen · # Positionen": "counts towards net worth · # positions", "zählt zum Vermögen · # Positionen · Cash #\u00a0€": "counts towards net worth · # positions · cash #\u00a0€",
+  "zählt zum Vermögen · # Position · Cash #\u00a0€": "counts towards net worth · # position · cash #\u00a0€",
+  "zählt zum Vermögen · # Positionen · Cash ••••• €": "counts towards net worth · # positions · cash ••••• €", "zählt zum Vermögen · # Position · Cash ••••• €": "counts towards net worth · # position · cash ••••• €",
+  "# Position": "# position", "# Positionen": "# positions", "# Buchungen · # Wertpapiere": "# transactions · # securities", "# im Depot": "# in portfolio",
+  "· Ich": "· me", "Ich": "Me",
+
+  // ---------------------------------------------------------------- Mehr, Einstellungen
+  "Steuer-Übersicht": "Tax overview", "Gewinne je Jahr, Aktien-Topf, Krypto-Haltefrist, Freibeträge": "Gains per year, share pot, crypto holding period, allowances",
+  "Sachwerte": "Assets", "Kamera, Laptop, Auto, Gold …": "Camera, laptop, car, gold …", "# Eintrag · Kamera, Laptop, Auto, Gold …": "# entry · camera, laptop, car, gold …",
+  "# Einträge · Kamera, Laptop, Auto, Gold …": "# entries · camera, laptop, car, gold …", "Import, Kurse & Sichern": "Import, prices & backup",
+  "Dateien einlesen, Daten aus dem Internet, Sicherung": "Read files, data from the internet, backup", "KI-Fragen zum Portfolio": "AI questions about the portfolio",
+  "aus · hier einschalten": "off · switch on here", "Chat mit Rückfragen, Earnings, Beispiele · nur Name, Einstieg, Long/Short an deinen KI-Anbieter": "Chat with follow-ups, earnings, examples · only name, entry, long/short to your AI provider",
+  "Einstellungen": "Settings", "Design hell/dunkel, Verstecken, Kalender, Startseite": "Light/dark design, hiding, calendar, start page",
+  "Sprache, Design hell/dunkel, Verstecken, Kalender, Startseite": "Language, light/dark design, hiding, calendar, start page",
+  "Sicherheit & Sicherung": "Security & backup", "App-Sperre, Bildschirmschutz, verschlüsselte Sicherung": "App lock, screen protection, encrypted backup",
+  "API-Schlüssel": "API keys", "KI (OpenRouter, Claude, ChatGPT, Gemini) und weitere Dienste – eigene Schlüssel eintragen": "AI (OpenRouter, Claude, ChatGPT, Gemini) and other services – enter your own keys",
+  "Datenschutz": "Privacy", "was die App wann sendet": "what the app sends and when", "Hinweis & Anleitung": "Notice & guide", "keine Anlageberatung · so funktioniert die App": "not investment advice · how the app works",
+  "Fehler melden (Alpha)": "Report a bug (alpha)", "E-Mail an uns – was du schicken sollst und was nicht": "Email us – what to send and what not",
+  "Über die App": "About the app", "Idee, Tests & Gestaltung:": "Idea, testing & design:", "· Programmiert mit Unterstützung von Claude (Anthropic).": "· Programmed with the help of Claude (Anthropic).",
+  "Daten: Yahoo Finance (Kurse), Google News & Yahoo (Schlagzeilen), OpenRouter (KI, eigener Schlüssel) – nur auf Knopfdruck.": "Data: Yahoo Finance (prices), Google News & Yahoo (headlines), OpenRouter (AI, own key) – only at the push of a button.",
+  "Ohne Werbung, ohne Tracking, ohne Konto. Keine Anlageberatung.": "No ads, no tracking, no account. Not investment advice.",
+  "☕ Kaffee spendieren – kommt mit der Webseite": "☕ Buy us a coffee – coming with the website",
+  "Credits": "Credits", "Fremde Bausteine": "Third-party components", "(in der App enthalten, laufen offline):": "(included in the app, run offline):",
+  "Tesseract OCR": "Tesseract OCR", "(tesseract-core #, WebAssembly) – Texterkennung für Screenshots · Apache#": "(tesseract-core #, WebAssembly) – text recognition for screenshots · Apache#",
+  "Tesseract-Sprachdaten Deutsch": "Tesseract language data German", "(tessdata_best) – Apache#": "(tessdata_best) – Apache#",
+  "Alles andere (Rechnen, PDF-Lesen, Charts, Verschlüsselung, ZIP) ist eigener Code ohne fremde Bibliotheken. Keine Google-Play-Dienste, keine Tracker – Google News und Gemini nur auf Knopfdruck.":
+    "Everything else (calculations, PDF reading, charts, encryption, ZIP) is our own code without third-party libraries. No Google Play services, no trackers – Google News and Gemini only on request.",
+  "Datenquellen": "Data sources", "– nur auf Knopfdruck und nur, wenn Internet erlaubt ist:": "– only at the push of a button and only if internet is allowed:",
+  "Yahoo Finance": "Yahoo Finance", "– Kurse, Kursverlauf, Termine, Earnings, Schlagzeilen": "– prices, price history, dates, earnings, headlines",
+  "Onvista": "Onvista", "– Kurse für Zertifikate, Optionsscheine, Anleihen (per ISIN/WKN)": "– prices for certificates, warrants, bonds (by ISIN/WKN)",
+  "Google News": "Google News", "– Schlagzeilen (RSS)": "– headlines (RSS)",
+  "OpenRouter": "OpenRouter", "– KI-Chat mit eigenem Schlüssel (auch Gratis-Modelle); ebenso Anthropic, OpenAI, Google": "– AI chat with your own key (free models too); likewise Anthropic, OpenAI, Google",
+  "Unterstützen": "Support", "Depot-Kompass ist kostenlos und bleibt ohne Werbung. Wer das Projekt unterstützen möchte, kann anonym spenden – danke!":
+    "Depot-Kompass is free and stays ad-free. If you would like to support the project, you can donate anonymously – thank you!",
+  "☕ Spenden-Möglichkeiten folgen zum Release": "☕ Donation options will follow with the release",
+  "Bitte nur im jeweils genannten Netz senden – sonst geht die Spende verloren.": "Please only send on the network named – otherwise the donation is lost.",
+  "📋 Kopieren": "📋 Copy", "Bitcoin (BTC)": "Bitcoin (BTC)", "Monero (XMR)": "Monero (XMR)", "Ethereum (ETH · MetaMask)": "Ethereum (ETH · MetaMask)",
+  "Solana (SOL)": "Solana (SOL)", "Tron (TRX)": "Tron (TRX)", "Stellar (XLM)": "Stellar (XLM)", "Hyperliquid": "Hyperliquid",
+  "Aktuelle Kurse gibt es nur mit Internet.": "Current prices are only available with internet.",
+  "Ohne Internet rechnet die App mit dem letzten Kurs aus deinen Importen – Wert und Gewinn/Verlust stimmen dann nicht mit heute überein. Internet erlauben, dann unter ⚙️ → Import „Kurse & Daten aktualisieren“. Für zusätzliche Datenquellen eigene, kostenlose API-Schlüssel eintragen.":
+    "Without internet the app uses the last price from your imports – value and profit/loss will then not match today. Allow internet, then tap “Update prices & data” under ⚙️ → Import. For additional data sources enter your own free API keys.",
+  "🌐 Internet erlauben": "🌐 Allow internet", "🔑 API-Schlüssel": "🔑 API keys", "In die Zwischenablage kopiert.": "Copied to clipboard.", "Kopieren ging nicht – bitte von Hand markieren.": "Copying failed – please select it by hand.",
+  "Diese App ist in der": "This app is in the", "Alpha-Phase": "alpha phase", ". Fällt dir ein Fehler auf oder hast du eine Idee? Schreib uns:": ". Found a bug or have an idea? Write to us:",
+  ". Sollte dir ein Fehler auffallen oder sonst etwas: schreib uns eine Mail.": ". If you notice a bug or anything else: send us an email.",
+  "Design": "Design", "☀️ hell": "☀️ light", "🌙 dunkel": "🌙 dark", "⚫ schwarz (OLED)": "⚫ black (OLED)", "wie Handy": "like phone",
+  "Verstecken (Auge oben rechts)": "Hiding (eye at the top right)", "nur Beträge": "amounts only", "nur Beträge:": "amounts only:", "auch die Prozente.": "percentages too.", "nur noch Prozent.": "percent only.",
+  "Positionsgrößen und dein ganzes Kapital werden ausgeblendet – du siehst alles nur in Prozent, dazu Kaufkurs und Kurs.": "Position sizes and your total capital are hidden – you see everything in percent only, plus buy price and price.",
+  "Hebel-Rechner": "Leverage calculator", "bis #×": "up to #×", "So weit geht der Schieberegler. Höherer Hebel = Knock-out rückt sehr nah an den Einstieg.": "How far the slider goes. Higher leverage = knock-out moves very close to the entry.",
+  "Zusatzmodule": "Add-on modules", "✨ KI-Zusammenfassung": "✨ AI summary",
+  "Aus = nichts wird gesendet. An = KI-Chat zu Portfolio, Einzelwerten und Watchlist über deinen Anbieter (eigener Schlüssel) – nur Name, Einstiegskurs, Long/Short (Anteile nur auf Wunsch), nie Depotbeträge, Stückzahlen oder Konten, nur auf Knopfdruck.": "Off = nothing is sent. On = AI chat about portfolio, single securities and watchlist via your provider (own key) – only name, entry price, long/short (shares only on request), never portfolio amounts, quantities or accounts, only at the push of a button.",
+  "Welche Seite beim Öffnen kommt.": "Which page appears when opening.", "🌐 Sprache / Language": "🌐 Language / Sprache",
+  "Weitere Sprachen folgen. Zahlen und Daten bleiben vorerst im deutschen Format.": "More languages will follow. Numbers and dates stay in German format for now.",
+  "Deutsch": "Deutsch", "English": "English",
+
+  // ---------------------------------------------------------------- Sicherheit, Datenschutz, Schluessel
+  "App-Sperre mit #-stelliger PIN": "App lock with #-digit PIN", "Aus. Mit PIN werden alle Daten in der App verschlüsselt.": "Off. With a PIN, all data in the app is encrypted.",
+  "PIN festlegen (# Ziffern)": "Set PIN (# digits)", "PIN wiederholen": "Repeat PIN", "Sperre einschalten": "Switch on lock", "Wichtig: PIN weg = Daten weg.": "Important: PIN lost = data lost.",
+  "Es gibt keine Hintertür. Darum unten die Sicherung einrichten – die hat ihr eigenes Passwort und rettet dich.": "There is no back door. So set up the backup below – it has its own password and will save you.",
+  "Bildschirm": "Screen", "Bildschirmschutz": "Screen protection", "App-Übersicht und Screenshots zeigen nur Schwarz. Zum Screenshot-Schicken kurz ausschalten.": "App overview and screenshots show only black. Switch off briefly to send a screenshot.",
+  "Automatische Sicherung (nur auf dem Handy)": "Automatic backup (only on the phone)", "# Sicherungs-Passwort festlegen": "# Set backup password", "# Ordner wählen": "# Choose folder",
+  "mindestens # Zeichen, eigenes Passwort": "at least # characters, own password", "Passwort wiederholen": "Repeat password", "Passwort speichern": "Save password",
+  "Gut aufbewahren": "Keep it safe", "(z. B. in einem Passwort-Manager): Ohne Passwort lässt sich keine Sicherung wiederherstellen.": "(e.g. in a password manager): without the password no backup can be restored.",
+  "Danach sichert die App automatisch beim Verlassen, wenn sich etwas geändert hat, und behält die letzten # Dateien. Tipp: einen Ordner wie „Dokumente/Depot-Kompass-Sicherung“ anlegen. Gegen Verlust des Handys die Datei ab und zu per Kabel auf PC oder USB-Stick kopieren.":
+    "After that the app backs up automatically when leaving if something changed, and keeps the last # files. Tip: create a folder like “Documents/Depot-Kompass-Backup”. To protect against losing the phone, copy the file to a PC or USB stick now and then.",
+  "Jetzt sichern": "Back up now", "Noch keine Sicherung.": "No backup yet.", "Wiederherstellen": "Restore", "⚙️ → Import, Kurse & Sichern → Datei wählen → die": "⚙️ → Import, prices & backup → Choose file → the",
+  "-Datei. Die App fragt nach dem Passwort.": " file. The app asks for the password.", "🔒 Bestand „“ als CSV (verschlüsselt)": "🔒 Holdings as CSV (encrypted)",
+  "📴 Offline": "📴 Offline", "– deine Daten bleiben auf diesem Handy. Kein Konto, keine Werbung, kein Tracking, kein Google-Backup. Die App braucht keine Kontakte, keinen Standort und keine Kamera.":
+    "– your data stays on this phone. No account, no ads, no tracking, no Google backup. The app needs no contacts, no location and no camera.",
+  "🌐 Internet": "🌐 Internet", "Internet-Abrufe erlauben": "Allow internet requests", "An – nur wenn du einen Knopf drückst.": "On – only when you press a button.",
+  "Wenn an, fragt die App auf Knopfdruck ab,": "If on, the app requests at the push of a button", "welche": "which", "Werte du hast – nie Stückzahlen, Beträge oder Kontodaten:": "securities you hold – never quantities, amounts or account data:",
+  "Yahoo Finance (Kurse, Charts, Dividenden, Earnings).": "Yahoo Finance (prices, charts, dividends, earnings).", "Google News, Yahoo und deine eigenen Quellen.": "Google News, Yahoo and your own sources.",
+  "Links": "Links", "(Artikel, Schlüssel holen) öffnen im Browser.": "(articles, getting keys) open in the browser.", "(⚙️ → API-Schlüssel) gehen nur an den jeweiligen Dienst.": "(⚙️ → API keys) only go to the respective service.",
+  "Die Dienste sehen dabei deine IP-Adresse.": "The services see your IP address.", "🔒 Schutz": "🔒 Protection", "Nur verschlüsselte Verbindungen (HTTPS).": "Encrypted connections only (HTTPS).",
+  "Mit App-PIN sind alle Daten verschlüsselt und an dieses Handy gebunden.": "With an app PIN all data is encrypted and bound to this phone.",
+  "Sicherungen und Exporte nur verschlüsselt, mit deinem eigenen Passwort.": "Backups and exports only encrypted, with your own password.",
+  "Eigene Schlüssel gehören zum Internet-Teil: Sie bleiben verschlüsselt auf dem Handy und gehen nur an den jeweiligen Dienst. Du kannst sie jederzeit hinterlegen.":
+    "Own keys belong to the internet part: they stay encrypted on the phone and only go to the respective service. You can add them at any time.",
+  "Eigene Schlüssel gehören zum Internet-Teil: Sie bleiben verschlüsselt auf dem Handy und gehen nur an den jeweiligen Dienst. Du kannst sie jederzeit hinterlegen. Die KI ist gerade aus – der OpenRouter-Schlüssel wird erst genutzt, wenn du sie unter Einstellungen → Zusatzmodule einschaltest.":
+    "Own keys belong to the internet part: they stay encrypted on the phone and only go to the respective service. You can add them at any time. The AI is currently off – the OpenRouter key is only used once you switch it on under Settings → Add-on modules.",
+  "OpenRouter (KI)": "OpenRouter (AI)", "KI-Zusammenfassung – Gratis-Modelle mit „:free“": "AI summary – free models with “:free”", "Schlüssel einfügen": "Paste key", "Schlüssel eintragen": "Enter key",
+  "Gratis-Schlüssel holen ↗": "Get free key ↗", "noch nicht genutzt – kann schon hinterlegt werden (geplant: Bilanzen, Kennzahlen)": "not used yet – can already be stored (planned: balance sheets, ratios)",
+  "noch nicht genutzt – kann schon hinterlegt werden (geplant: Kurse, Devisen)": "not used yet – can already be stored (planned: prices, currencies)",
+  "noch nicht genutzt – kann schon hinterlegt werden (geplant: Kurse, Fundamentaldaten)": "not used yet – can already be stored (planned: prices, fundamentals)",
+  "noch nicht genutzt – kann schon hinterlegt werden (geplant: Nachrichten, Earnings)": "not used yet – can already be stored (planned: news, earnings)",
+
+  // ---------------------------------------------------------------- KI
+  "✨ KI-Fragen": "✨ AI questions", "KI einschalten": "Switch on AI", "🔑 OpenRouter-Schlüssel eintragen": "🔑 Enter OpenRouter key",
+  "Stell Fragen zu deinem Portfolio – z. B. „Check mein Portfolio“, „Positionen im Minus: nachkaufen oder schließen?“ oder „Wert auflösen – wie umgewichten?“.":
+    "Ask questions about your portfolio – e.g. “Check my portfolio”, “Losing positions: buy more or close?” or “Sell a security – how to rebalance?”.",
+  "Gesendet werden nur": "Only", "Name, Art, Einstiegskurs und Long/Short": "name, type, entry price and long/short",
+  "an OpenRouter (Anteile in % nur, wenn du es einschaltest) – keine Euro-Beträge, keine Stückzahlen, keine Konten. Du siehst vor dem Senden genau, was rausgeht. Die KI ist gerade":
+    "are sent to OpenRouter (shares in % only if you switch it on) – no euro amounts, no quantities, no accounts. Before sending you see exactly what goes out. The AI is currently",
+  ", es wird nichts gesendet.": ", nothing is sent.", "Dafür brauchst du einen": "For this you need a", "Gratis-Schlüssel von OpenRouter": "free key from OpenRouter",
+  "Frage": "Question", "Check mein Portfolio": "Check my portfolio", "Positionen im Minus: nachkaufen oder schließen?": "Losing positions: buy more or close?",
+  "Übergewicht & Gewinne mitnehmen?": "Overweight & take profits?", "Wert auflösen – wie umgewichten?": "Sell a security – how to rebalance?",
+  "Eigene Frage zum Portfolio": "Own question about the portfolio", "Watchlist-Check": "Watchlist check", "Welchen Wert auflösen?": "Which security to sell?", "Deine Frage": "Your question",
+  "Modell (nur Gratis)": "Model (free only)", "– erst Liste laden –": "– load list first –", "Gratis-Modelle laden": "Load free models",
+  "Das wird gesendet": "This will be sent", "an OpenRouter": "to OpenRouter", "Senden": "Send", "Antwort": "Answer", "Als Notiz speichern": "Save as note",
+  "Anteile und „% seit Einstieg“ mitsenden (für Fragen zur Gewichtung nötig)": "Also send shares and “% since entry” (needed for weighting questions)",
+  "Gesendet: Name, Art, Einstiegskurs je Stück, Long/Short. Nie Euro-Beträge des Depots, Stückzahlen, Konten oder Personen. Schlagzeilen kommen von der News-Seite (vorher „News laden“).":
+    "Sent: name, type, entry price per share, long/short. Never portfolio euro amounts, quantities, accounts or persons. Headlines come from the news page (“Load news” first).",
+  "Die Antwort stammt von einer KI und ist keine Anlageberatung. Gratis-Modelle kennen keine aktuellen Kurse.": "The answer comes from an AI and is not investment advice. Free models do not know current prices.",
+
+  // ---------------------------------------------------------------- KI-Chat (ab 0.46)
+  "der angezeigte Text an den gewählten Anbieter (OpenRouter, Anthropic, OpenAI oder Google), mit deinem Schlüssel – Namen, Einstiegskurse, Long/Short, Schlagzeilen, bei Einzelwerten öffentliche Quartalszahlen (Anteile nur auf Wunsch), nie Depotbeträge oder Stückzahlen. Rückfragen senden das bisherige Gespräch mit.":
+    "the text shown to the chosen provider (OpenRouter, Anthropic, OpenAI or Google), with your key – names, entry prices, long/short, headlines, public quarterly figures for single securities (shares only on request), never portfolio amounts or quantities. Follow-up questions include the conversation so far.",
+  "Stell Fragen zu deinem Portfolio und zu einzelnen Werten – im Chat mit Rückfragen. Beispiele: „Check mein Portfolio“, „Earnings auswerten“, „Positionen im Minus: nachkaufen oder schließen?“.":
+    "Ask questions about your portfolio and single securities – in a chat with follow-up questions. Examples: “Check my portfolio”, “Analyse earnings”, “Losing positions: buy more or close?”.",
+  "Du nutzt deinen eigenen Schlüssel: OpenRouter (auch Gratis-Modelle), Anthropic (Claude), OpenAI (ChatGPT) oder Google (Gemini).":
+    "You use your own key: OpenRouter (free models too), Anthropic (Claude), OpenAI (ChatGPT) or Google (Gemini).",
+  "Gesendet werden nur Name, Art, Einstiegskurs und Long/Short – keine Euro-Beträge, keine Stückzahlen, keine Konten. Du siehst vor dem Senden genau, was rausgeht. Die KI ist gerade aus, es wird nichts gesendet.":
+    "Only name, type, entry price and long/short are sent – no euro amounts, no quantities, no accounts. Before sending you see exactly what goes out. The AI is currently off, nothing is sent.",
+  "💬 Community-Server auf Discord für Fragen, Ideen und Feedback – folgt.": "💬 Community server on Discord for questions, ideas and feedback – coming soon.",
+  "Benachrichtigungen": "Notifications", "an · Kurse, Earnings, Schlagzeilen": "on · prices, earnings, headlines", "aus · nur mit Internet": "off · internet only",
+  "🔔 Benachrichtigungen": "🔔 Notifications",
+  "Die App kann dich auf dem Handy erinnern: an deine Kurs-Marken, an Earnings-Termine, an starke Kursbewegungen und an neue Schlagzeilen zu deinen Werten.":
+    "The app can remind you on your phone: of your price marks, earnings dates, strong price moves and new headlines about your securities.",
+  "Das geht nur mit Internet: Android startet die Prüfung alle paar Stunden im Hintergrund. Abgefragt werden nur öffentliche Kurse und Schlagzeilen zu den Namen deiner Werte – nie Beträge, Stückzahlen oder Konten. Die Liste der Werte liegt verschlüsselt auf dem Handy.":
+    "This only works with internet: Android starts the check every few hours in the background. Only public prices and headlines for the names of your securities are requested – never amounts, quantities or accounts. The list of securities is stored encrypted on the phone.",
+  "Internet ist in der App aus – im Offline-Modus gibt es keine Benachrichtigungen.": "Internet is off in the app – there are no notifications in offline mode.",
+  "Benachrichtigungen an": "Notifications on", "ab Werk aus": "off by default", "Starke Kursbewegung": "Strong price move",
+  "Veränderung seit dem letzten Schlusskurs": "Change since the last closing price", "Earnings heute oder morgen": "Earnings today or tomorrow",
+  "Termine aus „Kurse & Daten aktualisieren“": "Dates from “Update prices & data”", "Neue Schlagzeilen": "New headlines",
+  "Google News, Suche nach dem Namen (ohne ETFs)": "Google News, search by name (without ETFs)", "Kursbewegung ab": "Price move from", "Prüfen etwa alle": "Check about every",
+  "# %": "# %", "# Std.": "# h",
+  "Android legt den genauen Zeitpunkt selbst fest (Akku sparen). Es werden höchstens # Werte geprüft.": "Android decides the exact time itself (to save battery). At most # securities are checked.",
+  "✓ Vom Handy erlaubt": "✓ Allowed by the phone",
+  "⚠️ Vom Handy nicht erlaubt – bitte in den Android-Einstellungen der App Benachrichtigungen erlauben.": "⚠️ Not allowed by the phone – please allow notifications in the app's Android settings.",
+  "✓ Prüfung ist eingeplant": "✓ Check is scheduled", "Prüfung noch nicht eingeplant": "Check not scheduled yet", "🔔 Test-Benachrichtigung": "🔔 Test notification",
+  "Benachrichtigungen eingeschaltet.": "Notifications switched on.", "Benachrichtigungen ausgeschaltet.": "Notifications switched off.",
+  "Benachrichtigungen konnten nicht eingerichtet werden.": "Notifications could not be set up.",
+  "Depot-Kompass – Hinweise": "Depot-Kompass – alerts", "Earnings heute": "Earnings today", "Earnings morgen": "Earnings tomorrow",
+  "seit dem letzten Schlusskurs": "since the last close", "1 neue Schlagzeile": "1 new headline", "%d neue Schlagzeilen": "%d new headlines",
+  "So sieht eine Benachrichtigung aus.": "This is what a notification looks like.",
+  "Benachrichtigungen (an):": "Notifications (on):",
+  "alle paar Stunden im Hintergrund öffentliche Kurse (Yahoo) zu deinen Tickern und Schlagzeilen (Google News) zu den Namen deiner Werte – nie Beträge, Stückzahlen oder Konten.":
+    "every few hours in the background, public prices (Yahoo) for your tickers and headlines (Google News) for the names of your securities – never amounts, quantities or accounts.",
+  "Analysten": "Analysts", "Kursziel Ø": "Avg. price target", "Abstand zum Kurs": "Distance to price", "Median": "Median", "Spanne": "Range", "Einschätzung": "Rating",
+  "Stark kaufen": "Strong buy", "Kaufen": "Buy", "Halten": "Hold", "Untergewichten": "Underweight", "Verkaufen": "Sell", "Stark verkaufen": "Strong sell",
+  "Stark kaufen # · Kaufen # · Halten # · Verkaufen #": "Strong buy # · Buy # · Hold # · Sell #", "Letzte Einstufungen": "Latest ratings", "Verteilung": "Distribution",
+  "Quelle Yahoo Finance · Stand #.#.# · keine Anlageberatung": "Source Yahoo Finance · as of #.#.# · not investment advice",
+  "Quelle Yahoo Finance · Stand #/#/# · keine Anlageberatung": "Source Yahoo Finance · as of #/#/# · not investment advice",
+  "Analysten & Kursziele": "Analysts & price targets", "Was sagen die Analystenhäuser – Kursziele im Mittel und letzte Einstufungen": "What analyst firms say – average price targets and latest ratings",
+  "🔐 Verschlüsselt teilen": "🔐 Share encrypted", "🔐 Depot verschlüsselt teilen": "🔐 Share portfolio encrypted",
+  "Erstellt eine verschlüsselte Datei nur mit diesem Depot. Die andere Person liest sie mit dem Passwort ein – als eigenes, beobachtetes Depot. Ihre übrigen Daten bleiben unberührt.":
+    "Creates an encrypted file with only this portfolio. The other person imports it with the password – as a separate, observed portfolio. Their other data stays untouched.",
+  "Name für den Empfänger": "Name for the recipient", "Passwort (mind. # Zeichen)": "Password (at least # characters)", "Passwort wiederholen": "Repeat password",
+  "Enthalten: Wertpapiere, Buchungen und Cash dieses Depots. Nicht enthalten: Notizen, Original-Dokumente, Schlüssel, andere Depots. Das Passwort am besten auf einem anderen Weg weitergeben (z. B. persönlich).":
+    "Included: securities, transactions and cash of this portfolio. Not included: notes, original documents, keys, other portfolios. Best pass on the password another way (e.g. in person).",
+  "✉️ Fehlercodes per E-Mail senden": "✉️ Send error codes by e-mail", "📤 Ganzes Protokoll teilen": "📤 Share full log",
+  "Öffnet deine Mail-App mit den Fehlercodes – du siehst alles vorher und entscheidest selbst, ob du sendest.": "Opens your mail app with the error codes – you see everything first and decide yourself whether to send.",
+  "📤 Teilen": "📤 Share", "💾 Speichern": "💾 Save", "Geteiltes Depot": "Shared portfolio", "# Buchungen · # Wertpapiere": "# transactions · # securities",
+  "Wohin?": "Where to?", "als neues Depot hinzufügen": "add as new portfolio", "Person (Familie/Haushalt)": "Person (family/household)", "z. B. Partner, Kind, Freund": "e.g. partner, child, friend",
+  "beobachtet – zählt nicht mit": "observed – does not count", "mein Depot – zählt zum Vermögen": "my portfolio – counts towards net worth", "Depot übernehmen": "Take over portfolio",
+  "Deine anderen Depots, Notizen und Einstellungen bleiben unverändert.": "Your other portfolios, notes and settings stay unchanged.",
+  "Geteiltes Depot: wird hinzugefügt, nichts anderes wird verändert.": "Shared portfolio: is added, nothing else is changed.",
+  "Mindestens # Zeichen.": "At least # characters.", "Verschlüsseln fehlgeschlagen.": "Encryption failed.", "Teilen-Menü geöffnet.": "Share menu opened.", "Bitte Speicherort wählen.": "Please choose where to save.",
+  "Teilen fehlgeschlagen.": "Sharing failed.", "Das gewählte Depot wird durch das geteilte ersetzt. Weiter?": "The selected portfolio will be replaced by the shared one. Continue?",
+  "Depot ersetzt.": "Portfolio replaced.", "Depot hinzugefügt.": "Portfolio added.", "Geteilte Datei nicht lesbar.": "Shared file not readable.",
+  "# geteilte Datei(en) – werden eingelesen …": "# shared file(s) – importing …",
+  "Die Passwörter sind nicht gleich.": "The passwords do not match.",
+  "📂 Sicherung oder geteiltes Depot einlesen": "📂 Restore backup or import shared portfolio",
+  "Wähle die": "Choose the", "-Datei (oder die verschlüsselte ZIP). Die App fragt nach dem Passwort. Eine Vollsicherung ersetzt alle Depots, ein geteiltes Depot wird nur hinzugefügt. Tipp: Dateien lassen sich auch aus jeder App mit „Teilen → Depot-Kompass“ schicken.":
+    " file (or the encrypted ZIP). The app asks for the password. A full backup replaces all portfolios, a shared portfolio is only added. Tip: you can also send files from any app via “Share → Depot-Kompass”.",
+  "📥 Geteiltes Depot einlesen (.dksafe)": "📥 Import shared portfolio (.dksafe)",
+  "Ein Depot, das dir jemand verschlüsselt geschickt hat – wird hinzugefügt, nichts anderes ändert sich. Eigenes Depot weitergeben: ✏️ Depot bearbeiten → 🔐 Verschlüsselt teilen.":
+    "A portfolio someone sent you encrypted – it is added, nothing else changes. To pass on your own portfolio: ✏️ Edit portfolio → 🔐 Share encrypted.",
+  "Depot-Kompass-Team": "Depot-Kompass team", "Entwicklung": "Development",
+  "– Depot-Kompass-Team, programmiert mit Unterstützung von Claude (Anthropic).": "– Depot-Kompass team, programmed with the help of Claude (Anthropic).",
+  "Ohne Schlüssel aktiv": "Active without a key", "Eigene Schlüssel": "Own keys",
+  "Diese Quellen brauchen keinen Schlüssel – sie laufen nur auf Knopfdruck und nur, wenn Internet erlaubt ist:": "These sources need no key – they only run at the push of a button and only if internet is allowed:",
+  "– Kurse, Kursverlauf, Termine, Earnings, Analysten": "– prices, price history, dates, earnings, analysts",
+  "– Kurse für Zertifikate, Optionsscheine, Anleihen (Onvista vergibt keine eigenen Schlüssel)": "– prices for certificates, warrants, bonds (Onvista does not issue keys)",
+  "💜 Credits & Unterstützen": "💜 Credits & support", "Credits & Unterstützen": "Credits & support",
+  "Wer und was dahintersteckt – und wie du das Projekt unterstützen kannst": "Who and what is behind it – and how you can support the project",
+  "💬 Chat": "💬 Chat", "💡 Beispiele": "💡 Examples", "🗂️ Verlauf": "🗂️ History", "Anbieter": "Provider", "Modell": "Model", "Modelle laden": "Load models",
+  "OpenRouter": "OpenRouter", "Anthropic (Claude)": "Anthropic (Claude)", "OpenAI (ChatGPT)": "OpenAI (ChatGPT)", "Google (Gemini)": "Google (Gemini)",
+  "OpenRouter ✓": "OpenRouter ✓", "Anthropic (Claude) ✓": "Anthropic (Claude) ✓", "OpenAI (ChatGPT) ✓": "OpenAI (ChatGPT) ✓", "Google (Gemini) ✓": "Google (Gemini) ✓",
+  "🔑 Schlüssel eintragen": "🔑 Enter key",
+  "Modelle mit „:free“ sind kostenlos. Andere kosten Guthaben bei OpenRouter.": "Models ending in “:free” are free. Others use credit at OpenRouter.",
+  "Abrechnung nach Verbrauch über deinen eigenen Schlüssel beim Anbieter.": "Billed by usage via your own key at the provider.",
+  "Earnings auswerten": "Analyse earnings", "Chancen & Risiken eines Werts": "Opportunities & risks of a security", "Schlagzeilen einordnen": "Put headlines in context",
+  "Welcher Wert?": "Which security?",
+  "Gesendet: Name, Art, Einstiegskurs je Stück, Long/Short; bei Einzelwerten zusätzlich öffentliche Kennzahlen und Quartalszahlen. Nie Euro-Beträge des Depots, Stückzahlen, Konten oder Personen.":
+    "Sent: name, type, entry price per share, long/short; for single securities also public ratios and quarterly figures. Never portfolio euro amounts, quantities, accounts or persons.",
+  "Gesendet: Name, Art, Einstiegskurs je Stück, Long/Short, Anteile in %; bei Einzelwerten zusätzlich öffentliche Kennzahlen und Quartalszahlen. Nie Euro-Beträge des Depots, Stückzahlen, Konten oder Personen.":
+    "Sent: name, type, entry price per share, long/short, shares in %; for single securities also public ratios and quarterly figures. Never portfolio euro amounts, quantities, accounts or persons.",
+  "Antworten stammen von einer KI und sind keine Anlageberatung. Die KI kennt nur die mitgeschickten Daten und ihr allgemeines Wissen.":
+    "Answers come from an AI and are not investment advice. The AI only knows the data sent and its general knowledge.",
+  "Portfolio": "Portfolio", "Einzelwert": "Single security", "Watchlist": "Watchlist", "Schnelle Fragen": "Quick questions",
+  "Klumpen, Streuung, starke Gewinner und Verlierer": "Concentration, diversification, big winners and losers",
+  "z. B. „Die Nvidia-Earnings sind draußen – werte sie vollständig aus.“": "e.g. “The Nvidia earnings are out – analyse them fully.”",
+  "Stärken, Schwächen, Bewertung und drei Szenarien": "Strengths, weaknesses, valuation and three scenarios",
+  "Was bedeuten die aktuellen Meldungen für meinen Wert?": "What do the latest news mean for my security?",
+  "Verbilligen, halten oder neu einsteigen – mit Für und Wider": "Average down, hold or re-enter – with pros and cons",
+  "Teilgewinne, laufen lassen, unter 10 % Anteil kommen": "Partial profits, let it run, get below 10 % weight",
+  "Teilgewinne, laufen lassen, unter # % Anteil kommen": "Partial profits, let it run, get below # % weight",
+  "Erlös so verteilen, dass die Gewichtung passt": "Spread the proceeds so the weighting fits",
+  "Was spricht für und gegen einen genaueren Blick?": "What speaks for and against a closer look?",
+  "Frei formulieren – die Positionen gehen mit": "Ask freely – your positions are included",
+  "Bin ich zu stark in einer Branche oder Anlageart investiert?": "Am I too heavily invested in one sector or asset type?",
+  "Wie hoch sollte mein Krypto-Anteil höchstens sein – was spricht dafür und dagegen?": "How high should my crypto share be at most – what speaks for and against it?",
+  "Wie könnte ich mein Portfolio gegen einen Kursrutsch absichern?": "How could I protect my portfolio against a market crash?",
+  "Erkläre mir einfach: Was sagt das KGV aus und wann ist es hoch?": "Explain simply: what does the P/E ratio tell me and when is it high?",
+  "Noch keine Gespräche.": "No conversations yet.",
+  "Gespräche liegen nur auf diesem Handy (verschlüsselt, in der Sicherung enthalten). Es werden höchstens # aufgehoben.":
+    "Conversations are only stored on this phone (encrypted, included in the backup). At most # are kept.",
+  "＋ Neu": "＋ New", "Deine Frage mit den gesendeten Daten anzeigen": "Show your question with the data sent", "Rückfrage": "Follow-up question",
+  "z. B. Erkläre den letzten Punkt genauer.": "e.g. Explain the last point in more detail.",
+  "Rückfragen gehen mit dem bisherigen Gespräch an denselben Anbieter – keine weiteren Depotdaten.": "Follow-up questions go to the same provider with the conversation so far – no further portfolio data.",
+  "KI denkt nach …": "AI is thinking …", "Lade Modell-Liste …": "Loading model list …", "# Modelle gefunden.": "# models found.",
+  "Für diesen Anbieter ist noch kein Schlüssel eingetragen (⚙️ → API-Schlüssel).": "No key has been entered for this provider yet (⚙️ → API keys).",
+  "Internet ist in der App ausgeschaltet (⚙️ → Datenschutz).": "Internet is switched off in the app (⚙️ → Privacy).",
+  "Der Schlüssel fehlt oder ist ungültig. Bitte unter ⚙️ → API-Schlüssel neu eintragen.": "The key is missing or invalid. Please enter it again under ⚙️ → API keys.",
+  "Beim Anbieter fehlt Guthaben oder das Kontingent ist aufgebraucht. Bitte dort prüfen oder ein Gratis-Modell wählen.": "The provider has no credit left or the quota is used up. Please check there or choose a free model.",
+  "Zu viele Anfragen oder Kontingent aufgebraucht. Bitte kurz warten oder ein anderes Modell wählen.": "Too many requests or quota used up. Please wait a moment or choose another model.",
+  "Dieses Modell gibt es nicht (mehr). Bitte „Modelle laden“ und ein anderes wählen.": "This model does not exist (any more). Please tap “Load models” and choose another one.",
+  "Bitte erst einen Schlüssel eintragen (⚙️ → API-Schlüssel).": "Please enter a key first (⚙️ → API keys).",
+  "Bitte erst „Modelle laden“ und ein Modell wählen.": "Please tap “Load models” first and choose a model.",
+  "Bitte erst eine Rückfrage eintippen.": "Please type a follow-up question first.", "Dieses Gespräch löschen?": "Delete this conversation?",
+  "KI-Chat – Gratis-Modelle mit „:free“, andere über Guthaben": "AI chat – free models ending in “:free”, others via credit",
+  "KI-Chat mit Claude – kostenpflichtig nach Verbrauch (kein Abo nötig, ein Claude-Abo lässt sich nicht verbinden)": "AI chat with Claude – paid by usage (no subscription needed; a Claude subscription cannot be connected)",
+  "KI-Chat mit GPT-Modellen – kostenpflichtig nach Verbrauch": "AI chat with GPT models – paid by usage",
+  "KI-Chat mit Gemini – mit kostenlosem Kontingent": "AI chat with Gemini – with a free quota", "Schlüssel holen ↗": "Get key ↗",
+  "Eigene Schlüssel gehören zum Internet-Teil: Sie bleiben verschlüsselt auf dem Handy und gehen nur an den jeweiligen Dienst. Du kannst sie jederzeit hinterlegen. Die KI ist gerade aus – KI-Schlüssel werden erst genutzt, wenn du sie unter Einstellungen → Zusatzmodule einschaltest.":
+    "Own keys belong to the internet part: they stay encrypted on the phone and only go to the respective service. You can add them at any time. The AI is currently off – AI keys are only used once you switch it on under Settings → Add-on modules.",
+
+  // ---------------------------------------------------------------- News, Notizen, Rechner
+  "News laden": "Load news", "News laden:": "Load news:", "Noch nichts geladen.": "Nothing loaded yet.", "Keine Meldungen.": "No news.", "Quellen": "Sources",
+  "        Für deine Aktien und Kryptowerte (Depot + Watchlist) aus Google News, Yahoo und deinen eigenen Quellen (unten). Antippen öffnet den Artikel im Browser.": null,
+  "Für deine Aktien und Kryptowerte (Depot + Watchlist) aus Google News, Yahoo und deinen eigenen Quellen (unten). Antippen öffnet den Artikel im Browser.":
+    "For your shares and crypto (portfolio + watchlist) from Google News, Yahoo and your own sources (below). Tap to open the article in the browser.",
+  "deutsch · sucht nach deinen Werten": "German · searches for your securities", "englisch · sucht nach deinen Werten": "English · searches for your securities",
+  "alle Meldungen (nicht nur zu meinen Werten)": "all news (not only about my securities)", "Eigene Quelle hinzufügen (RSS/Atom-Feed)": "Add own source (RSS/Atom feed)",
+  "Feed-Adresse (https://…)": "Feed address (https://…)", "z. B. Regionalzeitung": "e.g. local newspaper", "Tipp: Viele Zeitungen haben unten auf der Seite „RSS“. Nur https-Adressen.": "Tip: many newspapers have “RSS” at the bottom of the page. https addresses only.",
+  "Bitte eine https://-Adresse eintragen.": "Please enter an https:// address.", "News gibt es nur in der App.": "News is only available in the app.", "Kurse gibt es nur in der App.": "Prices are only available in the app.",
+  "Neue Notiz": "New note", "Noch keine Notizen. Mit + anlegen – oder in einer Position bzw. Watchlist-Zeile.": "No notes yet. Create one with + – or in a position or watchlist row.",
+  "🧮 Hebel-Rechner": "🧮 Leverage calculator", "🧮 Hebel-Rechner mit Chart (Knock-out, Stop, Ziel)": "🧮 Leverage calculator with chart (knock-out, stop, target)",
+  "🧮 Im Rechner öffnen und ändern": "🧮 Open and edit in calculator", "Als Notiz speichern (mit Chart)": "Save as note (with chart)", "z. B. Hyperliquid Doppeltop short": "e.g. Hyperliquid double top short",
+  "Long": "Long", "Short": "Short", "Hebel": "Leverage", "Hebel ziehen:": "Drag leverage:", "Einstieg (Basiswert)": "Entry (underlying)", "Stop": "Stop", "Ziel": "Target",
+  "mit Stop": "with stop", "ohne Stop (ganzer Einsatz)": "without stop (whole stake)", "Einsatz € (optional)": "Stake € (optional)", "Max. Verlust € (optional)": "Max. loss € (optional)",
+  "Knock-out ca.": "Knock-out approx.", "Risiko bei deinem Einsatz": "Risk with your stake", "Gewinn bei Ziel": "Profit at target", "Chance : Risiko": "Reward : risk",
+  "Einsatz für deinen Max.-Verlust": "Stake for your max. loss", "Kursverlauf im Chart (optional)": "Price history in chart (optional)", "Hebel-Chart mit Marken": "Leverage chart with marks",
+  "Einstieg und Hebel eintragen.": "Enter entry and leverage.", "Einstieg #": "Entry #", "KO # (# %)": "KO # (# %)", "Stop # (# %)": "Stop # (# %)", "Ziel # (# %)": "Target # (# %)", "Produkt # %": "Product # %",
+  "Broker / Produkt": "Broker / product", "Kraken Futures (EU)": "Kraken Futures (EU)", "Hyperliquid": "Hyperliquid", "Eigene Werte": "Custom values",
+  "Knock-out-Zertifikat (Trade Republic, Scalable, Smartbroker …)": "Knock-out certificate (Trade Republic, Scalable, Smartbroker …)",
+  "Beim Zertifikat legt der Emittent die Knock-out-Schwelle fest – meist etwas vor dem Basispreis. Den genauen Wert findest du im Produktblatt; die Ordergebühr ist ein fester Euro-Betrag.":
+    "For a certificate the issuer sets the knock-out barrier – usually a little before the strike. The exact value is in the product sheet; the order fee is a fixed euro amount.",
+  "Vorgabe: Liquidation bei # % Restmarge, Gebühr # % je Seite. Den genauen Liquidationspreis zeigt Kraken Futures beim Eröffnen. Andere Werte: „Eigene Werte“ wählen.":
+    "Default: liquidation at # % remaining margin, fee # % per side. Kraken Futures shows the exact liquidation price when you open the position. Other values: choose “Custom values”.",
+  "Vorgabe: Liquidation bei # % Restmarge, Gebühr # % je Seite. Den genauen Liquidationspreis zeigt Hyperliquid beim Eröffnen. Andere Werte: „Eigene Werte“ wählen.":
+    "Default: liquidation at # % remaining margin, fee # % per side. Hyperliquid shows the exact liquidation price when you open the position. Other values: choose “Custom values”.",
+  "Benachrichtigungen brauchen Internet – in der App ist es aus (⚙️ → Datenschutz).": "Notifications need internet – it is switched off in the app (⚙️ → Privacy).",
+  "Grund:": "Reason:",
+  "⚙️ Android-Einstellungen öffnen": "⚙️ Open Android settings",
+  "⚠️ Die Hintergrund-Prüfung ist nicht eingeplant. Schalte Benachrichtigungen einmal aus und wieder an – kommt dann eine Meldung mit „Grund“, schick sie uns.": "⚠️ The background check is not scheduled. Switch notifications off and on again – if a message with “Reason” appears, please send it to us.",
+  "💡 Inspiration": "💡 Inspiration", "r/mauerstrassenwetten": "r/mauerstrassenwetten", "Claude (Anthropic)": "Claude (Anthropic)",
+  "(Reddit) – danke für Ideen, Diskussionen und die Erinnerung, dass zu jedem Depot auch Verluste und Risiko gehören.": "(Reddit) – thanks for ideas, discussions and the reminder that every portfolio comes with losses and risk.",
+  "– Inspirationsquelle und Coding-Helfer bei der Entwicklung.": "– source of inspiration and coding helper during development.",
+  "💡 Ab etwa # % braucht es schon # % Anstieg, um wieder bei null zu sein – du brauchst gerade # %. Manche lösen eine Position ab hier auf und eröffnen bei Bedarf eine neue, um den Verlust zu begrenzen. Realisierte Verluste lassen sich steuerlich mit Gewinnen verrechnen (Aktienverluste nur mit Aktiengewinnen). Ohne Gewähr, keine Anlageberatung.":
+    "💡 From about # % it already takes # % to get back to zero – you currently need # %. Some people close a position from here and open a new one if needed, to limit the loss. Realised losses can be offset against gains for tax purposes (in Germany, stock losses only against stock gains). No guarantee, not investment advice.",
+  "Fehlerprotokoll": "Error log", "🐞 Fehlerprotokoll": "🐞 Error log", "technische Fehler sammeln, auswerten und teilen – ohne Beträge": "collect, analyse and share technical errors – no amounts",
+  "Die App sammelt hier technische Fehler (Benachrichtigungen, Abstürze, Skript-Fehler, Fehlermeldungen).": "The app collects technical errors here (notifications, crashes, script errors, error messages).",
+  "Keine Beträge, Stückzahlen, Konten oder Schlüssel": "No amounts, quantities, accounts or keys",
+  "– Zahlen in Meldungen werden durch # ersetzt. Das Protokoll bleibt auf dem Handy, bis du es selbst teilst.": "– numbers in messages are replaced by #. The log stays on your phone until you share it yourself.",
+  "📤 Teilen": "📤 Share", "📋 Kopieren": "📋 Copy", "🗑️ Protokoll leeren": "🗑️ Clear log", "Protokoll geleert.": "Log cleared.", "Auswertung": "Analysis", "Teilen ging nicht.": "Sharing failed.",
+  "Keine Fehler aufgezeichnet. Wenn etwas schiefgeht (z. B. beim Aktualisieren), hier nachsehen.": "No errors recorded. If something goes wrong (e.g. when refreshing), look here.",
+  "# Einträge": "# entries",
+  "Internet ist in der App ausgeschaltet (⚙️ → Datenschutz) – dann gibt es keine Benachrichtigungen.": "Internet is switched off in the app (⚙️ → Privacy) – then there are no notifications.",
+  "Android verbietet der App Benachrichtigungen – Mehr → 🔔 Benachrichtigungen → „Android-Einstellungen öffnen“.": "Android blocks notifications for the app – More → 🔔 Notifications → “Open Android settings”.",
+  "Android-Schlüsselspeicher (Keystore) hat den Schlüssel abgelehnt – ab 0.58 wird er automatisch neu angelegt; tritt es weiter auf: an uns schicken.": "Android key store rejected the key – since 0.58 it is recreated automatically; if it keeps happening, send it to us.",
+  "Android hat die Hintergrund-Prüfung (JobScheduler) abgelehnt – Akku-Optimierung für die App prüfen.": "Android rejected the background check (JobScheduler) – check battery optimisation for the app.",
+  "Die Hintergrund-Prüfung ist nicht eingeplant.": "The background check is not scheduled.",
+  "Die Liste für den Wächter war fehlerhaft (JSON) – bitte an uns schicken.": "The list for the background check was faulty (JSON) – please send it to us.",
+  "Datenquelle nicht erreichbar (Netz, Yahoo/Onvista) – meist vorübergehend.": "Data source not reachable (network, Yahoo/Onvista) – usually temporary.",
+  "Zu wenig Arbeitsspeicher – sehr große Daten oder viele Screenshots.": "Not enough memory – very large data or many screenshots.",
+  "Der App fehlt eine Android-Berechtigung – das ist ein Fehler der App (z. B. ACCESS_NETWORK_STATE, behoben in #). Bitte Fehlercode an uns schicken.": "The app is missing an Android permission – this is a bug in the app (e.g. ACCESS_NETWORK_STATE, fixed in #). Please send us the error code.",
+  "Steuertermin": "Tax date", "🧾 Steuertermine (ohne Gewähr)": "🧾 Tax dates (Germany, no guarantee)",
+  "Vorabpauschale für ETFs und Fonds": "Advance lump sum tax on ETFs and funds (Germany)", "Abgabefrist Steuererklärung (Vorjahr)": "Tax return deadline (previous year, Germany)",
+  "Freistellungsauftrag prüfen": "Check your tax exemption order (Germany)", "Verlustbescheinigung beantragen": "Request loss certificate (Germany)",
+  "Für thesaurierende ETFs zieht die Bank Anfang Januar ggf. Steuer ab – etwas Geld auf dem Verrechnungskonto lassen. Ohne Gewähr.": "For accumulating ETFs the bank may deduct tax in early January – keep some cash in the settlement account. No guarantee.",
+  "Gilt, wenn du abgeben musst; mit Steuerberater später. Fällt die Frist aufs Wochenende, gilt der nächste Werktag. Ohne Gewähr.": "Applies if you have to file; later with a tax advisor. If the deadline falls on a weekend, the next working day applies. No guarantee.",
+  "# € je Person (# € bei Zusammenveranlagung) – fürs neue Jahr sinnvoll auf deine Banken verteilen. Ohne Gewähr.": "# € per person (# € for joint assessment) – split it sensibly across your banks for the new year. No guarantee.",
+  "Bis # bei der Bank beantragen, wenn du Verluste mit Gewinnen bei einer anderen Bank verrechnen willst. Ohne Gewähr.": "Request it from your bank by 15 Dec if you want to offset losses against gains at another bank. No guarantee.",
+  "💡 Ab hier braucht es mindestens # % Anstieg. Realisierte Verluste lassen sich steuerlich mit Gewinnen verrechnen (Aktienverluste nur mit Aktiengewinnen) – manche entscheiden sich deshalb, einen Verlust zu realisieren und das Geld anders einzusetzen. Ohne Gewähr, keine Anlageberatung.":
+    "💡 From here it takes at least # % to recover. Realised losses can be offset against gains for tax purposes (in Germany, stock losses only against stock gains) – which is why some people choose to realise a loss and put the money to other use. No guarantee, not investment advice.",
+  "Wartungsmarge": "Maintenance margin", "Wartungsmarge %": "Maintenance margin %", "Gebühr % je Seite": "Fee % per side",
+  "= Rest, den die Börse behält – deshalb liegt der Knock-out bei #× nicht # %, sondern etwa #–# % entfernt.": "= the part the exchange keeps – that is why at #× the knock-out is not # % away, but roughly #–# %.",
+  "Leer = Vorgabe # % / # %. Die genauen Werte stehen bei deiner Börse (Margin- und Gebührenseite).": "Empty = default # % / # %. The exact values are on your exchange's margin and fee page.",
+  "Knock-out nach Wartungsmarge # % und Gebühr # % je Seite: # % statt # % (reine Rechnung #/Hebel). Finanzierungskosten, Aufgeld und Spread sind nicht enthalten – den echten Liquidations- bzw. Knock-out-Preis zeigt deine Börse oder der Emittent. Keine Anlageberatung.":
+    "Knock-out after maintenance margin # % and fee # % per side: # % instead of # % (plain #/leverage). Financing costs, premium and spread are not included – your exchange or the issuer shows the real liquidation / knock-out price. Not investment advice.",
+  "Bei diesem Hebel fressen Wartungsmarge und Gebühren den ganzen Einsatz – die Position wäre sofort weg.": "At this leverage, maintenance margin and fees eat the whole stake – the position would be gone immediately.",
+  "Vereinfacht: KO ≈ Einstieg × (# − #/Hebel), ohne Aufgeld, Finanzierungskosten und Spread. Den echten KO zeigt der Emittent. Keine Anlageberatung.":
+    "Simplified: KO ≈ entry × (# − #/leverage), without premium, financing costs and spread. The issuer shows the real KO. Not investment advice.",
+  "Vereinfacht: KO ≈ Einstieg × (# + #/Hebel), ohne Aufgeld, Finanzierungskosten und Spread. Den echten KO zeigt der Emittent. Keine Anlageberatung.":
+    "Simplified: KO ≈ entry × (# + #/leverage), without premium, financing costs and spread. The issuer shows the real KO. Not investment advice.",
+
+  // ---------------------------------------------------------------- Sachwerte, Steuer
+  "Sachwert eintragen": "Add asset", "z. B. Kamera, Laptop, Auto": "e.g. camera, laptop, car", "z. B. Seriennummer, Rechnung im Ordner …": "e.g. serial number, invoice in folder …",
+  "Kaufpreis €": "Purchase price €", "Wertverlust % pro Jahr": "Depreciation % per year", "Heutiger Wert € (leer = aus Kaufpreis und Wertverlust)": "Today's value € (empty = from purchase price and depreciation)",
+  "Technik": "Electronics", "Fahrzeug": "Vehicle", "Immobilie": "Property", "Kamera": "Camera", "Laptop": "Laptop", "Uhren & Schmuck": "Watches & jewellery", "Möbel & Haushalt": "Furniture & household",
+  "Sammlung": "Collection", "Edelmetall (physisch)": "Precious metals (physical)", "Forderung / Darlehen": "Receivable / loan",
+  "Technik · seit # · # %/Jahr": "Electronics · since # · # %/year", "Technik · Wert von Hand": "Electronics · value entered manually", "Edelmetall (physisch) · seit # · Wert von Hand": "Precious metals (physical) · since # · value entered manually",
+  "Technik: #\u00a0€ · # %": "Electronics: #\u00a0€ · # %", "Technik: ••••• € · # %": "Electronics: ••••• € · # %", "Edelmetall (physisch): #\u00a0€ · # %": "Precious metals (physical): #\u00a0€ · # %",
+  "seit #": "since #", "Angaben": "Details", "Stichtag": "Reference date",
+  "Steuer-Übersicht": "Tax overview", "Aktien – Gewinne": "Shares – gains", "Aktien – Verluste": "Shares – losses", "nur mit Aktiengewinnen verrechenbar": "can only be offset against share gains",
+  "Dividenden + Zinsen (brutto)": "Dividends + interest (gross)", "Kapitalerträge zusammen": "Capital income combined", "Bereits einbehaltene Steuer": "Tax already withheld",
+  "Krypto – unter # Jahr gehalten": "Crypto – held under # year", "Krypto – über # Jahr gehalten": "Crypto – held over # year", "unter der Freigrenze von # € → steuerfrei": "below the exemption limit of # € → tax-free",
+  "ohne Teilfreistellung gerechnet": "calculated without partial exemption", "Keine Steuerberatung.": "Not tax advice.",
+  "Sparer-Pauschbetrag # € (Paare # €) per Freistellungsauftrag": "Saver's allowance # € (couples # €) via exemption order",
+  "Aus deinen Buchungen: Wertpapiere mit Durchschnittseinstand, Krypto nach FIFO (älteste zuerst). Staking-Erträge, Teilfreistellung und Verlusttöpfe der Banken sind nicht berücksichtigt.":
+    "From your transactions: securities with average cost, crypto by FIFO (oldest first). Staking income, partial exemption and the banks' loss pots are not taken into account.",
+  "# Jahr": "# year", "# Jahr:": "# year:", "# Jahre": "# years", "# Monate": "# months", "# Tage": "# days", "Zinsen + Div.": "Interest + div.",
+
+  // ---------------------------------------------------------------- Fehler melden, Einfuehrung
+  "Danke fürs Testen! Du hast": "Thanks for testing! You have", "Bitte schicke:": "Please send:", "Bitte NICHT schicken:": "Please do NOT send:",
+  "die Versionsnummer (steht oben),": "the version number (shown above),", "was du gemacht hast und was passiert ist – Schritt für Schritt,": "what you did and what happened – step by step,",
+  "einen Screenshot: vorher oben das Auge antippen (Beträge aus) und unter ⚙️ → Sicherheit den Bildschirmschutz kurz ausschalten,": "a screenshot: first tap the eye at the top (amounts off) and briefly switch off screen protection under ⚙️ → Security,",
+  "bei Import-Problemen: welcher Broker und welche Export-Art (z. B. „Kraken-App → Aktivitäten“).": "for import problems: which broker and which export type (e.g. “Kraken app → Activities”).",
+  "deine CSV-Dateien, Kontoauszüge oder Sicherungen,": "your CSV files, statements or backups,", "Screenshots mit Beträgen, Stückzahlen oder Kontonummern,": "screenshots with amounts, quantities or account numbers,",
+  "PIN, Sicherungs-Passwort oder API-Schlüssel.": "PIN, backup password or API keys.", "Die App selbst sendet nichts – es gibt keine Fehlerberichte im Hintergrund.": "The app itself sends nothing – there are no background error reports.",
+  "✉️ Mail an uns": "✉️ Email us", "Version Test": "Version Test",
+  "# % entfernt": "# % away", "erhalten · brutto #\u00a0€ · # % auf deinen Einsatz": "received · gross #\u00a0€ · # % on your stake",
+  "erhalten · brutto # € · # % auf deinen Einsatz": "received · gross # € · # % on your stake", "erhalten · brutto #\u00a0€": "received · gross #\u00a0€",
+  "Fehler melden:": "Report a bug:", "der Mail-Knopf öffnet nur dein Mail-Programm – was du schickst, entscheidest du dort.": "the mail button only opens your mail app – you decide there what you send.",
+  "Willkommen": "Welcome", "Weiter": "Next",
+  "CSV, PDF oder Screenshot importieren": "Import CSV, PDF or screenshot", "📄 CSV, PDF oder Screenshot wählen": "📄 Choose CSV, PDF or screenshot",
+  "📄 CSV / PDF / Screenshot wählen": "📄 Choose CSV / PDF / screenshot", "CSV- und PDF-Dateien und Screenshots werden automatisch erkannt:": "CSV and PDF files and screenshots are recognised automatically:",
+  "Screenshot": "Screenshot",
+  "🗜️ Alles exportieren – verschlüsselte ZIP mit allen Originalen": "🗜️ Export everything – encrypted ZIP with all originals", "Dokumente ohne Buchungen": "Documents without transactions",
+  "🔁 Aus dem Original neu einlesen": "🔁 Re-import from the original", "Dokument gelöscht.": "Document deleted.", "Original nicht gefunden.": "Original not found.",
+  "Export gibt es nur in der App.": "Export is only available in the app.", "Erst ein Sicherungs-Passwort festlegen (⚙️ → Sicherheit & Sicherung).": "First set a backup password (⚙️ → Security & backup).",
+  "App ist gesperrt – bitte erst entsperren.": "The app is locked – please unlock first.", "Falsches Passwort.": "Wrong password.", "Die ZIP ist beschädigt oder verändert.": "The ZIP is damaged or has been altered.",
+  "Export laden? Alle Depots in der App werden durch den Inhalt der ZIP ersetzt.": "Load export? All portfolios in the app will be replaced by the content of the ZIP.",
+  "Ergebnis je Aktie": "Earnings per share", "Erwartet": "Expected", "Überraschung": "Surprise", "🔄 Aktualisieren": "🔄 Update",
+  "Fragt nur diesen einen Wert bei Yahoo ab (Internet nötig).": "Only asks Yahoo about this one security (internet required).",
+  "Noch keine Auswertung für diesen Termin geladen. Die Zahlen sind meist am Abend des Termins oder am nächsten Tag da.": "No results loaded for this date yet. The figures usually arrive on the evening of the date or the next day.",
+  "Earnings # · Daten vom #": "Earnings # · data from #", "Earnings #": "Earnings #", "Die Zahlen kommen am #. Danach hier „Aktualisieren“ tippen.": "The figures come on #. Then tap “Update” here.",
+  "Quartal bis # · Quelle Yahoo Finance": "Quarter to # · source Yahoo Finance", "Quartalszahlen · antippen für Details": "Quarterly results · tap for details",
+  "Auswertung noch nicht geladen – antippen": "Results not loaded yet – tap", "Ergebnis je Aktie # (erwartet #)": "Earnings per share # (expected #)", "Ergebnis je Aktie #": "Earnings per share #",
+  "WKN": "WKN", "Richtung": "Direction", "Hole Earnings …": "Fetching earnings …", "Earnings aktualisiert.": "Earnings updated.",
+  "Noch keine Auswertung bei Yahoo – später nochmal versuchen.": "No results at Yahoo yet – try again later.", "Suche Ticker …": "Searching ticker …",
+  "Kein Yahoo-Ticker für diesen Wert – in der Position eintragen.": "No Yahoo ticker for this security – enter it in the position.",
+  "Optionsschein": "Warrant", "Zertifikat": "Certificate",
+  "ISIN oder WKN (für Kurse, z. B. Zertifikate)": "ISIN or WKN (for prices, e.g. certificates)", "Art des Werts": "Type of security", "z. B. DE000BE0F1P5": "e.g. DE000BE0F1P5",
+  "Zertifikate, Optionsscheine, Anleihen:": "Certificates, warrants, bonds:", "Onvista (Kurs per ISIN/WKN), ebenfalls nur beim Aktualisieren.": "Onvista (price by ISIN/WKN), also only when updating.",
+  "Hole Zertifikat-Kurse #/# …": "Fetching certificate prices #/# …", "Kein Wertpapier hat einen Ticker oder eine ISIN/WKN.": "No security has a ticker or an ISIN/WKN.",
+  "# Zertifikat-Kurse aktualisiert.": "# certificate prices updated.", "einer ausgeführten Order (Kauf/Verkauf) – Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX und andere – Texterkennung direkt auf dem Handy, ohne Internet. Der wöchentliche Export ersetzt diese Buchungen später automatisch.": "of an executed order (buy/sell) – Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX and others – text recognition directly on the phone, without internet. The weekly export later replaces these transactions automatically.",
+  "Wertpapier-Abrechnung": "Securities statement", "(PDF je Kauf/Verkauf) von Scalable Capital, Smartbroker+, Trade Republic, Revolut und Baader Bank – mit Gegenprobe gegen den Endbetrag.": "(PDF per buy/sell) from Scalable Capital, Smartbroker+, Trade Republic, Revolut and Baader Bank – with a cross-check against the final amount.",
+  "Lese Screenshot … (beim ersten Mal ca. 10 Sekunden)": "Reading screenshot … (about 10 seconds the first time)", "Trade Republic – Screenshot": "Trade Republic – screenshot",
+  "Im Bild keine Kauf-/Verkaufsabrechnung erkannt. Bitte den Screenshot der ausgeführten Order nehmen (mit „Asset“, „Transaktion“ und „Summe“).":
+    "No buy/sell confirmation found in the image. Please use the screenshot of the executed order (with “Asset”, “Transaction” and “Total”).",
+  "Wähle die CSV- oder PDF-Exporte deiner Broker und Banken – gern": "Choose the CSV or PDF exports of your brokers and banks – preferably",
+  "Importe": "Imports", "Noch nichts importiert.": "Nothing imported yet.", "In anderes Depot verschieben": "Move to another portfolio",
+  "↪️ Buchung verschieben": "↪️ Move transaction", "↪️ # Buchungen verschieben": "↪️ Move # transactions", "↪️ # Buchung verschieben": "↪️ Move # transaction",
+  "🗑️ Import zurücknehmen (# Buchungen löschen)": "🗑️ Undo import (delete # transactions)", "🗑️ Import zurücknehmen (# Buchung löschen)": "🗑️ Undo import (delete # transaction)",
+  "# Buchung": "# transaction", "von Hand": "manual", "Import": "Import", "Buchung gelöscht.": "Transaction deleted.", "Diese Buchung löschen?": "Delete this transaction?",
+  // Einfuehrung (erster Start)
+  "Depot-Kompass bringt deine Depots, dein Cash und deine Sachwerte an einen Ort – auf deinem Handy, ohne Konto, ohne Werbung, ohne Tracking.":
+    "Depot-Kompass brings your portfolios, your cash and your assets together in one place – on your phone, without an account, without ads, without tracking.",
+  "Keine Anlageberatung.": "Not investment advice.",
+  "Die App rechnet nur mit deinen Daten. Kurse und Termine aus dem Internet können verspätet oder falsch sein. Deine Entscheidungen triffst du selbst.":
+    "The app only calculates with your data. Prices and dates from the internet can be delayed or wrong. You make your own decisions.",
+  "Wie möchtest du starten?": "How do you want to start?", "📴 Ganz offline": "📴 Fully offline",
+  "Alles läuft mit deinen importierten Dateien: Depots, Gewinn/Verlust, Dividenden, Kalender, Sachwerte, Notizen. Nichts verlässt das Handy.":
+    "Everything runs on your imported files: portfolios, profit/loss, dividends, calendar, assets, notes. Nothing leaves the phone.",
+  "🌐 Mit Internet": "🌐 With internet",
+  "Zusätzlich holt die App auf Knopfdruck aktuelle Kurse, Charts, Dividenden- und Earnings-Termine und News für deine Werte. Dabei wird nur abgefragt,":
+    "In addition, at the push of a button the app fetches current prices, charts, dividend and earnings dates and news for your securities. It only asks",
+  "Werte – keine Stückzahlen, keine Beträge, keine Kontodaten. Eigene API-Schlüssel (optional) gehören auch zu diesem Teil.":
+    "securities – no quantities, no amounts, no account data. Own API keys (optional) also belong to this part.",
+  "Du kannst das jederzeit unter ⚙️ → Datenschutz umstellen.": "You can change this at any time under ⚙️ → Privacy.",
+  "📴 Offline starten": "📴 Start offline", "🌐 Mit Internet starten": "🌐 Start with internet",
+  "🔒 Deine App-PIN": "🔒 Your app PIN",
+  "Mit einer 6-stelligen PIN werden alle Daten in der App verschlüsselt. Beim Öffnen fragt die App danach. Entsperren per Fingerabdruck gibt es bewusst nicht – private Finanzdaten nur mit PIN.":
+    "With a 6-digit PIN all data in the app is encrypted. The app asks for it when opening. Unlocking by fingerprint is deliberately not offered – private financial data only with a PIN.",
+  "Mit einer #-stelligen PIN werden alle Daten in der App verschlüsselt. Beim Öffnen fragt die App danach. Entsperren per Fingerabdruck gibt es bewusst nicht – private Finanzdaten nur mit PIN.":
+    "With a #-digit PIN all data in the app is encrypted. The app asks for it when opening. Unlocking by fingerprint is deliberately not offered – private financial data only with a PIN.",
+  "Wichtig:": "Important:", "PIN vergessen = Daten weg. Es gibt keine Hintertür. Eine verschlüsselte Sicherung mit eigenem Passwort schützt davor.":
+    "PIN forgotten = data gone. There is no back door. An encrypted backup with its own password protects you.",
+  "PIN (# Ziffern)": "PIN (# digits)", "PIN festlegen": "Set PIN", "Ohne PIN weiter (nicht empfohlen)": "Continue without PIN (not recommended)",
+  // PIN-Sperre
+  "App-PIN eingeben": "Enter app PIN", "PIN vergessen?": "Forgot PIN?",
+  "Zu viele Fehlversuche – bitte # Sekunden warten.": "Too many failed attempts – please wait # seconds.",
+  "Falsche PIN – noch # Versuche bis zur Wartezeit.": "Wrong PIN – # attempts left before the waiting time.",
+  "PIN vergessen? Dann werden ALLE Daten in der App gelöscht – Depots, Watchlist, Notizen, Schlüssel. Das lässt sich nicht rückgängig machen.":
+    "Forgot your PIN? Then ALL data in the app will be deleted – portfolios, watchlist, notes, keys. This cannot be undone.",
+  "Wirklich alles löschen? Wiederherstellen geht danach nur mit einer .dksafe-Sicherung und deren Passwort.":
+    "Really delete everything? Afterwards restoring is only possible with a .dksafe backup and its password.", "eigenes": "own", "Gewinn gesamt": "Total profit", "Größte": "Largest", "Wertpapiere": "Securities",
+  "Einstieg # · Knock-out ca. # (# %)": "Entry # · knock-out approx. # (# %)", "Kalender": "Calendar",
+});
+
+// Texte mit eigenen Namen darin
+UEB_MUSTER.en.push(
+  [/^vorhandenes Depot ersetzen: (.+)$/, "replace existing portfolio: $1"],
+  [/^Die KI hat nicht geantwortet(.*)\. Bitte später nochmal versuchen\.$/, "The AI did not answer$1. Please try again later."],
+  [/^Offenes Depot: (.+)$/, "Open portfolio: $1"], [/^(.+) geöffnet\.$/, "$1 opened."], [/^✏️ (.+)$/, "✏️ $1"],
+  [/^➕ Neues Depot „(.*)“$/, "➕ New portfolio “$1”"], [/^Depot „(.*)“ leeren$/, "Clear portfolio “$1”"], [/^🔒 Bestand „(.*)“ als CSV \(verschlüsselt\)$/, "🔒 Holdings “$1” as CSV (encrypted)"],
+  [/^Größte Position (.+): ([\d.,]+) % \(über ([\d.,]+) %\)$/, "Largest position $1: $2 % (above $3 %)"],
+  [/^Datei (\d+) von (\d+): (.+)$/, "File $1 of $2: $3"], [/^(\d+) im Depot (.+)$/, "$1 in portfolio $2"], [/^im Depot „(.+)“$/, "in portfolio “$1”"],
+  [/^(.+) – alle Depots$/, "$1 – all portfolios"], [/^Alle von (.+)$/, "All of $1"], [/^(.+) · Gesamtvermögen · (\d+) Depots$/, "$1 · net worth · $2 portfolios"],
+  [/^Haltefrist endet · (.+)$/, "Holding period ends · $1"], [/^(Kauf|Verkauf|Dividende|Einzahlung|Auszahlung|Kartenzahlung|Zinsen|Erinnerung) · (.+)$/,
+    (m, a, b) => ({ Kauf: "Buy", Verkauf: "Sell", Dividende: "Dividend", Einzahlung: "Deposit", Auszahlung: "Withdrawal", Kartenzahlung: "Card payment", Zinsen: "Interest", Erinnerung: "Reminder" }[a] + " · " + b)],
+  [/^(Kauf|Verkauf) (.+)$/, (m, a, b) => (a === "Kauf" ? "Buy " : "Sell ") + b],
+  [/^Transfer an (.+)$/, "Transfer to $1"], [/^Transfer von (.+)$/, "Transfer from $1"],
+  [/^Dividenden (Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)$/, (m, a) => "Dividends " + MONATE_EN[a]],
+  [/^Dividenden (\d{4})$/, "Dividends $1"], [/^(.+) · Ich$/, "$1 · me"], [/^· (\d+) Buchungen, zuletzt (.+)$/, "· $1 transactions, last $2"],
+  [/^· Version (.+) · Alpha$/, "· Version $1 · alpha"], [/^⚠ (.+): Verkauf über dem Bestand – fehlt ein Kauf in der Datei\? Gewinn zählt nur auf den vorhandenen Bestand\.$/,
+    "⚠ $1: sale above holdings – is a buy missing in the file? Profit only counts on the existing holdings."],
+  [/^Angelegt (.+)$/, "Created $1"],
+  [/^📄 Original: (.+) \((.+)\)$/, "📄 Original: $1 ($2)"], [/^📄 (.+)$/, "📄 $1"],
+  [/^Verschlüsselte ZIP „(.*)“ – Daten und Original-Dokumente\.$/, "Encrypted ZIP “$1” – data and original documents."],
+  [/^ZIP mit (\d+) Original(en)? erstellt – jetzt den Speicherort wählen\.(.*)$/, (m, n, e, r) => `ZIP with ${n} original${n === "1" ? "" : "s"} created – now choose where to save it.` + r.replace("fehlten", "missing")],
+  [/^Export geladen – (\d+) Original(e)? wiederhergestellt\.$/, (m, n) => `Export loaded – ${n} original${n === "1" ? "" : "s"} restored.`],
+  [/^„(.+)“ neu einlesen\? Die (\d+) Buchung(en)? dieses Imports werden ersetzt\.$/, (m, a, n, e) => `Re-import “${a}”? The ${n} transaction${e ? "s" : ""} of this import will be replaced.`],
+  [/^Dokument „(.+)“ aus der App löschen\?$/, "Delete document “$1” from the app?"],
+  [/^(\d+) Buchung(en)? gelöscht, Original entfernt\.$/, (m, n, e) => `${n} transaction${e ? "s" : ""} deleted, original removed.`],
+  [/^(Umsatz|Gewinn) (.+)$/, (m, a, b) => (a === "Umsatz" ? "Revenue " : "Profit ") + b.replace("Mrd.", "bn").replace("Mio.", "m")],
+  [/^📊 (.+)$/, "📊 $1"],
+  [/^Gegenprobe: (.+) × (.+) ([−+]) Kosten = (.+) – stimmt\.(.*)$/, (m, a, b, c, d, rest) => `Cross-check: ${a} × ${b} ${c} costs = ${d} – correct.` + trScrRest(rest)],
+  [/^Achtung: (.+) × (.+) ergibt nicht die Summe (.+) – bitte Zahlen prüfen \(Texterkennung\)\.(.*)$/, (m, a, b, c, rest) => `Warning: ${a} × ${b} does not give the total ${c} – please check the numbers (text recognition).` + trScrRest(rest)],
+  [/^(\d+) Buchung(en)? · (.+) – (.+) · importiert (.+)$/, (m, n, e, a, b, c) => `${n} transaction${e ? "s" : ""} · ${a} – ${b} · imported ${c}`],
+  [/^(\d+) Buchung(en)? · (.+) – (.+)$/, (m, n, e, a, b) => `${n} transaction${e ? "s" : ""} · ${a} – ${b}`],
+  [/^(\d+) Buchung(en)? nach „(.+)“ verschieben\?$/, (m, n, e, z) => `Move ${n} transaction${e ? "s" : ""} to “${z}”?`],
+  [/^(\d+) Buchung(en)? nach „(.+)“ verschoben\.$/, (m, n, e, z) => `${n} transaction${e ? "s" : ""} moved to “${z}”.`],
+  [/^Diesen Import zurücknehmen\? (\d+) Buchung(en)? werden aus „(.+)“ gelöscht\.$/, (m, n, e, z) => `Undo this import? ${n} transaction${e ? "s" : ""} will be deleted from “${z}”.`],
+  [/^(\d+) Buchung(en)? gelöscht\.$/, (m, n, e) => `${n} transaction${e ? "s" : ""} deleted.`],
+  [/^Diese Buchung nach „(.+)“ verschieben\?$/, "Move this transaction to “$1”?"], [/^Buchung nach „(.+)“ verschoben\.$/, "Transaction moved to “$1”."], [/^Short · Hebel (.+)$/, "Short · leverage $1"], [/^Long · Hebel (.+)$/, "Long · leverage $1"],
+  [/^(.+) angelegt – jetzt Daten importieren\.$/, "$1 created – now import data."],
+);
+const MONATE_EN = { Januar: "January", Februar: "February", März: "March", April: "April", Mai: "May", Juni: "June", Juli: "July", August: "August",
+                    September: "September", Oktober: "October", November: "November", Dezember: "December" };
+// null-Eintraege (Platzhalter) entfernen
+for (const k of Object.keys(UEB.en)) if (UEB.en[k] == null) delete UEB.en[k];
+
+/** Rest des Screenshot-Hinweises (Zuordnung, Datum) */
+function trScrRest(rest) {
+  return String(rest || "").replace(/ Zugeordnet: (.+?)\./, " Matched: $1.").replace(/ „(.+?)“ ist neu – ohne ISIN, Kurs kommt über „Kurse & Daten aktualisieren“ per Name\./, " “$1” is new – without ISIN, the price comes via “Update prices & data” by name.")
+    .replace(/ Datum aus dem Screenshot: (.+?)\./, " Date from the screenshot: $1.").replace(" Richtung: Short.", " Direction: short.").replace(" Richtung: Long.", " Direction: long.");
+}
+
+// Nachkauf-Rechner (0.50)
+Object.assign(UEB.en, {
+  "📉 Nachkauf-Rechner (Einstand senken, Exit-Plan)": "📉 Average-down calculator (lower cost basis, exit plan)", "📉 Nachkauf-Rechner": "📉 Average-down calculator",
+  "📉 Nachkauf rechnen": "📉 Average-down calculator",
+  "Was-wäre-wenn: Hier wird nur gerechnet – deine gespeicherte Position bleibt unverändert.": "What-if: this only calculates – your saved position stays unchanged.",
+  "Krypto (8 Stellen)": "Crypto (8 decimals)", "Aktie (4 Stellen)": "Stock (4 decimals)", "Bestand (Stück)": "Holding (units)", "Ø Einstandskurs €": "Avg. cost price €",
+  "Kurs jetzt €": "Price now €", "Stand vom": "As of", "A · Budget nachkaufen": "A · Buy with budget", "B · Ziel-Einstand": "B · Target cost basis",
+  "Nachkauf-Budget € (A)": "Top-up budget € (A)", "Ziel-Einstandskurs € (B)": "Target cost price € (B)", "Ziel-Ausstiegskurs € (C)": "Target exit price € (C)",
+  "Trigger-Kurs € (D)": "Trigger price € (D)", "Einstand rausnehmen": "Take out cost basis", "Gebühren berücksichtigen": "Include fees",
+  "Gebühr % je Order (wird als Standard gemerkt)": "Fee % per order (remembered as default)", "Spanne der Exit-Tabelle: ±": "Range of the exit table: ±", "% um Break-even": "% around break-even",
+  "Eigene Kurslevels (optional, mit ; trennen)": "Own price levels (optional, separate with ;)", "z. B. #; #; #": "e.g. #; #; #",
+  "Keine Anlageberatung. Rechner dient ausschließlich der Information.": "Not investment advice. This calculator is for information only.",
+  "Neuer Einstandskurs": "New cost price", "nach Nachkauf A": "after top-up A", "nach Nachkauf B": "after top-up B", "ohne Nachkauf": "without top-up",
+  "Benötigtes Budget": "Required budget", "Break-even-Kurs": "Break-even price", "inkl. Verkaufsgebühr": "incl. selling fee",
+  "⚠ Nachkauf überproportional groß – Sunk-Cost-Risiko (Budget mehr als #× der aktuellen Position).": "⚠ Top-up disproportionately large – sunk-cost risk (budget more than #× the current position).",
+  "A · Mit Budget nachkaufen": "A · Buy more with a budget", "B · Ziel-Einstand erreichen": "B · Reach a target cost basis", "C · Exit-Szenarien": "C · Exit scenarios",
+  "D · Einstand rausnehmen": "D · Take out the cost basis", "Gekaufte Stück": "Units bought", "Neuer Bestand": "New holding", "Neuer Einstand": "New cost basis", "Wert jetzt": "Value now",
+  "davon Gebühr": "of which fee", "netto # €": "net # €", "Benötigte Stück": "Required units", "Kurs": "Price", "Erlös": "Proceeds", "Break-even": "Break-even", "Ziel-Ausstieg": "Target exit",
+  "Verkaufen beim Trigger": "Sell at trigger", "Zurück (Gesamtinvestition)": "Back (total investment)", "Runner": "Runner", "# € beim Trigger": "# € at trigger",
+  "Der Runner entsteht nur aus Kursgewinn über dem Break-even – bei genau Break-even bleibt nichts übrig.": "The runner only comes from gains above break-even – at exactly break-even nothing is left.",
+  "Investiert": "Invested", "Marktwert": "Market value", "Investiert gegen Marktwert": "Invested vs. market value", "Exit-Kurve: Kurs gegen Gewinn und Verlust": "Exit curve: price vs. profit and loss",
+  "Bestand muss größer als 0 sein.": "Holding must be greater than 0.", "Einstandskurs muss größer als 0 sein.": "Cost price must be greater than 0.",
+  "Aktueller Kurs muss größer als 0 sein.": "Current price must be greater than 0.", "Gebühr muss zwischen 0 und 100 % liegen.": "Fee must be between 0 and 100 %.",
+  "Gebühr muss zwischen # und # % liegen.": "Fee must be between # and # %.", "Budget muss größer als 0 sein.": "Budget must be greater than 0.", "Budget muss größer als # sein.": "Budget must be greater than #.",
+  "Bestand muss größer als # sein.": "Holding must be greater than #.", "Einstandskurs muss größer als # sein.": "Cost price must be greater than #.", "Aktueller Kurs muss größer als # sein.": "Current price must be greater than #.",
+  "Ziel-Einstand muss größer als # sein.": "Target cost basis must be greater than #.", "Trigger-Kurs muss größer als # sein.": "Trigger price must be greater than #.",
+  "Der Kurs liegt über deinem Einstand – Nachkaufen hebt den Einstand, senken geht nicht.": "The price is above your cost basis – buying more raises it, lowering is not possible.",
+  "Das Ziel liegt nicht unter deinem Einstand – kein Nachkauf nötig.": "The target is not below your cost basis – no top-up needed.",
+  "Unmöglich: Der Ziel-Einstand muss über dem aktuellen Kurs inkl. Gebühr liegen.": "Impossible: the target cost basis must be above the current price incl. fee.",
+  "Unmöglich: Der Ziel-Einstand muss über dem aktuellen Kurs liegen.": "Impossible: the target cost basis must be above the current price.",
+  "Beim Trigger-Kurs bringt die ganze Position höchstens die Investition zurück – kein Runner. Er entsteht nur aus Kursgewinn über dem Break-even.":
+    "At the trigger price the whole position returns at most the investment – no runner. It only comes from gains above break-even.",
+  "Diese Position hat keinen Bestand.": "This position has no holding.", "Einstand senken": "Lower cost basis",
+});
+Object.assign(UEB.en, { "netto #\u00a0€": "net #\u00a0€", "#\u00a0€ beim Trigger": "#\u00a0€ at trigger", "# Stück": UEB.en["# Stück"] || "# units" });
+UEB_MUSTER.en.push([/^Werte aus „(.+)“ übernommen \(Kopie\)\.$/, "Values copied from “$1” (copy)."]);
+
+// Positionsgroessen- und Gewinnmitnahme-Rechner (0.50)
+Object.assign(UEB.en, {
+  "⚖️ Positionsgrößen-Rechner (fester Verlust am Stop)": "⚖️ Position size calculator (fixed loss at the stop)", "⚖️ Positionsgrößen-Rechner": "⚖️ Position size calculator",
+  "Du legst fest, wie viel du höchstens verlieren willst – der Rechner sagt, wie groß die Position sein darf.": "You decide how much you are willing to lose at most – the calculator tells you how large the position may be.",
+  "Einstieg €": "Entry €", "Stop-Loss €": "Stop loss €", "Verlust in €": "Loss in €", "Verlust in % vom Kapital": "Loss in % of capital", "Risiko % vom Kapital": "Risk % of capital",
+  "Max. Verlust €": "Max. loss €", "Kapital €": "Capital €", "Kapital € (optional)": "Capital € (optional)", "Depotwert als Kapital übernehmen": "Use portfolio value as capital",
+  "Ziel € (optional)": "Target € (optional)", "Schwankung prüfen (optional)": "Check volatility (optional)", "– ohne –": "– none –",
+  "Positionsgröße": "Position size", "Verlust am Stop": "Loss at stop", "Stop # % entfernt": "Stop # % away", "# € am Ziel": "# € at target", "Anteil am Kapital": "Share of capital", "Anteil am Gesamtportfolio": "Share of total portfolio", "alle Depots zusammen": "all portfolios combined",
+  "⚠ Mehr als # % deines Gesamtportfolios in einem Wert – Klumpenrisiko. Nur Rechnung, keine Anlageberatung.": "⚠ More than # % of your total portfolio in one holding – concentration risk. Calculation only, not investment advice.",
+  "Risiko # %": "Risk # %", "Gebühren (rein + raus)": "Fees (in + out)", "im Verlust enthalten": "included in the loss",
+  "Gleiches Risiko, anderer Stop-Abstand": "Same risk, different stop distance", "Abstand": "Distance", "Position": "Position", "Stück": "Units",
+  "Enger Stop = größere Position, weiter Stop = kleinere – der Verlust am Stop bleibt gleich. Ohne Slippage und Kurslücken; der echte Verlust kann größer sein.":
+    "Tight stop = larger position, wide stop = smaller – the loss at the stop stays the same. Without slippage and gaps; the real loss can be larger.",
+  "Dein Stop liegt innerhalb einer normalen Wochenbewegung – er kann leicht ausgelöst werden.": "Your stop is within a normal weekly move – it can be triggered easily.",
+  "Dein Stop liegt außerhalb einer normalen Wochenbewegung.": "Your stop is outside a normal weekly move.",
+  "Kapital und Risiko in % eintragen.": "Enter capital and risk in %.", "Maximalen Verlust eintragen.": "Enter the maximum loss.",
+  "Einstieg muss größer als # sein.": "Entry must be greater than #.", "Stop muss größer als # sein.": "Stop must be greater than #.",
+  "Long: Der Stop muss unter dem Einstieg liegen.": "Long: the stop must be below the entry.", "Short: Der Stop muss über dem Einstieg liegen.": "Short: the stop must be above the entry.",
+  "⚠ Long: Das Ziel liegt nicht über dem Einstieg.": "⚠ Long: the target is not above the entry.", "⚠ Short: Das Ziel liegt nicht unter dem Einstieg.": "⚠ Short: the target is not below the entry.",
+  "⚠ Die Position wäre größer als dein Kapital – nur mit Hebel möglich oder Stop weiter setzen.": "⚠ The position would be larger than your capital – only possible with leverage, or set a wider stop.",
+  "💰 Gewinnmitnahme-Rechner (Teil verkaufen, Rest laufen lassen)": "💰 Take-profit calculator (sell a part, let the rest run)", "💰 Gewinnmitnahme-Rechner": "💰 Take-profit calculator",
+  "💰 Gewinnmitnahme": "💰 Take profit", "Stufe #: Verkaufskurs €": "Step #: selling price €", "Stufe #: Anteil %": "Step #: share %",
+  "Gewinn mitgenommen": "Profit taken", "Erlös # €": "Proceeds # €", "Rest läuft weiter": "Rest keeps running", "# % der Position": "# % of the position",
+  "Einstand zurück": "Cost basis back", "ab Stufe #": "from step #", "noch nicht": "not yet", "von # €": "of # €", "Stufe # · # €": "Step # · # €",
+  "Verkaufen": "Sell", "Rest danach": "Rest afterwards", "Einstand ist zurück – der Rest ist reiner Gewinn": "Cost basis is back – the rest is pure profit",
+  "Rest abgesichert bis # €": "Rest covered down to # €", "alles verkauft": "everything sold", "# € (# %)": "# € (# %)",
+  "„Rest abgesichert bis“: Fällt der Rest bis zu diesem Kurs und du verkaufst dort, landet die ganze Position insgesamt bei plus/minus null. Gewinn gegen den Durchschnittseinstand gerechnet, ohne Steuern.":
+    "“Rest covered down to”: if the rest falls to this price and you sell there, the whole position ends at break-even overall. Profit calculated against the average cost, without taxes.",
+  "Mindestens eine Stufe eintragen: Kurs und Anteil in %.": "Enter at least one step: price and share in %.", "Jede Stufe braucht einen Kurs und einen Anteil größer als #.": "Every step needs a price and a share greater than #.",
+  "Die Anteile ergeben zusammen mehr als # %.": "The shares add up to more than # %.",
+  "⚠ Mindestens eine Stufe liegt nicht über dem Break-even – dort wird Verlust realisiert.": "⚠ At least one step is not above break-even – a loss is realised there.",
+});
+UEB_MUSTER.en.push([/^(.+): übliche Wochenbewegung ±([\d.,]+) %, größter Rücksetzer −([\d.,]+) % \((\d+) Wochen\)\.$/, "$1: typical weekly move ±$2 %, largest pullback −$3 % ($4 weeks)."]);
+
+Object.assign(UEB.en, { "Aus deinen Positionen übernehmen (Kopie)": "Take from your positions (copy)", "– selbst eintragen –": "– enter yourself –", "⚖️ Positionsgröße": "⚖️ Position size" });
+
+// Gewinnmitnahme nach Betrag (0.51)
+Object.assign(UEB.en, { "Betrag in € rausnehmen": "Take out an amount in €", "Anteil in %": "Share in %", "Stufe #: Betrag €": "Step #: amount €",
+  "Einstand als Betrag übernehmen (Stufe #)": "Use cost basis as amount (step #)", "Du nimmst raus": "You take out", "davon Gewinn #\u00a0€": "of which profit #\u00a0€",
+  "#\u00a0€ · # % der Position": "#\u00a0€ · # % of the position", "Wert #\u00a0€": "Value #\u00a0€", "ganze Stücke: # → #\u00a0€": "whole units: # → #\u00a0€",
+  "Mindestens eine Stufe eintragen: Verkaufskurs und Betrag in €.": "Enter at least one step: selling price and amount in €.",
+  "Jede Stufe braucht einen Verkaufskurs und einen Betrag größer als #.": "Every step needs a selling price and an amount greater than #.",
+  "So viel gibt die Position nicht her – die Beträge sind zusammen größer als ihr Wert bei diesen Kursen.": "The position does not hold that much – the amounts together exceed its value at these prices.",
+  "Erst Bestand und Einstandskurs eintragen.": "Enter holding and cost price first." });
+
+// Plan als Notiz + Schluessel-Ampel (0.52)
+Object.assign(UEB.en, { "Name des Plans (optional)": "Plan name (optional)", "z. B. Nachkauf bei Rücksetzer": "e.g. top-up on a pullback",
+  "⚖️ Positionsgröße-Rechner": "⚖️ Position size calculator", "📉 Nachkauf-Rechner": "📉 Average-down calculator", "💰 Gewinnmitnahme-Rechner": "💰 Take-profit calculator",
+  "Stufe # # (# %)": "Step # # (# %)", "Stufe # #": "Step # #", "Einstand #": "Cost basis #", "Rest sicher bis # (# %)": "Rest covered to # (# %)", "Rest sicher bis #": "Rest covered to #",
+  "Ziel #": "Target #", "Stop #": "Stop #", "Positions-Chart mit Marken": "Position chart with marks", "Gewinnmitnahme-Chart mit Stufen": "Take-profit chart with steps", "Chart mit Marken": "Chart with marks",
+  "Erst den Rechner ausfüllen – so lässt sich nichts speichern.": "Fill in the calculator first – there is nothing to save yet.",
+  "Prüfen": "Check", "wird geprüft …": "checking …", "Noch nicht geprüft.": "Not checked yet.", "Format passt – noch nicht online geprüft.": "Format fits – not checked online yet.",
+  "Ungewöhnliches Format – bitte online prüfen.": "Unusual format – please check online.", "Der Schlüssel ist zu kurz oder enthält Leerzeichen.": "The key is too short or contains spaces.",
+  "Keine Antwort vom Dienst – später noch einmal prüfen.": "No answer from the service – check again later.", "Internet ist in der App ausgeschaltet – online nicht geprüft.": "Internet is switched off in the app – not checked online.",
+  "Kein Schlüssel hinterlegt.": "No key stored.", "Keine Verbindung zum Dienst – später noch einmal prüfen.": "No connection to the service – check again later.",
+  "Alpha Vantage lässt sich nicht online prüfen (der Dienst nimmt jeden Schlüssel an).": "Alpha Vantage cannot be checked online (the service accepts any key).",
+  "Ungültig – der Dienst lehnt diesen Schlüssel ab.": "Invalid – the service rejects this key.", "Gültig – vom Dienst bestätigt.": "Valid – confirmed by the service.",
+  "Schlüssel wird erkannt – aber Kontingent oder Guthaben ist aufgebraucht.": "Key is recognised – but the quota or credit is used up.",
+  "Der Dienst antwortet mit Fehler # – später noch einmal prüfen.": "The service answers with error # – check again later.", "Online-Prüfung gibt es nur in der App.": "Online check is only available in the app.",
+  "Gespeichert – aber der Schlüssel sieht falsch aus.": "Saved – but the key looks wrong." });
+UEB_MUSTER.en.push([/^Das sieht nach einem Schlüssel für (.+) aus – bitte prüfen, ob er in der richtigen Zeile steht\.$/, "This looks like a key for $1 – please check that it is in the right row."],
+  [/^Ein Schlüssel für (.+) sieht anders aus – bitte prüfen, ob er vollständig und in der richtigen Zeile ist\.$/, "A key for $1 looks different – please check that it is complete and in the right row."]);
+Object.assign(UEB.en, { "gespeichert …#": "saved …#", "gespeichert …****": "saved …****", "neuen Schlüssel eingeben zum Ersetzen": "enter a new key to replace it" });
+UEB_MUSTER.en.push([/^gespeichert …(.+)$/, "saved …$1"]);
+
+// 0.53: Aktualisieren oben, Dollar, Legenden
+Object.assign(UEB.en, {
+  "Kurse und Daten aktualisieren": "Update prices and data", "Derselbe Knopf sitzt oben rechts neben ⚙️ (🔄) – von jeder Seite aus erreichbar.": "The same button sits at the top right next to ⚙️ (🔄) – reachable from every page.",
+  "Euro €": "Euro €", "Dollar $": "Dollar $", "Kurs: # € = … $ (für die Umrechnung)": "Rate: # € = … $ (for the conversion)", "# (vom #/#/#)": "# (as of #/#/#)", "# (vom #)": "# (as of #)",
+  "Für die Umrechnung in Euro den Kurs „# € = … $“ eintragen oder oben 🔄 antippen.": "For the conversion into euros enter the rate “# € = … $” or tap 🔄 at the top.",
+  "ohne": "none", "Risiko: alles bis KO": "Risk: everything down to KO",
+  "ℹ️ Legende": "ℹ️ Legend", "ℹ️ Kurz erklärt": "ℹ️ In short", "ℹ️ So funktionieren die Marken": "ℹ️ How the marks work",
+  "unten rechts legt eine neue Notiz an.": "at the bottom right creates a new note.",
+  "vor dem Titel = Notiz mit gespeichertem Rechner-Plan (Chart und Zahlen) – antippen und „Im Rechner öffnen“.": "before the title = note with a saved calculator plan (chart and figures) – tap it and “open in calculator”.",
+  "Notizen aus einer Position oder der Watchlist stehen auch dort.": "Notes from a position or the watchlist are shown there too.",
+  "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 Nachkauf · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.": "The four calculators: 🧮 leverage · ⚖️ position size · 📉 average down · 💰 take profit. Every plan can be saved as a note.",
+  "Kurs-Alarme stellst du in der Watchlist ein: Wert antippen → Kaufmarke und Verkaufsmarke.": "Price alerts are set in the watchlist: tap an asset → buy mark and sell mark.",
+  "# heißt: bewegt sich der Basiswert # %, bewegt sich dein Produkt # %.": "# means: if the underlying moves # %, your product moves # %.",
+  "Knock-out": "Knock-out", "= bei diesem Kurs ist der Einsatz weg.": "= at this price the stake is gone.", "= dein eigener Ausstieg vorher ·": "= your own exit before that ·",
+  "= dort willst du Gewinn mitnehmen.": "= where you want to take profit.", "# : # heißt: doppelt so viel Gewinn am Ziel wie Verlust am Stop.": "# : # means: twice as much profit at the target as loss at the stop.",
+  "Im Chart: grün = Ziel, gestrichelt = Stop, rot = Knock-out.": "In the chart: green = target, dashed = stop, red = knock-out.",
+  "Einstieg": "Entry", "= Kurs, zu dem du kaufst ·": "= price at which you buy ·", "Stop-Loss": "Stop loss", "= Kurs, bei dem du aussteigst.": "= price at which you get out.",
+  "Max. Verlust": "Max. loss", "= was du bei diesem Trade höchstens verlieren willst.": "= the most you are willing to lose on this trade.",
+  "Ergebnis: so viele Stück darfst du kaufen, damit am Stop genau dieser Verlust entsteht.": "Result: this many units you may buy so that exactly this loss occurs at the stop.",
+  "# : # heißt: am Ziel gewinnst du doppelt so viel, wie du am Stop verlierst.": "# : # means: at the target you win twice as much as you lose at the stop.",
+  "Im Chart: grün = Ziel und Gewinnzone, rot = Stop und Verlustzone, die Linie = Kursverlauf (wenn gewählt).": "In the chart: green = target and profit zone, red = stop and loss zone, the line = price history (if selected).",
+  "Ø Einstandskurs": "Avg. cost price", "= dein Durchschnittspreis je Stück.": "= your average price per unit.", "= ab diesem Kurs ist die Position im Plus.": "= from this price on the position is in profit.",
+  "= du hast ein festes Budget ·": "= you have a fixed budget ·", "= du willst einen bestimmten Einstand erreichen.": "= you want to reach a certain cost basis.",
+  "= was bleibt bei welchem Verkaufskurs übrig.": "= what is left at which selling price.",
+  "= so viel verkaufen, dass dein ganzes eingesetztes Geld zurück ist. Der Rest („Runner“) läuft ohne eigenes Geld weiter.": "= sell enough to get all the money you put in back. The rest (“runner”) keeps running without your own money.",
+  "Nachkaufen senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt.": "Buying more lowers the cost basis but raises the stake – the loss grows if the price keeps falling.",
+  "= was nach dem Verkauf auf deinem Konto ankommen soll.": "= what should arrive in your account after the sale.",
+  "= dein eingesetztes Geld ist wieder draußen – der Rest ist reiner Gewinn.": "= the money you put in is out again – the rest is pure profit.",
+  "Rest abgesichert bis": "Rest covered down to", "= fällt der Rest bis dahin, landet die ganze Position bei plus/minus null.": "= if the rest falls that far, the whole position ends at break-even.",
+  "Ganze Stücke": "Whole units", "= falls dein Broker keine Bruchteile verkauft.": "= in case your broker does not sell fractions.",
+  "Im Chart: weiß = dein Einstand, grün = Verkaufsstufen, gestrichelt = bis dahin ist der Rest sicher.": "In the chart: white = your cost basis, green = selling steps, dashed = down to there the rest is covered.",
+  "Kaufmarke": "Buy mark", "Verkaufsmarke": "Sell mark",
+  "= dein Wunschkurs zum Kaufen. Fällt der Kurs auf oder unter die Marke, steht in der Watchlist „Kaufmarke erreicht“.": "= your desired price to buy. If the price falls to or below the mark, the watchlist shows “buy mark reached”.",
+  "= dein Wunschkurs zum Verkaufen. Steigt der Kurs auf oder über die Marke, steht dort „Verkaufsmarke erreicht“.": "= your desired price to sell. If the price rises to or above the mark, it shows “sell mark reached”.",
+  "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄).": "Checked on every “Update prices & data” (top right 🔄).",
+  "Beide Felder sind freiwillig – leer lassen heißt: keine Marke.": "Both fields are optional – leaving them empty means: no mark.",
+});
+{ const W = { "Position": "Position", "Verlust am Stop": "Loss at stop", "Gewinn am Ziel": "Profit at target", "Du nimmst raus": "You take out", "davon Gewinn": "of which profit", "Rest": "Rest",
+              "Budget": "Budget", "Investiert": "Invested", "Marktwert": "Market value" };
+  UEB_MUSTER.en.push([/^Umgerechnet \(1 € = (.+?) \$\): (.+)$/, (m, k, rest) => `Converted (1 € = ${k} $): ` + rest.split(" · ").map((t) => { const [n, v] = t.split(" ≈ "); return (W[n] || n) + " ≈ " + v; }).join(" · ")]); }
+// Dollar-Zwillinge: jeder Text mit "€" gilt genauso mit "$" (Rechner in Dollar)
+for (const [k, v] of Object.entries(UEB.en)) if (k.includes("€") && v != null && !k.includes("$")) { const k2 = k.replace(/€/g, "$"); if (UEB.en[k2] == null) UEB.en[k2] = String(v).replace(/€/g, "$"); }
+
+// 0.55: Break-even, Rechenbeispiel, Suche
+Object.assign(UEB.en, {
+  "Bis Break-even": "To break-even", "Puffer bis Break-even": "Buffer to break-even", "nach Gebühren": "after fees",
+  "Break-even # %": "break-even # %", "Puffer # %": "buffer # %",
+  "🧮 Was es braucht, um wieder bei null zu sein": "🧮 What it takes to get back to zero", "🧮 Was ein Rücksetzer für dich bedeutet": "🧮 What a pullback means for you",
+  "Du liegst bei": "You are at", ". Damit die Position nach Gebühren wieder bei null ist, muss der Kurs um": ". For the position to be back at zero after fees, the price has to rise by",
+  "steigen.": ".", "steigen – von # € auf # €.": "– from # € to # €.",
+  ". Fällt der Kurs um # %, liegst du noch bei": ". If the price falls by # %, you are still at", "(# €). Bis zum Break-even darf er um": "(# €). It may fall by",
+  "fallen.": "before reaching break-even.", "fallen – bis # €.": "before reaching break-even – down to # €.",
+  "ℹ️ Verlust und nötiger Anstieg": "ℹ️ Loss and required rise", "Verlust": "Loss", "nötiger Anstieg": "required rise",
+  "Je tiefer eine Position im Minus ist, desto größer muss der Anstieg sein, um wieder bei null zu sein. Ob Halten, Nachkaufen oder Verkaufen sinnvoll ist, entscheidest du – das ist nur Rechnung, keine Anlageberatung.":
+    "The deeper a position is in the red, the larger the rise needed to get back to zero. Whether holding, buying more or selling makes sense is your decision – this is only arithmetic, not investment advice.",
+  "Kaufgebühren sind im Einstand enthalten. Eine Verkaufsgebühr lässt sich in den Rechnern als Standard hinterlegen.": "Purchase fees are included in the cost basis. A selling fee can be set as a default in the calculators.",
+  "Mit # % Verkaufsgebühr (Standard aus den Rechnern) und den Kaufgebühren im Einstand.": "With # % selling fee (default from the calculators) and the purchase fees in the cost basis.",
+  "Xetra · Euro": "Xetra · euro", "Frankfurt · Euro": "Frankfurt · euro", "ETF / Fonds": "ETF / fund", "ETC / Zertifikat": "ETC / certificate", "Edelmetall": "Precious metal", "Devise": "Currency",
+});
+
+// 0.56: "In Tranchen kaufen" (vorher Nachkauf-Rechner)
+Object.assign(UEB.en, {
+  "📉 In Tranchen kaufen – für einen entspannten Durchschnittspreis": "📉 Buy in tranches – for a relaxed average price", "📉 In Tranchen kaufen": "📉 Buy in tranches",
+  "In Tranchen kaufen": "Buy in tranches", "📉 In Tranchen kaufen-Rechner": "📉 Buy in tranches",
+  "⚠ Tranche überproportional groß – Sunk-Cost-Risiko (Budget mehr als #× der aktuellen Position).": "⚠ Tranche disproportionately large – sunk-cost risk (budget more than #× the current position).",
+  "Der Kurs liegt über deinem Einstand – eine weitere Tranche hebt den Einstand, senken geht nicht.": "The price is above your cost basis – another tranche raises it, lowering is not possible.",
+  "Das Ziel liegt nicht unter deinem Einstand – keine weitere Tranche nötig.": "The target is not below your cost basis – no further tranche needed.",
+  "nach Tranche A": "after tranche A", "nach Tranche B": "after tranche B", "ohne weitere Tranche": "without another tranche",
+  "A · Tranche mit festem Budget": "A · Tranche with a fixed budget", "A · Festes Budget": "A · Fixed budget", "Budget der Tranche # (A)": "Tranche budget # (A)",
+  "Budget der Tranche € (A)": "Tranche budget € (A)", "Budget der Tranche $ (A)": "Tranche budget $ (A)",
+  "Jede weitere Tranche senkt den Einstand, erhöht aber den Einsatz – der Verlust wird größer, wenn der Kurs weiter fällt.": "Every further tranche lowers the cost basis but raises the stake – the loss grows if the price keeps falling.",
+  "z. B. Zweite Tranche bei Rücksetzer": "e.g. second tranche on a pullback",
+  "Die vier Rechner: 🧮 Hebel · ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme. Jeder Plan lässt sich als Notiz speichern.": "The four calculators: 🧮 leverage · ⚖️ position size · 📉 buy in tranches · 💰 take profit. Every plan can be saved as a note.",
+  // 0.61: Kurs-Alarme
+  "Kaufmarke erreicht": "Buy mark reached", "Verkaufsmarke erreicht": "Sell mark reached",
+  "Alarm-Marke unterschritten": "Alert mark fallen below", "Alarm-Marke überschritten": "Alert mark exceeded",
+  "Kurs-Alarme (Marken)": "Price alerts (marks)", "Kauf-/Verkaufsmarke aus der Watchlist, Alarm-Marken aus den Positionen": "Buy/sell mark from the watchlist, alert marks from your positions",
+  "🔔 Alarm unter € (Kurs ≤)": "🔔 Alert below € (price ≤)", "🔔 Alarm über € (Kurs ≥)": "🔔 Alert above € (price ≥)",
+  "Kurs-Alarm, z. B. Stop-, Nachkauf- oder Ziel-Marke: Bei eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy, wenn der Kurs die Marke erreicht. Android prüft nur alle paar Stunden – kein Sekunden-Alarm.":
+    "Price alert, e.g. a stop, top-up or target mark: with notifications switched on (⚙️ → More → 🔔) your phone tells you when the price reaches the mark. Android only checks every few hours – no second-by-second alarm.",
+  "Ehrlich gesagt: Android prüft im Hintergrund nur etwa so oft, wie du unten einstellst – frühestens stündlich, manchmal später (Akku). Das ist kein Sekunden-Alarm wie in einer Trading-App – für schnelle Stops nutze die Order beim Broker.":
+    "To be honest: Android only checks in the background about as often as you set below – at most hourly, sometimes later (battery). This is not a second-by-second alarm like in a trading app – for fast stops use the order at your broker.",
+  "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich, wenn eine Marke erreicht ist – Android prüft dafür alle paar Stunden im Hintergrund.":
+    "With notifications switched on (⚙️ → More → 🔔) your phone also tells you when a mark is reached – Android checks for this every few hours in the background.",
+  // 0.62: Alarme
+  "Werte": "Assets", "🔔 Alarme": "🔔 Alerts", "Alarme": "Alerts", "🔔 Alarme (#)": "🔔 Alerts (#)", "erreicht": "reached", 
+  "Kurs fällt unter": "Price falls below", "Kurs steigt über": "Price rises above", "Kurs in Zone (von–bis)": "Price in zone (from–to)",
+  "Bewegung in % seit dem Setzen": "Move in % since set", "Neuer Alarm": "New alert", "Alarm": "Alert", "– Wert wählen –": "– choose asset –",
+  "Kurs € (melden bei Kurs ≤)": "Price € (notify at price ≤)", "Kurs € (melden bei Kurs ≥)": "Price € (notify at price ≥)", "von €": "from €", "bis €": "to €",
+  "Meldet sich, sobald der Kurs in die Zone läuft – egal ob von oben oder von unten.": "Notifies as soon as the price enters the zone – from above or below.",
+  "Bewegung in % (z. B. −10 oder 15)": "Move in % (e.g. −10 or 15)", "Minus = Rückgang, Plus = Anstieg.": "Minus = decline, plus = rise.",
+  "Gerechnet ab dem Kurs beim Speichern": "Calculated from the price when saved", "Alarm eingeschaltet": "Alert switched on",
+  "z. B. Kaufzone, Stop, Ziel 1, Nachkauf 2": "e.g. buy zone, stop, target 1, top-up 2", "Kurs jetzt:": "Price now:",
+  "ohne Ticker – nur die App prüft, kein Hintergrund-Alarm": "no ticker – only the app checks, no background alert",
+  "ohne Ticker: nur in der App": "no ticker: app only", "Wert fehlt": "asset missing", "kein Kurs": "no price",
+  "Noch keine Alarme. Unten rechts auf + tippen: Wert wählen, Namen geben (z. B. „Kaufzone“, „Stop“, „Ziel 1“) und Marke, Zone oder Bewegung in % festlegen. Pro Wert gehen beliebig viele Alarme.":
+    "No alerts yet. Tap + at the bottom right: choose an asset, give it a name (e.g. “buy zone”, “stop”, “target 1”) and set a mark, zone or move in %. Any number of alerts per asset.",
+  "Geprüft wird bei jedem „Kurse & Daten aktualisieren“ (oben rechts 🔄) – erreichte Alarme stehen hier und in der Watchlist.":
+    "Checked on every “Update prices & data” (top right 🔄) – reached alerts show here and in the watchlist.",
+  "Mit eingeschalteten Benachrichtigungen (⚙️ → Mehr → 🔔) meldet sich das Handy zusätzlich. Android prüft dafür nur alle paar Stunden – kein Sekunden-Alarm wie in einer Trading-App.":
+    "With notifications switched on (⚙️ → More → 🔔) your phone also notifies you. Android only checks every few hours for this – no second-by-second alarm like in a trading app.",
+  "Ein Alarm meldet sich einmal und ist wieder scharf, sobald der Kurs die Marke oder Zone verlassen hat.": "An alert notifies once and is armed again as soon as the price has left the mark or zone.",
+  "Werte ohne Yahoo-Ticker (z. B. Zertifikate, Handkurs) prüft nur die App selbst, nicht der Hintergrund.": "Assets without a Yahoo ticker (e.g. certificates, manual price) are only checked by the app itself, not in the background.",
+  "ℹ️ So funktionieren die Alarme": "ℹ️ How alerts work", "Noch kein Alarm für diesen Wert.": "No alert for this asset yet.",
+  "+ Alarm für diesen Wert": "+ Alert for this asset", "Alarm hinzufügen": "Add alert", "Diesen Alarm löschen?": "Delete this alert?", "Alarm gelöscht.": "Alert deleted.",
+  "Bitte einen Wert wählen.": "Please choose an asset.", "Bitte einen Kurs eintragen.": "Please enter a price.", "Bitte die Zone (von und bis) eintragen.": "Please enter the zone (from and to).",
+  "Bitte eine Bewegung in % eintragen, z. B. −10.": "Please enter a move in %, e.g. −10.",
+  "Für „Bewegung in %“ braucht der Wert einen Kurs – erst „Kurse & Daten aktualisieren“.": "“Move in %” needs a price for the asset – first “Update prices & data”.",
+  "Alarm gespeichert.": "Alert saved.", "Alarm gespeichert – ohne Ticker prüft ihn nur die App, kein Hintergrund-Alarm.": "Alert saved – without a ticker only the app checks it, no background alert.",
+  "🔔 Alarme (Marken, Zonen, Bewegung in %) für diesen Wert stellst du unten unter „Alarme“ oder in der Watchlist im Reiter „🔔 Alarme“ ein.":
+    "🔔 Alerts (marks, zones, move in %) for this asset are set below under “Alerts” or in the watchlist tab “🔔 Alerts”.",
+  "deine Alarme aus Watchlist → 🔔 Alarme (Marken, Zonen, Bewegung in %)": "your alerts from watchlist → 🔔 Alerts (marks, zones, move in %)",
+  "unter #\u00a0€": "below #\u00a0€", "über #\u00a0€": "above #\u00a0€", "Zone #\u00a0€ – #\u00a0€": "zone #\u00a0€ – #\u00a0€", "# % ab #\u00a0€": "# % from #\u00a0€",
+  "noch # %": "# % to go", "bisher # %": "so far # %", "Gerechnet ab dem Kurs beim Speichern:": "Calculated from the price when saved:",
+  "📥 Alarme einfügen": "📥 Paste alerts", "📤 Alle teilen": "📤 Share all", "Übernehmen": "Apply", 
+  "Alarme als Text einfügen (eine Zeile je Alarm)": "Paste alerts as text (one line per alert)",
+  "Aufbau:": "Format:", "Wert | Ticker | Name | Bedingung": "Asset | Ticker | Name | Condition",
+  ". Bedingung: „unter 1.300“, „über 1.650“, „zone 1.380 bis 1.420“ oder „prozent -10“. Gibt es den Wert noch nicht, kommt er in die Watchlist. Der Text enthält nur Namen und Kurse – keine Beträge.":
+    ". Condition: “unter 1.300”, “über 1.650”, “zone 1.380 bis 1.420” or “prozent -10” (keywords stay German). If the asset doesn't exist yet, it is added to the watchlist. The text only contains names and prices – no amounts.",
+  "Teilen und Einfügen geht als einfacher Text (unverschlüsselt) – so kannst du einzelne Alarme weitergeben oder dir selbst schicken. Er enthält nur Wert, Ticker, Name und Kurs-Marken.":
+    "Sharing and pasting works as plain text (unencrypted) – so you can pass on single alerts or send them to yourself. It only contains asset, ticker, name and price marks.",
+  "Kein Alarm im Text gefunden.": "No alert found in the text.", "Kopieren ging nicht.": "Copying failed.",
+  "# Alarme übernommen.": "# alerts added.", "# Alarme übernommen, # schon vorhanden.": "# alerts added, # already there.",
+  "# Alarme übernommen, # Werte neu in der Watchlist – Kurse kommen mit „Kurse & Daten aktualisieren“.": "# alerts added, # assets new in the watchlist – prices come with “Update prices & data”.",
+  // 0.63: Sicherheit
+  "Neuer Hinweis – zum Ansehen entsperren": "New notice – unlock to view",
+  "Für die ZIP braucht das Sicherungs-Passwort mindestens 14 Zeichen – bitte unter Sicherheit & Sicherung ändern.": "The ZIP export needs a backup password of at least 14 characters – please change it under Security & backup.",
+  "Mindestens 14 Zeichen.": "At least 14 characters.", "Mindestens 12 Zeichen.": "At least 12 characters.",
+  "Zu einfach – bitte Buchstaben und Zahlen mischen, keine Wiederholungen.": "Too simple – please mix letters and numbers, no repetitions.",
+  "mindestens 14 Zeichen, eigenes Passwort": "at least 14 characters, your own password", "Passwort (mind. 12 Zeichen)": "Password (min. 12 characters)",
+  "Datei zu groß (über 50 MB)": "File too large (over 50 MB)", "PDF-Inhalt zu groß": "PDF content too large",
+  // 0.64: Earnings-Ergebnis, Verlauf, Pruefprotokoll
+  "Earnings-Ergebnis": "Earnings result", "sobald die Zahlen da sind: Gewinn je Aktie gegen Erwartung": "as soon as the numbers are out: earnings per share vs. estimate",
+  "Bewegung seit der letzten Prüfung ab": "Move since the last check from", "Häufiges Prüfen braucht etwas mehr Akku und Daten.": "Frequent checks use a bit more battery and data.",
+  "Zahlen sind da": "Results are out", "erwartet": "expected", "über Erwartung": "beat", "unter Erwartung": "miss", "seit der letzten Prüfung": "since the last check",
+  "Verlauf": "History", "Jede Meldung der letzten 90 Tage – auch weggewischte. Liegt verschlüsselt nur auf diesem Handy.": "Every alert of the last 90 days – including dismissed ones. Stored encrypted on this phone only.",
+  "Alle anzeigen": "Show all", "Noch keine Meldungen.": "No alerts yet.", "Prüfprotokoll": "Check log",
+  "Wann Android zuletzt geprüft hat – so siehst du, ob ein Alarm zur richtigen Zeit kam.": "When Android last checked – so you can see whether an alert came at the right time.",
+  "Werte geprüft": "values checked", "Meldungen": "alerts", "ohne Antwort": "without response", "Noch keine Prüfung gelaufen.": "No check has run yet.",
+  "Verlauf löschen": "Delete history", "🕘 Verlauf": "🕘 History", "🗑️ Verlauf löschen": "🗑️ Delete history", "Verlauf und Prüfprotokoll löschen?": "Delete history and check log?", "Verlauf gelöscht.": "History deleted.",
+});
+
+// ---------------------------------------------------------------- Marktstimmung (0.66)
+Object.assign(UEB.en, {
+  "Marktstimmung": "Market sentiment", "🌡️ Stimmung laden": "🌡️ Load sentiment", "🔄 Aktualisieren": "🔄 Refresh", "# von #": "# of #",
+  "Extreme Angst": "Extreme fear", "Angst": "Fear", "Neutral": "Neutral", "Gier": "Greed", "Extreme Gier": "Extreme greed", "keine Daten": "no data",
+  "Aktien · eigene Berechnung": "Stocks · own calculation", "Krypto · alternative.me": "Crypto · alternative.me",
+  "Krypto: gestern # · vor # Woche # · vor # Monat #": "Crypto: yesterday # · # week ago # · # month ago #",
+  "S&P #: # Tag # % · # Tage # % · # Tage # %": "S&P #: # day # % · # days # % · # days # %",
+  "· dein Depot # Wochen # %": "· your portfolio # weeks # %",
+  "⚠ Nur Orientierung: Angst ist kein Kaufsignal, Gier kein Verkaufssignal. Keine Anlageberatung.": "⚠ Orientation only: fear is not a buy signal, greed is not a sell signal. Not investment advice.",
+  "Wie wird das berechnet?": "How is this calculated?",
+  "Stufen: #–# Extreme Angst · #–# Angst · #–# Neutral · #–# Gier · #–# Extreme Gier.": "Levels: #–# extreme fear · #–# fear · #–# neutral · #–# greed · #–# extreme greed.",
+  "(eigene Berechnung, nicht der CNN-Index): Mittelwert aus fünf Teilen, je #–# im Vergleich zum letzten Jahr:": "(own calculation, not the CNN index): average of five parts, each #–# compared with the past year:",
+  "Momentum (S&P # ggü. #-Tage-Schnitt): #": "Momentum (S&P # vs. #-day average): #",
+  "Volatilität (VIX ggü. #-Tage-Schnitt): #": "Volatility (VIX vs. #-day average): #",
+  "Sichere Häfen (Aktien ggü. Staatsanleihen, # Tage): #": "Safe havens (stocks vs. treasuries, # days): #",
+  "Risikoanleihen (Hochzins ggü. Staatsanleihen, # Tage): #": "Junk bonds (high yield vs. treasuries, # days): #",
+  "Marktbreite (Sektoren über #-Tage-Schnitt): #": "Market breadth (sectors above #-day average): #",
+  ": Crypto Fear & Greed Index von alternative.me.": ": Crypto Fear & Greed Index by alternative.me.",
+  "Fear & Greed für Aktien und Krypto – getrennt, als zusätzliche Orientierung zu deinem Depot. Lädt nur auf Knopfdruck (ca. # kleine Abrufe bei Yahoo und alternative.me).":
+    "Fear & Greed for stocks and crypto – separately, as extra orientation next to your portfolio. Loads only when you tap (about # small requests to Yahoo and alternative.me).",
+  "Marktstimmung gibt es nur in der App (ab Version #).": "Market sentiment is only available in the app (version # and later).",
+  "Lade Krypto-Stimmung …": "Loading crypto sentiment …",
+  "Lade Marktstimmung …": "Loading market sentiment …", "Krypto · Fear & Greed · alternative.me": "Crypto · Fear & Greed · alternative.me",
+  "VIX · Aktien": "VIX · stocks", "Angstbarometer der Cboe · # % zum Vortag": "Cboe fear gauge · # % vs. previous day", "Angstbarometer der Cboe · keine Daten": "Cboe fear gauge · no data",
+  "Dein Depot # Wochen # %": "Your portfolio # weeks # %",
+  "⚠ Nur Orientierung: Angst ist für viele ein Verkaufssignal – oft liegen gerade dort Chancen. Gier ist eher ein Warnsignal, besonders für einen Neueinstieg. Keine Anlageberatung.":
+    "⚠ Orientation only: many see fear as a sell signal – yet that is often where the opportunities are. Greed is more of a warning sign, especially before buying in. Not investment advice.",
+  "Woher kommen die Werte?": "Where do the values come from?",
+  "Wenn es schwer wird": "When things get hard",
+  "✨ Neu in Version #": "✨ New in version #", "Verstanden": "Got it", "✨ Neu in Version": "✨ New in version", "Test": "Test",
+  "⚠ Unter # € Ordervolumen gilt die höhere Gebühr (# € je Order).": "⚠ Below # € order volume the higher fee applies (# € per order).",
+  "🌡️ Marktstimmung in der Übersicht – passend zu deinem Depot: Krypto mit dem Fear & Greed Index, Aktien mit dem VIX (Angstbarometer).": "🌡️ Market sentiment on the overview – matching your portfolio: crypto with the Fear & Greed Index, stocks with the VIX (fear gauge).",
+  "⚖️ Positionsgrößen-Rechner: Broker wählen (Trade Republic, Smartbroker+ je Emittent) – feste Gebühren in Euro werden automatisch eingerechnet.": "⚖️ Position size calculator: choose your broker (Trade Republic, Smartbroker+ per issuer) – fixed fees in euros are included automatically.",
+  "⚖️ Neu: „Positionsgröße vorgeben“, z. B. # € oder # € – der Rechner zeigt den Verlust am Stop inklusive Gebühren.": "⚖️ New: “set position size”, e.g. # € or # € – the calculator shows the loss at the stop including fees.",
+  "✨ Diese Karte: Nach jedem Update siehst du hier einmal, was neu ist.": "✨ This card: after every update you see here once what is new.",
+  "💜 „Wenn es schwer wird“: Hilfe-Kontakte (TelefonSeelsorge, rund um die Uhr) unten auf „Mehr“ und bei extremer Angst in der Marktstimmung.": "💜 “When things get hard”: help contacts (TelefonSeelsorge, around the clock) at the bottom of “More” and in market sentiment when fear is extreme.",
+  "Positionsgröße vorgeben": "Set position size", "Positionsgröße €": "Position size €", "Positionsgröße $": "Position size $", "Broker / Gebühr": "Broker / fee", "Eigene Gebühr in % je Order": "Own fee in % per order",
+  "Trade Republic – # € je Order": "Trade Republic – # € per order",
+  "Smartbroker+ Aktien/ETF (gettex) – # € ab # €, sonst # €": "Smartbroker+ stocks/ETF (gettex) – # € from # €, otherwise # €",
+  "Smartbroker+ Zertifikat UniCredit (gettex) – # € ab # €, sonst # €": "Smartbroker+ certificate UniCredit (gettex) – # € from # €, otherwise # €",
+  "Smartbroker+ Zertifikat Goldman Sachs (gettex) – # € ab # €, sonst # €": "Smartbroker+ certificate Goldman Sachs (gettex) – # € from # €, otherwise # €",
+  "Smartbroker+ Zertifikat andere Emittenten (gettex) – # €": "Smartbroker+ certificate other issuers (gettex) – # €",
+  "Positionsgröße eintragen.": "Enter a position size.", "Broker-Gebühren gelten in Euro – bitte Währung Euro wählen.": "Broker fees are in euros – please choose euro.",
+  "Der maximale Verlust reicht nicht einmal für die Gebühren.": "The maximum loss does not even cover the fees.",
+  "Unter # € Ordervolumen gilt die höhere Gebühr (# € je Order).": "Below # € order volume the higher fee applies (# € per order).", "telefonseelsorge.de": "telefonseelsorge.de", "findahelpline.com": "findahelpline.com",
+  "Verluste können richtig wehtun – finanziell und im Kopf. Du bist nicht allein. Reden hilft.": "Losses can really hurt – financially and mentally. You are not alone. Talking helps.",
+  "TelefonSeelsorge": "TelefonSeelsorge", "(Deutschland) – kostenlos, anonym, Tag und Nacht:": "(Germany) – free, anonymous, day and night:",
+  "Chat & Mail:": "Chat & mail:", "Akute Gefahr: Notruf": "Immediate danger: emergency number", ". In anderen Ländern:": ". Other countries:",
+  "Und für den Markt: keine Entscheidung in Panik, Hebel raus, Pausen sind erlaubt.": "And for the market: no decisions in panic, no leverage, breaks are allowed.",
+  "💜 Die Lage drückt aufs Gemüt? Du bist nicht allein: TelefonSeelsorge": "💜 Is the market getting you down? You are not alone: TelefonSeelsorge (Germany)",
+  "(kostenlos, rund um die Uhr) –": "(free, around the clock) –", "mehr Hilfe": "more help",
+  ": Crypto Fear & Greed Index von alternative.me (# = extreme Angst, # = extreme Gier).": ": Crypto Fear & Greed Index by alternative.me (# = extreme fear, # = extreme greed).",
+  ": VIX, der offizielle Volatilitätsindex der Cboe. Je höher, desto mehr Angst erwartet der Markt.": ": VIX, the official volatility index of the Cboe. The higher it is, the more fear the market expects.",
+  "Krypto: Fear & Greed Index · Aktien: VIX (Angstbarometer) – passend zu deinem Depot. Lädt nur auf Knopfdruck.": "Crypto: Fear & Greed Index · stocks: VIX (fear gauge) – matching your portfolio. Loads only when you tap.",
+  "Krypto: Fear & Greed Index von alternative.me – passend zu deinem Depot. Lädt nur auf Knopfdruck.": "Crypto: Fear & Greed Index by alternative.me – matching your portfolio. Loads only when you tap.",
+  "Aktien: VIX, das Angstbarometer der Cboe – passend zu deinem Depot. Lädt nur auf Knopfdruck.": "Stocks: VIX, the Cboe fear gauge – matching your portfolio. Loads only when you tap.", "Lade Aktien-Stimmung #/# …": "Loading stock sentiment #/# …",
+  "Stand #/#/# #:# · offline gespeichert": "As of #/#/# #:# · saved offline", "Stand #.#.# #:# · offline gespeichert": "As of #.#.# #:# · saved offline",
+  "Keine Verbindung – Stimmung nicht geladen.": "No connection – sentiment not loaded.", "Marktstimmung geladen.": "Market sentiment loaded.",
+});
+
+// ---------------------------------------------------------------- Derivate (0.68)
+Object.assign(UEB.en, {
+  "📝 Notizen & Rechner": "📝 Notes & calculators", "🎯 Derivate": "🎯 Derivatives", "Derivate": "Derivatives",
+  "🎯 Derivate: Hebel-Rechner für Knock-out, Mini-Future, Perp": "🎯 Derivatives: leverage calculator for knock-out, mini future, perp",
+  "Die Rechner: ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme – und im Reiter 🎯 Derivate der Hebel-Rechner (Knock-out, Mini-Future, Perp). Jeder Plan lässt sich als Notiz speichern.":
+    "The calculators: ⚖️ position size · 📉 buy in tranches · 💰 take profit – and in the 🎯 Derivatives tab the leverage calculator (knock-out, mini future, perp). Every plan can be saved as a note.",
+  "Hier rechnest du Hebelprodukte durch: Basiswert suchen, Richtung, Hebel und Einstieg – der Chart zeigt Knock-out, Stop und Ziel. Als Notiz speichern geht auch.":
+    "Work through leveraged products here: search the underlying, direction, leverage and entry – the chart shows knock-out, stop and target. You can save it as a note too.",
+  "Knock-out-Zertifikat:": "Knock-out certificate:", "fester Knock-out, Hebel ergibt sich aus dem Abstand.": "fixed knock-out, leverage follows from the distance.",
+  "Mini-Future:": "Mini future:", "ohne Laufzeit, Schwelle wird täglich angepasst.": "no expiry, the barrier is adjusted daily.", "Perp:": "Perp:",
+  "Kontrakt an einer Krypto-Börse ohne Ablauf – den Hebel wählst du selbst; Kraken erlaubt EU-Privatkunden höchstens #×, andere Börsen mehr.":
+    "contract on a crypto exchange without expiry – you choose the leverage; Kraken allows EU retail clients at most #×, other exchanges more.",
+  "Den genauen Knock-out zeigt das Produktblatt des Emittenten bzw. die Börse. Keine Anlageberatung.": "The exact knock-out is in the issuer's product sheet or shown by the exchange. Not investment advice.",
+  "Basiswert suchen (Name, ISIN, WKN)": "Search underlying (name, ISIN, WKN)", "z. B. Bitcoin, Nvidia, DAX": "e.g. Bitcoin, Nvidia, DAX", "🔎 Suchen": "🔎 Search",
+  "Basiswert:": "Underlying:", "Kurs als Einstieg übernommen, Verlauf im Chart.": "Price taken as entry, history in the chart.",
+  "Produktart / Broker": "Product type / broker", "Perp – Kraken Futures (EU, höchstens #×)": "Perp – Kraken Futures (EU, at most #×)", "Perp – Hyperliquid": "Perp – Hyperliquid",
+  "Mini-Future (open end)": "Mini future (open end)", "Produkt (WKN/ISIN, optional)": "Product (WKN/ISIN, optional)", "z. B. aus dem Broker": "e.g. from your broker",
+  "Knock-out laut Produktblatt (optional)": "Knock-out per product sheet (optional)", "Knock-out laut Produkt": "Knock-out per product",
+  "# % entfernt · Hebel ca. #×": "# % away · leverage approx. #×", "Kraken Futures erlaubt EU-Privatkunden höchstens #× Hebel.": "Kraken Futures allows EU retail clients at most #× leverage.",
+  "Mini-Future: ohne Laufzeit; Stop-Loss-Schwelle und Basispreis werden täglich um die Finanzierungskosten angepasst. Mit Knock-out laut Produktblatt rechnet der Rechner mit dem echten Wert des Emittenten (Hebel leer lassen = Hebel wird daraus berechnet). Die Ordergebühr ist ein fester Euro-Betrag.":
+    "Mini future: no expiry; stop-loss barrier and strike are adjusted daily by the financing costs. With the knock-out from the product sheet the calculator uses the issuer's real value (leave leverage empty = leverage is calculated from it). The order fee is a fixed euro amount.",
+  "Knock-out-Zertifikat: Den Hebel bestimmt der Abstand zur Knock-out-Schwelle – er ändert sich mit dem Kurs. Mit Knock-out laut Produktblatt rechnet der Rechner mit dem echten Wert des Emittenten (Hebel leer lassen = Hebel wird daraus berechnet). Die Ordergebühr ist ein fester Euro-Betrag.":
+    "Knock-out certificate: the leverage is set by the distance to the knock-out barrier – it changes with the price. With the knock-out from the product sheet the calculator uses the issuer's real value (leave leverage empty = leverage is calculated from it). The order fee is a fixed euro amount.",
+  "Knock-out": "Knock-out", "Mini-Future": "Mini future", "Perp": "Perp", "Suche …": "Search …",
+  "🎯 Notizen → neuer Reiter „Derivate“: Hebel-Rechner für Knock-out-Zertifikate, Mini-Futures und Perps – Basiswert per Name, ISIN oder WKN suchen, Kurs wird übernommen, Verlauf im Chart.":
+    "🎯 Notes → new “Derivatives” tab: leverage calculator for knock-out certificates, mini futures and perps – search the underlying by name, ISIN or WKN, the price is taken over, history in the chart.",
+  "🎯 Knock-out laut Produktblatt eintragen: Der Rechner nutzt den echten Wert des Emittenten und rechnet den Hebel daraus.": "🎯 Enter the knock-out from the product sheet: the calculator uses the issuer's real value and derives the leverage from it.",
+  "🏷️ Neue Anlagearten: Knock-out, Mini-Future und Perp.": "🏷️ New asset types: knock-out, mini future and perp.",
+  // 0.69: Hebel-Rechner neu, Zertifikate-Finder, Rechner-Reiter
+  "Notizen & Rechner": "Notes & calculators",
+  "📝 Notizen": "📝 Notes",
+  "📉 Tranchen": "📉 Tranches",
+  "💰 Gewinnmitnahme": "💰 Taking profits",
+  "⚖️ Positionsgröße": "⚖️ Position size",
+  "🎯 Derivate": "🎯 Derivatives",
+  "Gespeicherte Notizen": "Saved notes",
+  "Die Rechner oben: ⚖️ Positionsgröße · 📉 In Tranchen kaufen · 💰 Gewinnmitnahme · 🎯 Derivate (Knock-out, Mini-Future, Perp). Jeder Plan lässt sich als Notiz speichern – und als Bild teilen.": "The calculators at the top: ⚖️ position size · 📉 buy in tranches · 💰 taking profits · 🎯 derivatives (knock-out, mini future, perp). Every plan can be saved as a note – and shared as an image.",
+  "Hier rechnest du Hebelprodukte durch: Broker und Produktart wählen, Basiswert suchen, Einstieg, Stop-Loss und Max.-Verlust – der Chart zeigt Knock-out, Stop-Loss und Take-Profit, in Prozent und Euro. Darunter findest du passende echte Zertifikate mit WKN.": "Work through leveraged products here: choose broker and product type, search the underlying, entry, stop-loss and max. loss – the chart shows knock-out, stop-loss and take-profit, in percent and euros. Below you find matching real certificates with WKN.",
+  "Knock-out-Zertifikat (Turbo):": "Knock-out certificate (turbo):",
+  "Knock-out = Basispreis, der Hebel ergibt sich aus dem Abstand.": "knock-out = strike, the leverage follows from the distance.",
+  "ohne Laufzeit, Knock-out-Schwelle liegt vor dem Basispreis, danach gibt es oft einen Restwert.": "no expiry, the knock-out barrier lies before the strike, afterwards there is often a residual value.",
+  "Kontrakt an einer Krypto-Börse ohne Ablauf – den Hebel wählst du selbst.": "contract on a crypto exchange without expiry – you choose the leverage yourself.",
+  "ℹ️ Begriffe erklärt": "ℹ️ Terms explained",
+  "# heißt: bewegt sich der Basiswert # %, bewegt sich dein Produkt etwa # %. Der Hebel ändert sich mit dem Kurs.": "# means: if the underlying moves # %, your product moves about # %. The leverage changes with the price.",
+  "= daran rechnet der Emittent den Wert: Wert je Zertifikat = (Kurs − Basispreis) × Bezugsverhältnis (bei Short umgekehrt).": "= the issuer calculates the value from it: value per certificate = (price − strike) × ratio (reversed for short).",
+  "= bei diesem Kurs endet das Produkt. Beim Turbo ist dann alles weg, beim Mini-Future gibt es oft noch einen Restwert.": "= at this price the product ends. With a turbo everything is gone, with a mini future there is often a residual value.",
+  "# heißt: ein Zertifikat steht für #/# des Basiswerts. Steht im Produktblatt und beim Broker.": "# means: one certificate stands for #/# of the underlying. Shown in the product sheet and at your broker.",
+  "= Unterschied zwischen Kaufkurs (Brief) und Verkaufskurs (Geld) – kostet dich beim Ein- und Ausstieg.": "= difference between buying price (ask) and selling price (bid) – costs you when entering and exiting.",
+  "= Kosten des Emittenten, verschieben Basispreis und Knock-out jeden Tag ein Stück zu deinem Nachteil.": "= the issuer's costs, they move strike and knock-out a little against you every day.",
+  "(Perp) = Rest, den die Börse behält – deshalb liegt der Knock-out bei #× nicht # %, sondern etwa #–# % entfernt.": "(perp) = the rest the exchange keeps – that is why at #× the knock-out is not # % away, but roughly #–# %.",
+  "= dein Ausstieg: Position wird geschlossen, du nimmst den Rest mit – vor dem Knock-out.": "= your exit: the position is closed and you keep the rest – before the knock-out.",
+  "= dein Gewinnziel.": "= your profit target.",
+  ": trag ein, wie viel Euro du höchstens verlieren willst – der Rechner zeigt den passenden Stop-Loss-Kurs.": ": enter the most you want to lose in euros – the calculator shows the matching stop-loss price.",
+  "# : # heißt: doppelt so viel Gewinn am Take-Profit wie Verlust am Stop-Loss.": "# : # means: twice as much profit at the take-profit as loss at the stop-loss.",
+  "Im Chart: grün = Take-Profit, gestrichelt = Stop-Loss, rot = Knock-out. Kurslücken können den Stop-Loss überspringen.": "In the chart: green = take-profit, dashed = stop-loss, red = knock-out. Price gaps can jump over the stop-loss.",
+  "Basispreis": "Strike",
+  "Bezugsverhältnis": "Ratio",
+  "Finanzierung": "Financing",
+  "Spread": "Spread",
+  "Max.-Verlust": "Max. loss",
+  "Produkt": "Product",
+  "Basiswert": "Underlying",
+  "Broker": "Broker",
+  "z. B. Bitcoin Boden long": "e.g. Bitcoin bottom long",
+  "Hebel (leer = aus Basispreis)": "Leverage (empty = from strike)",
+  "Basispreis laut Produkt (optional)": "Strike per product (optional)",
+  "Knock-out-Schwelle laut Produkt (optional)": "Knock-out barrier per product (optional)",
+  "Stop-Loss (leer = aus Max.-Verlust)": "Stop-loss (empty = from max. loss)",
+  "Take-Profit": "Take-profit",
+  "Stop-Loss": "Stop-loss",
+  "mit Stop-Loss": "with stop-loss",
+  "ohne Stop-Loss (bis Knock-out)": "without stop-loss (to knock-out)",
+  "Einsatz € (was die Zertifikate kosten)": "Stake € (what the certificates cost)",
+  "Einsatz € (Marge)": "Stake € (margin)",
+  "Max. Verlust €": "Max. loss €",
+  "Produktdaten und Kosten (aus dem Produktblatt / Broker)": "Product data and costs (from the product sheet / broker)",
+  "Preis je Zertifikat € (Brief)": "Price per certificate € (ask)",
+  "Spread € (Brief − Geld)": "Spread € (ask − bid)",
+  "Ordergebühr € je Order": "Order fee € per order",
+  "Finanzierung % p. a.": "Financing % p.a.",
+  "Haltedauer Tage": "Holding period, days",
+  "Mini-Future: ohne Laufzeit; Knock-out-Schwelle und Basispreis werden täglich um die Finanzierungskosten angepasst. Preis je Zertifikat reicht – das Bezugsverhältnis rechnet der Rechner dann selbst (auch bei Dollar-Basiswerten).": "Mini future: no expiry; knock-out barrier and strike are adjusted daily by the financing costs. The price per certificate is enough – the calculator then works out the ratio itself (also for dollar underlyings).",
+  "Knock-out-Zertifikat (Turbo): Knock-out = Basispreis, der Hebel ändert sich mit dem Kurs. Preis je Zertifikat reicht – das Bezugsverhältnis rechnet der Rechner dann selbst (auch bei Dollar-Basiswerten).": "Knock-out certificate (turbo): knock-out = strike, the leverage changes with the price. The price per certificate is enough – the calculator then works out the ratio itself (also for dollar underlyings).",
+  "Einstiegsbedingung (optional)": "Entry condition (optional)",
+  "Einstiegsbedingung:": "Entry condition:",
+  "z. B. erst wenn ein Boden in Sicht ist, nicht im freien Fall · Retracement abwarten": "e.g. only once a bottom is in sight, not in free fall · wait for a retracement",
+  "Einstieg selbst ändern, z. B. wenn du erst tiefer kaufen willst.": "Change the entry yourself, e.g. if you only want to buy lower.",
+  "Aktueller Kurs:": "Current price:",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was das für dein Produkt heißt (mit Hebel und Kosten) – mit Einsatz auch in Euro. SL und TP lassen sich mit dem Finger verschieben.": "Top: price of the underlying (distance in %). Below: what it means for your product (with leverage and costs) – with a stake also in euros. SL and TP can be moved with your finger.",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was das für dein Produkt heißt (mit Hebel und Kosten). SL und TP lassen sich mit dem Finger verschieben.": "Top: price of the underlying (distance in %). Below: what it means for your product (with leverage and costs). SL and TP can be moved with your finger.",
+  "Hebel #×": "Leverage #×",
+  "Hebel": "Leverage",
+  "Einstieg": "Entry",
+  "Long": "Long",
+  "Short": "Short",
+  "aus dem Basispreis laut Produkt": "from the strike per product",
+  "Basispreis #": "Strike #",
+  "Risiko: alles bis zum Knock-out": "Risk: everything down to the knock-out",
+  "aus deinem Max.-Verlust": "from your max. loss",
+  "# % Basiswert": "# % underlying",
+  "# % Basiswert · aus deinem Max.-Verlust": "# % underlying · from your max. loss",
+  "Gewinnziel eintragen": "Enter a profit target",
+  "Knock-out laut Produkt": "Knock-out per product",
+  "Knock-out ca.": "Knock-out approx.",
+  "# % entfernt": "# % away",
+  "Gewinn am Take-Profit": "Profit at take-profit",
+  "Verlust am Stop-Loss": "Loss at stop-loss",
+  "bis zum Knock-out": "down to the knock-out",
+  "Chance : Risiko": "Reward : risk",
+  "Stückzahl": "Quantity",
+  "# Stück": "# pcs.",
+  "je # € = # €": "at # € = # €",
+  "je # € = # € · Bezugsverhältnis aus dem Preis": "at # € = # € · ratio from the price",
+  "Kosten": "Costs",
+  "Spread + Ordergebühren (Kauf und Verkauf)": "Spread + order fees (buy and sell)",
+  "Einsatz für deinen Max.-Verlust": "Stake for your max. loss",
+  "= # Stück": "= # pcs.",
+  "Bei diesem Hebel fressen Wartungsmarge und Gebühren den ganzen Einsatz – die Position wäre sofort weg.": "At this leverage maintenance margin and fees eat the whole stake – the position would be gone immediately.",
+  "Der Stop-Loss liegt hinter dem Knock-out – vorher wäre schon alles weg.": "The stop-loss lies beyond the knock-out – everything would be gone before.",
+  "Für den Stop-Loss aus deinem Max.-Verlust fehlt noch der Einsatz (was du für das Produkt bezahlst).": "For the stop-loss from your max. loss the stake is still missing (what you pay for the product).",
+  "Dein Max.-Verlust ist kleiner als Spread und Gebühren – schon direkt nach dem Kauf wärst du darüber.": "Your max. loss is smaller than spread and fees – you would be above it right after buying.",
+  "Dein Max.-Verlust ist größer als alles, was du bis zum Knock-out verlieren kannst – ein Stop-Loss ist dafür nicht nötig.": "Your max. loss is larger than anything you can lose up to the knock-out – no stop-loss needed for it.",
+  "Dein Stop-Loss passt nicht zum Max.-Verlust: dort verlierst du # € statt höchstens # €.": "Your stop-loss does not fit your max. loss: there you lose # € instead of at most # €.",
+  "Der Einsatz reicht nicht für ein ganzes Zertifikat.": "The stake is not enough for one whole certificate.",
+  "Der Spread zählt erst mit Bezugsverhältnis oder Preis je Zertifikat.": "The spread only counts with a ratio or price per certificate.",
+  "Die Ordergebühr zählt erst mit Einsatz.": "The order fee only counts with a stake.",
+  "Stop-Loss für # € Max.-Verlust:": "Stop-loss for # € max. loss:",
+  "(# % Basiswert)": "(# % underlying)",
+  "übernehmen": "apply",
+  "Risiko vergleichen": "Compare risk",
+  "Abstand": "Distance",
+  "Einstieg und Hebel (oder Basispreis/Knock-out laut Produkt) eintragen.": "Enter entry and leverage (or strike/knock-out per product).",
+  "Zertifikat: Wert = Abstand Kurs ↔ Basispreis × Bezugsverhältnis. Ordergebühr # € je Order, Spread # €, Finanzierung # % p. a. über # Tage. Ein Stop-Loss ist kein garantierter Preis: bei Kurslücken oder schnellen Bewegungen kann der Verlust größer sein. Den echten Knock-out zeigt der Emittent bzw. die Börse. Keine Anlageberatung.": "Certificate: value = distance price ↔ strike × ratio. Order fee # € per order, spread # €, financing # % p.a. over # days. A stop-loss is not a guaranteed price: with price gaps or fast moves the loss can be larger. The issuer or exchange shows the real knock-out. Not investment advice.",
+  "Zertifikat: Wert = Abstand Kurs ↔ Basispreis × Bezugsverhältnis. Ordergebühr # € je Order, Spread # €, Finanzierung # % p. a. über # Tage (Knock-out dann ca. #). Ein Stop-Loss ist kein garantierter Preis: bei Kurslücken oder schnellen Bewegungen kann der Verlust größer sein. Den echten Knock-out zeigt der Emittent bzw. die Börse. Keine Anlageberatung.": "Certificate: value = distance price ↔ strike × ratio. Order fee # € per order, spread # €, financing # % p.a. over # days (knock-out then approx. #). A stop-loss is not a guaranteed price: with price gaps or fast moves the loss can be larger. The issuer or exchange shows the real knock-out. Not investment advice.",
+  "Knock-out nach Wartungsmarge # % und Gebühr # % je Seite: # % statt # % (reine Rechnung #/Hebel). Ein Stop-Loss ist kein garantierter Preis: bei Kurslücken oder schnellen Bewegungen kann der Verlust größer sein. Den echten Knock-out zeigt der Emittent bzw. die Börse. Keine Anlageberatung.": "Knock-out after maintenance margin # % and fee # % per side: # % instead of # % (plain #/leverage). A stop-loss is not a guaranteed price: with price gaps or fast moves the loss can be larger. The issuer or exchange shows the real knock-out. Not investment advice.",
+  "📷 Als Bild teilen (Chart + Zahlen)": "📷 Share as image (chart + figures)",
+  "📷 Als Bild teilen (Chart, Zahlen, Notiz)": "📷 Share as image (chart, figures, note)",
+  "🧮 Hebel-Rechner mit Chart (Knock-out, Stop-Loss, Take-Profit)": "🧮 Leverage calculator with chart (knock-out, stop-loss, take-profit)",
+  "Depot-Kompass · vereinfachte Rechnung · keine Anlageberatung": "Depot-Kompass · simplified calculation · not investment advice",
+  "Bild ging nicht:": "Image failed:",
+  "Bild ging nicht: #": "Image failed: #",
+  "🔍 Passende Zertifikate finden": "🔍 Find matching certificates",
+  "Sucht echte Knock-out-Zertifikate (Turbos) bei Onvista": "Searches real knock-out certificates (turbos) on Onvista",
+  "Sucht echte Mini-Futures (Knock-out mit Stop-Loss-Schwelle) bei Onvista": "Searches real mini futures (knock-out with stop-loss barrier) on Onvista",
+  "mit deinem Hebel ± Spanne und beim gewählten Broker handelbar. Danach WKN beim Broker eingeben.": "with your leverage ± range and tradable at the chosen broker. Then enter the WKN at your broker.",
+  "alle Broker": "all brokers",
+  "Wunsch-Hebel": "Target leverage",
+  "Spanne ±": "Range ±",
+  "Basiswert bei Onvista": "Underlying on Onvista",
+  "Basiswert bei Onvista:": "Underlying on Onvista:",
+  "Erst oben den Basiswert suchen.": "First search the underlying above.",
+  "🔍 Zertifikate suchen": "🔍 Search certificates",
+  "# Treffer bei Onvista, die # mit dem Hebel am nächsten an #× · Stand #:#": "# hits on Onvista, the # with leverage closest to #× · as of #:#",
+  "Nichts in dieser Spanne – Spanne vergrößern oder „alle Broker“.": "Nothing in this range – widen the range or choose “all brokers”.",
+  "WKN kopieren": "Copy WKN",
+  "Open End": "Open end",
+  "währungsgesichert": "currency hedged",
+  "Daten von Onvista, ohne Gewähr. Ob dein Broker das Produkt gerade handelt, siehst du dort nach Eingabe der WKN. Keine Anlageberatung.": "Data from Onvista, no guarantee. Whether your broker currently trades the product you see there after entering the WKN. Not investment advice.",
+  "Keine Antwort von Onvista – später noch einmal versuchen.": "No answer from Onvista – try again later.",
+  "Erst Basiswert und Hebel eintragen.": "Enter underlying and leverage first.",
+  "Der Zertifikate-Finder braucht die App ab Version #.#.": "The certificate finder needs the app from version #.#.",
+  "Suche Zertifikate …": "Searching certificates …",
+  "# passende Zertifikate.": "# matching certificates.",
+  "# übernommen – Hebel, Knock-out und Preis kommen jetzt aus dem Produkt.": "# applied – leverage, knock-out and price now come from the product.",
+  "WKN # kopiert – beim Broker in die Suche einfügen.": "WKN # copied – paste it into your broker's search.",
+  "Gebühren:": "Fees:",
+  "(beim Ausstieg am Stop-Loss). Börsenplatz-Entgelte, Spread und Kurslücken sind nicht enthalten.": "(on exit at the stop-loss). Exchange fees, spread and price gaps are not included.",
+  "Trade Republic": "Trade Republic",
+  "Scalable Capital": "Scalable Capital",
+  "Smartbroker+": "Smartbroker+",
+  "comdirect": "comdirect",
+  "Consorsbank": "Consorsbank",
+  "ING": "ING",
+  "DKB": "DKB",
+  "flatex": "flatex",
+  "DEGIRO": "DEGIRO",
+  "DB maxblue": "DB maxblue",
+  "S Broker": "S Broker",
+  "1822direkt": "1822direkt",
+  "#direkt": "#direkt",
+  "justTRADE": "justTRADE",
+  "tradegate.direct": "tradegate.direct",
+  "Traders Place": "Traders Place",
+  "Joe Broker": "Joe Broker",
+  "Finanzen invest": "Finanzen invest",
+  "Targobank": "Targobank",
+  "Bitcoin": "Bitcoin",
+  "Depot-Kompass": "Depot-Kompass",
+  "Kraken": "Kraken",
+  "Scalable": "Scalable",
+  "Smartbroker": "Smartbroker",
+  // 0.69: Depot/Watchlist
+  "↔️ In anderes Depot": "↔️ To another portfolio",
+  "↔️ Position verschieben": "↔️ Move position",
+  "Ziel-Depot": "Target portfolio",
+  "Verschieben": "Move",
+  "Abbrechen": "Cancel",
+  "Alle # Buchungen von": "All # transactions of",
+  "Nichts zu verschieben.": "Nothing to move.",
+  "📥 Watchlist importieren": "📥 Import watchlist",
+  "Oder Liste einfügen": "Or paste a list",
+  "Liste übernehmen": "Apply list",
+  "Alle Werte eines Depots übernehmen": "Take over all holdings of a portfolio",
+  "Alle Werte dieses Depots zur Watchlist": "Add all holdings of this portfolio to the watchlist",
+  "📄 Datei wählen": "📄 Choose file",
+  "Datei (CSV, Text, HTML-Tabelle) oder Liste einfügen: je Zeile ein Wert – Name, ISIN, WKN oder Ticker. Doppelte Werte werden übersprungen.": "File (CSV, text, HTML table) or paste a list: one item per line – name, ISIN, WKN or ticker. Duplicates are skipped.",
+  "– gespeicherte Bank- oder Broker-Seite mit Tabelle: die größte Tabelle wird gelesen, Spalten einmal zuordnen": "– saved bank or broker page with a table: the largest table is read, assign the columns once",
+  "In anderes Depot": "To another portfolio",
+  "↪️ Verschieben": "↪️ Move",
+  "Keine neuen Werte gefunden.": "No new items found.",
+  "Datei zu groß.": "File too large.",
+  "# Werte zur Watchlist hinzugefügt – Kurse kommen mit „Kurse & Daten aktualisieren“.": "# items added to the watchlist – prices come with “Update prices & data”.",
+  "Alle Werte dieses Depots stehen schon in der Watchlist.": "All holdings of this portfolio are already on the watchlist.",
+  "HTML ohne Tabelle – bitte die Seite mit der Bestands- oder Umsatztabelle speichern.": "HTML without a table – please save the page with the holdings or transactions table.",
+  "HTML": "HTML",
+  "Siemens DE#": "Siemens DE#", "Siemens DE0007236101": "Siemens DE0007236101",
+  "🎯 Stop-Loss aus deinem Max.-Verlust: Einsatz und Max.-Verlust in Euro eintragen – der Rechner zeigt den passenden Stop-Loss-Kurs und zeichnet ihn ein (z. B. Bitcoin # #×, # €, # € → #). Dazu ein Vergleich für # / # / # €.": "🎯 Stop-loss from your max. loss: enter stake and max. loss in euros – the calculator shows and draws the matching stop-loss price (e.g. Bitcoin 42,000, 5×, €500, €50 → 41,160). Plus a comparison for 50 / 75 / 100 €.",
+  "🎯 Zertifikate rechnen wie echt: Basispreis, Bezugsverhältnis, Preis je Zertifikat, Spread, Ordergebühr und Finanzierung – mit Stückzahl. Mini-Future mit Schwelle und Restwert.": "🎯 Certificates calculated like the real thing: strike, ratio, price per certificate, spread, order fee and financing – with quantity. Mini future with barrier and residual value.",
+  "🔍 Zertifikate-Finder: Broker wählen, Long/Short, Wunsch-Hebel ± Spanne – echte Produkte von Onvista mit WKN/ISIN, ein Tipp übernimmt sie in den Rechner.": "🔍 Certificate finder: choose broker, long/short, target leverage ± range – real products from Onvista with WKN/ISIN, one tap takes them into the calculator.",
+  "📊 Gewinn und Verlust immer in Euro und Prozent, Kacheln für Einstieg, Hebel, Stop-Loss, Take-Profit; im Chart Stop-Loss/Take-Profit mit dem Finger ziehen.": "📊 Profit and loss always in euros and percent, tiles for entry, leverage, stop-loss, take-profit; drag stop-loss/take-profit in the chart with your finger.",
+  "📷 Analyse als Bild teilen: Chart, Zahlen, Einstiegsbedingung und Notiz als PNG.": "📷 Share an analysis as an image: chart, figures, entry condition and note as PNG.",
+  "🧮 Notizen: Rechner jetzt als Reiter oben, gespeicherte Notizen darunter.": "🧮 Notes: calculators now as tabs at the top, saved notes below.",
+  "↔️ Position in ein anderes Depot verschieben · 📥 Watchlist importieren (Liste, CSV, HTML) oder alle Werte eines Depots übernehmen · HTML-Tabellen importieren.": "↔️ Move a position to another portfolio · 📥 import a watchlist (list, CSV, HTML) or take over all holdings of a portfolio · import HTML tables.",
+  "Jetzt #": "Now #",
+  "bis Einstieg # %": "to entry # %",
+  "Jetzt # · bis Einstieg # %": "Now # · to entry # %",
+  // 0.69: Positionsgroesse mit Hebel, Tranchen-Plan
+  "Hebel (optional, leer = ohne)": "Leverage (optional, empty = none)",
+  "# Stück · Hebel #×": "# pcs. · leverage #×",
+  "Dein Einsatz (Marge)": "Your stake (margin)",
+  "Position ÷ Hebel": "Position ÷ leverage",
+  "Position ÷ Hebel · Knock-out ca. # €": "Position ÷ leverage · knock-out approx. # €",
+  "Position ÷ Hebel · Knock-out ca. # $": "Position ÷ leverage · knock-out approx. # $",
+  "Stop-Loss # % entfernt": "Stop-loss # % away",
+  "Stop-Loss # % entfernt · % vom Einsatz": "Stop-loss # % away · % of stake",
+  "Gewinn am Ziel": "Profit at target",
+  "Ziel # % entfernt": "Target # % away",
+  "Ziel eintragen": "Enter a target",
+  "⚠ Mit #× Hebel liegt der Knock-out (ca. # €) vor deinem Stop-Loss – die Position wäre vorher weg. Hebel senken oder Stop-Loss enger.": "⚠ With #× leverage the knock-out (approx. # €) comes before your stop-loss – the position would be gone first. Lower the leverage or tighten the stop-loss.",
+  "⚠ Mit #× Hebel liegt der Knock-out (ca. # $) vor deinem Stop-Loss – die Position wäre vorher weg. Hebel senken oder Stop-Loss enger.": "⚠ With #× leverage the knock-out (approx. # $) comes before your stop-loss – the position would be gone first. Lower the leverage or tighten the stop-loss.",
+  "Mit Hebel: Positionsgröße und Verlust in Euro bleiben gleich – du bindest nur weniger Geld (Einsatz), dafür sind die Prozente auf den Einsatz größer. Knock-out vereinfacht ohne Gebühren und Finanzierung; Zertifikate genauer im Reiter 🎯 Derivate.": "With leverage: position size and loss in euros stay the same – you only tie up less money (stake), so the percentages on the stake are larger. Knock-out simplified without fees and financing; certificates in more detail in the 🎯 Derivatives tab.",
+  "📉 Mehrere Tranchen planen": "📉 Plan several tranches",
+  "Bis zu 5 Einstiege mit eigenem Kurs und Betrag – dazu Bestand und Ø Einstand von oben (wenn eingetragen).": "Up to 5 entries with their own price and amount – plus holding and average cost from above (if entered).",
+  "Tranche #: Kurs €": "Tranche #: price €",
+  "Tranche #: Kurs $": "Tranche #: price $",
+  "Betrag €": "Amount €",
+  "Betrag $": "Amount $",
+  "Tranche": "Tranche",
+  "Kurs": "Price",
+  "Betrag": "Amount",
+  "Stück": "Pcs.",
+  "Ø danach": "Avg. after",
+  "Ø Einstand gesamt": "Avg. cost total",
+  "Gesamtposition": "Total position",
+  "Wert zum Ø # €": "Value at avg. # €",
+  "Wert zum Ø # $": "Value at avg. # $",
+  "Gesamtkapital": "Total capital",
+  "davon neu # €": "of which new # €",
+  "davon neu # $": "of which new # $",
+  "Zum Kurs jetzt": "At current price",
+  "Am Ziel-Ausstieg (C)": "At target exit (C)",
+  "Gebühren % je Order beim Kauf und Verkauf berücksichtigt (wenn eingeschaltet). Ohne Steuern. Keine Anlageberatung.": "Fees % per order on buy and sell included (if switched on). Without taxes. Not investment advice.",
+  "Mindestens eine Tranche mit Kurs und Betrag eintragen.": "Enter at least one tranche with price and amount.",
+  "z. B. 250": "e.g. 250",
+  "Depotart (optional)": "Portfolio type (optional)",
+  "– keine Angabe –": "– not specified –",
+  "🏦 Langfristig investieren": "🏦 Long-term investing",
+  "🌊 Swingtrading": "🌊 Swing trading",
+  "⚡ Daytrading": "⚡ Day trading",
+  "🏠 Privates Vermögen": "🏠 Private assets",
+  "🎯 Hebelprodukte": "🎯 Leveraged products",
+  "⚖️ Positionsgröße jetzt mit Hebel, 📉 mehrere Tranchen planen, 🎯 Hebelprodukte direkt aus Position und Watchlist, Depotart je Depot.": "⚖️ Position size now with leverage, 📉 plan several tranches, 🎯 leveraged products straight from position and watchlist, portfolio type per portfolio.",
+  "📥 Alte Depot-Zusammenfassung (HTML) einlesen – Bestand mit Stückzahl und Ticker oder als Watchlist.": "📥 Read an old portfolio summary (HTML) – holdings with quantity and ticker or as a watchlist.",
+  // 0.69: Stop -> Stop-Loss im Positionsgroessen-Rechner
+  "mit Stop-Loss": "with stop-loss",
+  "⚖️ Positionsgrößen-Rechner (fester Verlust am Stop-Loss)": "⚖️ Position size calculator (fixed loss at the stop-loss)",
+  "Gleiches Risiko, anderer Stop-Loss-Abstand": "Same risk, different stop-loss distance",
+  "Enger Stop-Loss = größere Position, weiter Stop-Loss = kleinere – der Verlust am Stop-Loss bleibt gleich. Ohne Slippage und Kurslücken; der echte Verlust kann größer sein.": "Tight stop-loss = larger position, wide stop-loss = smaller – the loss at the stop-loss stays the same. Without slippage and gaps; the real loss can be larger.",
+  "Dein Stop-Loss liegt innerhalb einer normalen Wochenbewegung – er kann leicht ausgelöst werden.": "Your stop-loss is within a normal weekly move – it can be triggered easily.",
+  "Dein Stop-Loss liegt außerhalb einer normalen Wochenbewegung.": "Your stop-loss is outside a normal weekly move.",
+  "Long: Der Stop-Loss muss unter dem Einstieg liegen.": "Long: the stop-loss must be below the entry.",
+  "⚠ Die Position wäre größer als dein Kapital – nur mit Hebel möglich oder Stop-Loss weiter setzen.": "⚠ The position would be larger than your capital – only possible with leverage, or set a wider stop-loss.",
+  "Im Chart: grün = Ziel, gestrichelt = Stop-Loss, rot = Knock-out.": "In the chart: green = target, dashed = stop-loss, red = knock-out.",
+  "Ergebnis: so viele Stück darfst du kaufen, damit am Stop-Loss genau dieser Verlust entsteht.": "Result: this many units you may buy so that exactly this loss occurs at the stop-loss.",
+  "# : # heißt: am Ziel gewinnst du doppelt so viel, wie du am Stop-Loss verlierst.": "# : # means: at the target you win twice as much as you lose at the stop-loss.",
+  "Im Chart: grün = Ziel und Gewinnzone, rot = Stop-Loss und Verlustzone, die Linie = Kursverlauf (wenn gewählt).": "In the chart: green = target and profit zone, red = stop-loss and loss zone, the line = price history (if selected).",
+  "z. B. Kaufzone, Stop-Loss, Ziel 1, Nachkauf 2": "e.g. buy zone, stop-loss, target 1, top-up 2",
+  "Noch keine Alarme. Unten rechts auf + tippen: Wert wählen, Namen geben (z. B. „Kaufzone“, „Stop-Loss“, „Ziel 1“) und Marke, Zone oder Bewegung in % festlegen. Pro Wert gehen beliebig viele Alarme.": "No alerts yet. Tap + at the bottom right: choose an asset, give it a name (e.g. “buy zone”, “stop-loss”, “target 1”) and set a mark, zone or move in %. Any number of alerts per asset.",
+  "⚖️ Neu: „Positionsgröße vorgeben“, z. B. # € oder # € – der Rechner zeigt den Verlust am Stop-Loss inklusive Gebühren.": "⚖️ New: “set position size”, e.g. # € or # € – the calculator shows the loss at the stop-loss including fees.",
+  "Hier rechnest du Hebelprodukte durch: Basiswert suchen, Richtung, Hebel und Einstieg – der Chart zeigt Knock-out, Stop-Loss und Ziel. Als Notiz speichern geht auch.": "Work through leveraged products here: search the underlying, direction, leverage and entry – the chart shows knock-out, stop-loss and target. You can save it as a note too.",
+  "Stop-Loss # (# %)": "Stop-loss # (# %)",
+  "Stop-Loss #": "Stop-loss #",
+  "Verlust am Stop-Loss": "Loss at stop-loss",
+  "Stop-Loss # % entfernt": "Stop-loss # % away",
+  // 0.70: Kontakt ueber Discord-Ticket
+  "Fällt dir ein Fehler auf oder hast du eine Idee? Öffne auf unserem Discord ein Ticket:": "Found a bug or have an idea? Open a ticket on our Discord:",
+  "⚠️ Wir schreiben dich nie von uns aus privat an und fragen nie nach Geld oder Zugangsdaten.": "⚠️ We never message you privately first and never ask for money or login data.",
+  "Diese App ist in der Alpha-Phase. Sollte dir ein Fehler auffallen oder sonst etwas: öffne auf unserem Discord ein Ticket – dort antwortet nur das Team.": "This app is in the alpha phase. If you notice a bug or anything else: open a ticket on our Discord – only the team answers there.",
+  "💬 Discord-Ticket öffnen": "💬 Open a Discord ticket",
+  "📋 Fehlercodes kopieren": "📋 Copy error codes",
+  "💬 Discord-Ticket öffnen und einfügen": "💬 Open a Discord ticket and paste",
+  "Kopiert nur die Fehlercodes (ohne Beträge) – du fügst sie selbst im Ticket ein und entscheidest, was du schickst.": "Copies only the error codes (no amounts) – you paste them into the ticket yourself and decide what you send.",
+  "discord.gg/wFvFpeKpm": "discord.gg/wFvFpeKpm",
+  "Diese App ist in der": "This app is in the",
+  "Alpha-Phase": "alpha phase",
+  ". Sollte dir ein Fehler auffallen oder sonst etwas: öffne auf unserem Discord ein Ticket – dort antwortet nur das Team.": ". If you notice a bug or anything else: open a ticket on our Discord – only the team answers there.",
+  ". Fällt dir ein Fehler auf oder hast du eine Idee? Öffne auf unserem Discord ein Ticket:": ". Found a bug or have an idea? Open a ticket on our Discord:",
+});
+// ---------------------------------------------------------------- 0.70: Zeitraum im Hebel-Chart, Bild speichern
+Object.assign(UEB.en, {
+  "Lade Kurse …": "Loading prices …",
+  "Keine Kurse für diesen Zeitraum – es bleiben die gespeicherten Wochenkurse.": "No prices for this period – keeping the saved weekly prices.",
+  "Bild gespeichert: Bilder › Depot-Kompass": "Image saved: Pictures › Depot-Kompass",
+  "Teilen ging nicht – Bild liegt in Bilder › Depot-Kompass.": "Sharing failed – the image is in Pictures › Depot-Kompass.",
+});
+UEB_MUSTER.en.push([/^Linie: (.+), (\S+) – (\S+) \(Tageskurse, (\d+) Kurse\) · Hoch (\S+) · Tief (\S+)\.$/, "Line: $1, $2 – $3 (daily prices, $4 prices) · high $5 · low $6."]);
+UEB_MUSTER.en.push([/^Linie: (.+), (\S+) – (\S+) \(Wochenkurse, (\d+) Kurse\) · Hoch (\S+) · Tief (\S+)\.$/, "Line: $1, $2 – $3 (weekly prices, $4 prices) · high $5 · low $6."]);
+UEB_MUSTER.en.push([/^Linie: (.+), (\S+) – (\S+) \(Wochenkurse, gespeichert, (\d+) Kurse\) · Hoch (\S+) · Tief (\S+)\.$/, "Line: $1, $2 – $3 (weekly prices, saved, $4 prices) · high $5 · low $6."]);
+Object.assign(UEB.en, {
+  "📈 Hebel-Chart: Zeitraum wählbar – 1M, 3M, 6M, 1J (Tageskurse) und 5J (Wochenkurse). Mit Datum, Hoch und Tief im Zeitraum, damit Support-Zonen besser sichtbar sind.":
+    "📈 Leverage chart: choose the period – 1M, 3M, 6M, 1Y (daily prices) and 5Y (weekly prices). With dates, high and low of the period, so support zones are easier to see.",
+  "📷 Als Bild teilen: Das Bild wird zusätzlich in Bilder › Depot-Kompass gespeichert (Android 10+).": "📷 Share as image: the image is also saved to Pictures › Depot-Kompass (Android 10+).",
+  "🎫 Kontakt und Fehler melden jetzt über ein Ticket auf unserem Discord. „Stop“ heißt im Positionsgrößen-Rechner jetzt Stop-Loss.":
+    "🎫 Contact and bug reports now via a ticket on our Discord. In the position size calculator “stop” is now called stop-loss.",
+});
+Object.assign(UEB.en, {
+  "📈 Zeitraum 1M bis 5J jetzt auch im Positions-Chart des Positionsgrößen-Rechners (mit Datum, Hoch und Tief).":
+    "📈 Period 1M to 5Y now also in the position chart of the position size calculator (with dates, high and low).",
+});
+// ---------------------------------------------------------------- 0.73: Suche nach Art, weitere Derivate, Optionen
+Object.assign(UEB.en, {
+  "Knock-out-Zertifikat / Turbo (Trade Republic, Scalable, Smartbroker …)": "Knock-out certificate / turbo (Trade Republic, Scalable, Smartbroker …)",
+  "Faktor-Zertifikat (open end, fester Tageshebel)": "Factor certificate (open end, fixed daily leverage)",
+  "Perp – Kraken Futures (open end, EU höchstens 10×)": "Perp – Kraken Futures (open end, EU max. 10×)",
+  "Perp – Hyperliquid (open end)": "Perp – Hyperliquid (open end)",
+  "Optionsschein (mit Laufzeit)": "Warrant (with expiry)", "Option (Börse, mit Laufzeit, Kontrakt)": "Option (exchange, with expiry, contract)",
+  "Future (mit Laufzeit, z. B. Eurex/CME)": "Future (with expiry, e.g. Eurex/CME)",
+  "Index": "Index", "Rohstoff": "Commodity", "ETF/Fonds": "ETF/fund", "Rohstoff (Future)": "Commodity (future)",
+  "Nasdaq 100": "Nasdaq 100", "Nasdaq Composite": "Nasdaq Composite", "S&P 500": "S&P 500", "Dow Jones Industrial": "Dow Jones Industrial", "Russell 2000": "Russell 2000",
+  "DAX 40": "DAX 40", "MDAX": "MDAX", "TecDAX": "TecDAX", "Euro Stoxx 50": "Euro Stoxx 50", "FTSE 100": "FTSE 100", "Nikkei 225": "Nikkei 225", "Hang Seng": "Hang Seng", "CAC 40": "CAC 40",
+  "VIX (Volatilität)": "VIX (volatility)", "Gold (Future)": "Gold (future)", "Silber (Future)": "Silver (future)", "Öl Brent (Future)": "Oil Brent (future)",
+  "Öl WTI (Future)": "Oil WTI (future)", "Erdgas (Future)": "Natural gas (future)", "Kupfer (Future)": "Copper (future)", "Platin (Future)": "Platinum (future)",
+  "Nichts gefunden – andere Art wählen oder „Alle“.": "Nothing found – pick another type or “All”.",
+  "Call (steigt)": "Call (rises)", "Put (fällt)": "Put (falls)", "Call": "Call", "Put": "Put",
+  "Basiswert-Kurs jetzt": "Underlying price now", "Basispreis (Strike)": "Strike", "Prämie je Aktie €": "Premium per share €", "Kontraktgröße": "Contract size",
+  "Preis je Schein € (Brief)": "Price per warrant € (ask)", "Verfall": "Expiry", "Verfall (optional)": "Expiry (optional)", "Take-Profit (Basiswert)": "Take profit (underlying)",
+  "Einsatz € (was du bezahlst)": "Stake € (what you pay)",
+  "Option: an der Börse (z. B. Eurex), 1 Kontrakt = meist 100 Aktien. Prämie je Aktie steht beim Broker. Mit Laufzeit – am Verfall zählt nur der innere Wert.":
+    "Option: traded on an exchange (e.g. Eurex), 1 contract = usually 100 shares. Your broker shows the premium per share. With expiry – at expiry only the intrinsic value counts.",
+  "Optionsschein: vom Emittenten, Preis und Bezugsverhältnis stehen im Produktblatt. Mit Laufzeit – am Verfall zählt nur der innere Wert.":
+    "Warrant: issued by a bank, price and ratio are in the product sheet. With expiry – at expiry only the intrinsic value counts.",
+  "Future: mit Laufzeit – vor dem Verfall musst du ihn schließen oder in den nächsten Monat rollen (kostet). Margin und Gebühren stehen bei deiner Börse bzw. deinem Broker.":
+    "Future: with expiry – before it expires you have to close it or roll it into the next month (costs money). Margin and fees are shown by your exchange or broker.",
+  "Faktor-Zertifikat: ohne Laufzeit, fester Hebel je Tag (z. B. Faktor 3). Kein klassischer Knock-out – der Rechner zeigt die rechnerische Totalverlust-Grenze ohne Tages-Reset.":
+    "Factor certificate: no expiry, fixed leverage per day (e.g. factor 3). No classic knock-out – the calculator shows the arithmetic total-loss level without the daily reset.",
+  "Faktor-Zertifikat vereinfacht wie ein fester Hebel: Der Emittent stellt den Hebel täglich neu ein – bei Seitwärts- und Zickzack-Kursen verlierst du dadurch zusätzlich (Pfadabhängigkeit). Statt Knock-out schützt meist eine Reset-Schwelle vor dem Totalverlust an einem Tag.":
+    "Factor certificate simplified as fixed leverage: the issuer resets the leverage every day – in sideways and choppy markets you lose extra because of that (path dependency). Instead of a knock-out, a reset barrier usually prevents a total loss within one day.",
+  "Totalverlust-Grenze (vereinfacht)": "Total-loss level (simplified)",
+  "Basiswert-Kurs, Basispreis und Preis (Prämie) eintragen.": "Enter underlying price, strike and price (premium).",
+  "Option: gerechnet wird nur der Wert am Verfall (innerer Wert). Vor dem Verfall hängt der Preis zusätzlich von Volatilität und Restlaufzeit ab (Zeitwert) – den echten Preis zeigt der Emittent bzw. die Börse. Verlieren kannst du höchstens, was du bezahlt hast. Optionen verkaufen (Stillhalter) rechnet die App nicht. Keine Anlageberatung.":
+    "Option: only the value at expiry is calculated (intrinsic value). Before expiry the price also depends on volatility and time left (time value) – the real price is shown by the issuer or exchange. You can lose at most what you paid. Selling options (writing) is not calculated. Not investment advice.",
+  "Optionsschein: gerechnet wird nur der Wert am Verfall (innerer Wert). Vor dem Verfall hängt der Preis zusätzlich von Volatilität und Restlaufzeit ab (Zeitwert) – den echten Preis zeigt der Emittent bzw. die Börse. Verlieren kannst du höchstens, was du bezahlt hast. Optionen verkaufen (Stillhalter) rechnet die App nicht. Keine Anlageberatung.":
+    "Warrant: only the value at expiry is calculated (intrinsic value). Before expiry the price also depends on volatility and time left (time value) – the real price is shown by the issuer or exchange. You can lose at most what you paid. Selling options (writing) is not calculated. Not investment advice.",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was dein Optionsschein AM VERFALL wert ist (nur innerer Wert, mit Gebühren). Vorher kommt Zeitwert dazu. TP lässt sich mit dem Finger verschieben.":
+    "Top: price of the underlying (distance in %). Below: what your warrant is worth AT EXPIRY (intrinsic value only, with fees). Before that, time value is added. Drag TP with your finger.",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was dein Options-Kontrakt AM VERFALL wert ist (nur innerer Wert, mit Gebühren). Vorher kommt Zeitwert dazu. TP lässt sich mit dem Finger verschieben.":
+    "Top: price of the underlying (distance in %). Below: what your option contract is worth AT EXPIRY (intrinsic value only, with fees). Before that, time value is added. Drag TP with your finger.",
+  "Basiswert jetzt": "Underlying now", "Call – gewinnt, wenn er steigt": "Call – gains when it rises", "Put – gewinnt, wenn er fällt": "Put – gains when it falls",
+  "# % · im Geld": "# % · in the money", "# % · aus dem Geld": "# % · out of the money", "Break-even am Verfall": "Break-even at expiry", "# % Basiswert nötig": "# % underlying needed",
+  "Prämie je Kontrakt": "Premium per contract", "Preis je Schein": "Price per warrant", "# × # €": "# × # €", "Bezugsverhältnis #": "Ratio #",
+  "Ergebnis am Take-Profit": "Result at take profit", "am Verfall": "at expiry", "Höchster Verlust": "Maximum loss", "# € · # %": "# € · # %", "−100 %": "−100 %",
+  "Prämie + Gebühren – mehr nicht": "Premium + fees – no more", "Kontrakte": "Contracts", "Restlaufzeit": "Time to expiry", "abgelaufen": "expired",
+  "Der Einsatz reicht nicht für einen ganzen Kontrakt.": "The stake is not enough for a whole contract.", "Der Einsatz reicht nicht für einen ganzen Schein.": "The stake is not enough for a whole warrant.",
+  "Weniger als 30 Tage bis zum Verfall: Der Zeitwert schmilzt jetzt besonders schnell.": "Less than 30 days to expiry: time value now melts especially fast.",
+  "Aus dem Geld: Bleibt der Basiswert bis zum Verfall unter dem Basispreis, ist alles weg.": "Out of the money: if the underlying stays below the strike until expiry, everything is lost.",
+  "Aus dem Geld: Bleibt der Basiswert bis zum Verfall über dem Basispreis, ist alles weg.": "Out of the money: if the underlying stays above the strike until expiry, everything is lost.",
+  "Call · im Geld": "Call · in the money", "Call · aus dem Geld": "Call · out of the money", "Put · im Geld": "Put · in the money", "Put · aus dem Geld": "Put · out of the money",
+  "darunter wertlos am Verfall": "worthless below at expiry", "darüber wertlos am Verfall": "worthless above at expiry",
+  "Basispreis # (# %)": "Strike # (# %)", "BE # (# %)": "BE # (# %)", "Basispreis #": "Strike #",
+});
+Object.assign(UEB.en, {
+  "🔎 Basiswert-Suche nach Art: oben Index, Aktie, ETF, Krypto oder Rohstoff antippen – z. B. „Nasdaq“ zeigt sofort Nasdaq 100 und Nasdaq Composite.":
+    "🔎 Search the underlying by type: tap index, share, ETF, crypto or commodity at the top – e.g. “Nasdaq” shows Nasdaq 100 and Nasdaq Composite right away.",
+  "🎯 Knock-out-Zertifikat steht jetzt ganz oben. Neu: Faktor-Zertifikat, Optionsschein, Option und Future – Produkte ohne Laufzeit zuerst.":
+    "🎯 Knock-out certificate is now at the top. New: factor certificate, warrant, option and future – products without expiry first.",
+  "📐 Optionen/Optionsscheine: Call oder Put, Basispreis, Prämie, Verfall – Break-even, Ergebnis am Take-Profit und höchster Verlust (am Verfall).":
+    "📐 Options/warrants: call or put, strike, premium, expiry – break-even, result at take profit and maximum loss (at expiry).",
+});
+// ---------------------------------------------------------------- 0.74: Discount-Zertifikat, Mini-Future vs. Future
+Object.assign(UEB.en, {
+  "Discount-Zertifikat (mit Laufzeit, Abschlag + Cap)": "Discount certificate (with expiry, discount + cap)",
+  "Cap (Höchstbetrag)": "Cap (maximum amount)", "Preis je Zertifikat € (Brief)": "Price per certificate € (ask)", "Discount": "Discount",
+  "Discount-Zertifikat: du kaufst den Basiswert mit Abschlag, der Ertrag ist beim Cap gedeckelt. Mit Laufzeit – Preis, Cap und Bezugsverhältnis stehen im Produktblatt.":
+    "Discount certificate: you buy the underlying at a discount, the return is capped at the cap. With expiry – price, cap and ratio are in the product sheet.",
+  "Discount – günstiger als direkt kaufen": "Discount – cheaper than buying directly", "# % · darüber kein Mehrgewinn": "# % · no extra gain above",
+  "Abschlag (Discount)": "Discount", "gegenüber dem Basiswert": "versus the underlying", "Puffer # % Basiswert": "Buffer # % underlying",
+  "Preis je Zertifikat": "Price per certificate", "Höchster Ertrag": "Maximum return", "wenn der Basiswert am Verfall auf/über dem Cap steht": "if the underlying is at/above the cap at expiry",
+  "nur wenn der Basiswert auf 0 fällt": "only if the underlying falls to 0",
+  "Der Basiswert steht schon über dem Cap: mehr als der höchste Ertrag ist nicht drin.": "The underlying is already above the cap: you cannot earn more than the maximum return.",
+  "Discount-Zertifikat: gerechnet wird der Wert am Verfall – Basiswert bis höchstens zum Cap, mal Bezugsverhältnis. Du kaufst mit Abschlag (Puffer nach unten), dafür ist der Gewinn beim Cap gedeckelt. Vor dem Verfall schwankt der Preis mit Volatilität und Restlaufzeit. Kein Knock-out, aber Emittentenrisiko. Keine Anlageberatung.":
+    "Discount certificate: the value at expiry is calculated – underlying up to the cap at most, times the ratio. You buy at a discount (buffer to the downside), in return the gain is capped. Before expiry the price moves with volatility and time left. No knock-out, but issuer risk. Not investment advice.",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was dein Discount-Zertifikat AM VERFALL bringt (mit Gebühren). Über dem Cap bleibt der Ertrag gleich. TP lässt sich mit dem Finger verschieben.":
+    "Top: price of the underlying (distance in %). Below: what your discount certificate returns AT EXPIRY (with fees). Above the cap the return stays the same. Drag TP with your finger.",
+  "darüber kein Mehrgewinn": "no extra gain above", "Abschlag # %": "Discount # %", "Cap # (# %)": "Cap # (# %)", "Cap #": "Cap #",
+  "Mini-Future: ohne Laufzeit (anders als ein Future) – du kannst jederzeit zum aktuellen Kurs verkaufen, es gibt keinen Verfall. Knock-out-Schwelle und Basispreis werden täglich um die Finanzierungskosten angepasst.":
+    "Mini future: no expiry (unlike a future) – you can sell at the current price at any time, there is no expiry date. Knock-out barrier and strike are adjusted daily by the financing costs.",
+});
+Object.assign(UEB.en, {
+  "Mini-Future: ohne Laufzeit (anders als ein Future) – du kannst jederzeit zum aktuellen Kurs verkaufen, es gibt keinen Verfall. Knock-out-Schwelle und Basispreis werden täglich um die Finanzierungskosten angepasst. Preis je Zertifikat reicht – das Bezugsverhältnis rechnet der Rechner dann selbst (auch bei Dollar-Basiswerten).":
+    "Mini future: no expiry (unlike a future) – you can sell at the current price at any time, there is no expiry date. Knock-out barrier and strike are adjusted daily by the financing costs. The price per certificate is enough – the calculator then works out the ratio itself (also for dollar underlyings).",
+});
+Object.assign(UEB.en, {
+  "🎯 Neu im Derivate-Rechner: Discount-Zertifikat – Abschlag, Cap, Break-even, höchster Ertrag (Seitwärtsrendite) und Ergebnis am Verfall.":
+    "🎯 New in the derivatives calculator: discount certificate – discount, cap, break-even, maximum return (sideways return) and result at expiry.",
+  "ℹ️ Mini-Future erklärt: ohne Laufzeit, jederzeit verkaufbar – anders als ein Future mit festem Verfall.":
+    "ℹ️ Mini future explained: no expiry, can be sold any time – unlike a future with a fixed expiry date.",
+});
+// ---------------------------------------------------------------- 0.75: Kalender mit Zinsen, Staking, ETF-Ausschuettung
+Object.assign(UEB.en, {
+  "Zinsen": "Interest", "Staking-Ertrag": "Staking reward", "Ausschüttung": "Distribution", "Zinsen aufs Konto": "Interest on your account",
+  "# Stück · Staking – zählt als Ertrag": "# units · staking – counts as income", "# Stück · Reward – zählt als Ertrag": "# units · reward – counts as income",
+  "📅 Kalender: ETF-Ausschüttungen heißen jetzt so, dazu Zinsen aufs Konto und Staking-/Reward-Erträge (Krypto) am Tag der Gutschrift.":
+    "📅 Calendar: ETF distributions are now labelled as such, plus interest on your account and staking/reward income (crypto) on the day it is credited.",
+});
+Object.assign(UEB.en, {
+  "⚠️ Vorsicht vor Betrügern": "⚠️ Beware of scammers",
+  "Niemand vom Depot-Kompass-Team fragt dich jemals nach deiner Seed-Phrase (Wiederherstellungs-Wörter), Passwörtern, PIN, Zwei-Faktor-Codes oder Ausweisfotos.":
+    "Nobody from the Depot-Kompass team will ever ask you for your seed phrase (recovery words), passwords, PIN, two-factor codes or ID photos.",
+  "Unser Team schreibt dich nie von sich aus an – nicht per Direktnachricht, Mail, Telefon oder SMS.":
+    "Our team never contacts you first – not by direct message, email, phone or text message.",
+  "Kontakt gibt es nur über unseren Discord-Server (Ticket). Wer dich anders anschreibt und sich als Team ausgibt, ist ein Betrüger.":
+    "Contact is only through our Discord server (ticket). Anyone who writes to you any other way pretending to be the team is a scammer.",
+  "Die App braucht keine Zugangsdaten zu Broker oder Wallet – passt auf eure Daten auf!":
+    "The app never needs login details for your broker or wallet – protect your data!",
+  "PIN, Sicherungs-Passwort oder API-Schlüssel,": "PIN, backup password or API key,",
+  "deine Seed-Phrase (Wiederherstellungs-Wörter) – niemals, an niemanden.": "your seed phrase (recovery words) – never, to anyone.",
+  "⚠️ Vorsicht vor Betrügern: Unser Team fragt nie nach Seed-Phrase, Passwort oder PIN und schreibt dich nie von sich aus an. Kontakt nur über unseren Discord-Server – Hinweis jetzt unter Fehler melden und Sicherheit.":
+    "⚠️ Beware of scammers: our team never asks for your seed phrase, password or PIN and never contacts you first. Contact only through our Discord server – the notice is now under Report a bug and Security.",
+});
+Object.assign(UEB.en, {
+  "🪙 Spot ohne Hebel: Kraken, Bitvavo, Binance und Bitunix – z. B. BTC/CAD nachrechnen, Gebühr als Vorgabe änderbar.":
+    "🪙 Spot without leverage: Kraken, Bitvavo, Binance and Bitunix – e.g. calculate BTC/CAD, fee as an editable default.",
+  "📈 Neue Perps: Binance Futures und Bitunix Futures, Wartungsmarge und Gebühr änderbar. Währung für Einsatz und Ergebnis wählbar (EUR, USD, CAD, CHF, GBP, USDT, USDC).":
+    "📈 New perps: Binance Futures and Bitunix Futures, maintenance margin and fee editable. Currency for stake and result selectable (EUR, USD, CAD, CHF, GBP, USDT, USDC).",
+  "👁️ Beträge aus gilt jetzt auch im Chart (graue Punkte statt Euro) und für die Stückzahl. Unter dem Chart: Zeitachse und wann Hoch und Tief waren.":
+    "👁️ Hide amounts now also applies to the chart (grey dots instead of euros) and to the quantity. Below the chart: time axis and when the high and low were.",
+  "Währung für Einsatz und Ergebnis":
+    "Currency for stake and result",
+  "Kaufkurs":
+    "Purchase price",
+  "Gebühr % je Seite":
+    "Fee % per side",
+  "ohne Stop-Loss":
+    "without stop-loss",
+  "Einsatz € (was du kaufst)":
+    "Stake € (what you buy)",
+  "1× (Spot)":
+    "1× (spot)",
+  "ohne Hebel, kein Knock-out":
+    "no leverage, no knock-out",
+  "Gebühr je Seite":
+    "Fee per side",
+  "Vorgabe – beim Broker prüfen":
+    "Default – check with your broker",
+  "Risiko: bis der Kurs auf 0 fällt":
+    "Risk: until the price falls to 0",
+  "bis auf 0":
+    "down to 0",
+  "Spot – Kraken (ohne Hebel, z. B. BTC/EUR, BTC/CAD)":
+    "Spot – Kraken (no leverage, e.g. BTC/EUR, BTC/CAD)",
+  "Spot – Bitvavo (ohne Hebel)":
+    "Spot – Bitvavo (no leverage)",
+  "Spot – Binance (ohne Hebel)":
+    "Spot – Binance (no leverage)",
+  "Spot – Bitunix (ohne Hebel)":
+    "Spot – Bitunix (no leverage)",
+  "Wartungsmarge und Gebühr sind Vorgaben für die kleinste Stufe – die genauen Werte zeigt die Börse (Margin-Stufen, Gebührenseite). In der EU sind manche Perps für Privatkunden nicht erhältlich.":
+    "Maintenance margin and fee are defaults for the lowest tier – the exact values are shown by the exchange (margin tiers, fee page). In the EU some perps are not available to retail clients.",
+});
+Object.assign(UEB.en, {
+  "Perp – Binance Futures (USDⓈ-M, open end)": "Perp – Binance Futures (USDⓈ-M, open end)",
+  "Perp – Bitunix Futures (open end)": "Perp – Bitunix Futures (open end)",
+  "Perp – Binance Futures": "Perp – Binance Futures", "Perp – Bitunix Futures": "Perp – Bitunix Futures",
+  "1W": "1W",
+});
+Object.assign(UEB.en, {
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was das für dein Produkt heißt (mit Hebel und Kosten) – mit Einsatz auch in Euro. Einstieg, SL und TP lassen sich mit dem Finger verschieben.": "Top: price of the underlying (distance in %). Below: what it means for your product (with leverage and costs) – with a stake also in euros. Entry, SL and TP can be moved with your finger.",
+  "Oben: Kurs des Basiswerts (Abstand in %). Darunter: was das für dein Produkt heißt (mit Hebel und Kosten). Einstieg, SL und TP lassen sich mit dem Finger verschieben.": "Top: price of the underlying (distance in %). Below: what it means for your product (with leverage and costs). Entry, SL and TP can be moved with your finger.",
+});
+Object.assign(UEB.en, {
+  "Währung der Rechner": "Calculator currency", "€ Euro": "€ euro", "$ Dollar": "$ dollar", "CA$ Kanada": "CA$ Canada", "£ Pfund": "£ pound",
+  "Damit starten die Rechner (Hebel, Positionsgröße, Tranchen, Gewinnmitnahme). Im Rechner selbst kannst du sie jederzeit umstellen. Positionsgröße, Tranchen und Gewinnmitnahme kennen Euro und Dollar – andere Währungen rechnen dort wie Dollar ohne Umrechnung in Euro. Dein Depot bleibt in Euro.":
+    "The calculators start with this (leverage, position size, tranches, profit taking). You can switch it in each calculator at any time. Position size, tranches and profit taking know euro and dollar – other currencies work there like dollar without conversion to euro. Your portfolio stays in euro.",
+});
+Object.assign(UEB.en, {
+  "🕯️ Chart mit Kerzen und Volumen, neue Wochenansicht 1W, 5J zeigt Jahre, 1J Monate. Preisskala links, Einstieg lässt sich wie SL und TP mit dem Finger ziehen.":
+    "🕯️ Chart with candles and volume, new week view 1W, 5Y shows years, 1Y months. Price scale on the left, entry can be dragged with the finger like SL and TP.",
+  "💱 Neu in den Einstellungen: „Währung der Rechner“ (EUR, USD, CAD, CHF, GBP, USDT) – damit starten alle Rechner. Bei „Beträge aus + Kurse“ verbirgt der Hebel-Chart auch die Kurse.":
+    "💱 New in settings: “Calculator currency” (EUR, USD, CAD, CHF, GBP, USDT) – all calculators start with it. With “hide amounts + prices” the leverage chart also hides the prices.",
+});
+Object.assign(UEB.en, {
+  "Lizenz": "License",
+  "– PolyForm Noncommercial 1.0.0: Der Code ist offen, private und nicht-kommerzielle Nutzung ist frei. Kommerzielle Nutzung nur mit Erlaubnis des Teams.":
+    "– PolyForm Noncommercial 1.0.0: the source code is open, personal and other noncommercial use is free. Commercial use only with permission from the team.",
+});
+
+// ---- 0.78: Krypto-Markt (Long/Short, Open Interest, Fibonacci 4h), Binance-Import, Depot-Anzeige in US-Dollar, CNN-Link
+Object.assign(UEB.en, {
+  "Depot-Anzeige": "Portfolio display",
+  "Zeigt Werte, Gewinne und Kurse im Depot in US-Dollar – umgerechnet mit dem Kurs EUR/USD vom letzten Aktualisieren. Gerechnet, gespeichert und eingegeben wird weiter in Euro. Die Rechner haben ihre eigene Währung (unten).":
+    "Shows values, gains and prices of your portfolio in US dollars – converted with the EUR/USD rate from the last update. Calculations, storage and input stay in euro. The calculators have their own currency (below).",
+  "# € =": "# € =", "$ · Stand": "$ · as of",
+  "Noch kein Kurs EUR/USD – einmal „Kurse & Daten aktualisieren“ tippen. Bis dahin bleibt die Anzeige in Euro.": "No EUR/USD rate yet – tap “Update prices & data” once. Until then the display stays in euro.",
+  "Fear & Greed für Aktien:": "Fear & Greed for stocks:", "CNN Fear & Greed Index": "CNN Fear & Greed Index",
+  "(öffnet im Browser – CNN lässt keine Apps abrufen, darum nur der Link)": "(opens in the browser – CNN does not allow apps to fetch it, so only the link)",
+  "Krypto-Markt": "Crypto market", "📊 Long/Short, Open Interest, Fibonacci laden": "📊 Load long/short, open interest, Fibonacci",
+  "Long/Short und Open Interest (Kraken Futures, Binance Futures) und Fibonacci aus dem 4h-Chart (Kraken) – öffentliche Marktdaten ohne Konto. Lädt nur auf Knopfdruck.":
+    "Long/short and open interest (Kraken Futures, Binance Futures) and Fibonacci from the 4h chart (Kraken) – public market data without an account. Loads only when you tap.",
+  "Long / Short · Kraken": "Long / short · Kraken", "Long / Short · Binance": "Long / short · Binance",
+  "Open Interest · Kraken (Coins)": "Open interest · Kraken (coins)", "Open Interest · Binance (Coins)": "Open interest · Binance (coins)",
+  "Funding · Kraken (je Stunde)": "Funding · Kraken (per hour)", "# % / # %": "# % / # %", "# % · #": "# % · #", "# / #": "# / #",
+  "Long / Short = Anteil der Konten mit Long- bzw. Short-Position (nicht das Geld). Open Interest = offene Kontrakte in Coins.":
+    "Long / short = share of accounts with a long or short position (not the money). Open interest = open contracts in coins.",
+  "Fibonacci · 4h-Chart (Kraken, in Euro)": "Fibonacci · 4h chart (Kraken, in euro)", "Fibonacci 4h": "Fibonacci 4h",
+  "Hoch (20 Tage)": "High (20 days)", "Tief (20 Tage)": "Low (20 days)", "aufwärts": "upwards", "abwärts": "downwards",
+  "erst Tief, dann Hoch": "low first, then high", "erst Hoch, dann Tief": "high first, then low",
+  "Rücksetzer-Linien vom Hoch nach unten gemessen (0 % = Hoch, 100 % = Tief).": "Pullback lines measured from the high downwards (0 % = high, 100 % = low).",
+  "Erholungs-Linien vom Tief nach oben gemessen (0 % = Tief, 100 % = Hoch).": "Recovery lines measured from the low upwards (0 % = low, 100 % = high).",
+  "Marken-Vorschlag – du entscheidest": "Suggested levels – you decide", "Widerstand": "Resistance", "letztes Hoch darüber": "last high above",
+  "Unterstützung": "Support", "letztes Tief darunter": "last low below", "Pivot": "Pivot", "letzte 24 Std.": "last 24 h", "R1 / S1": "R1 / S1",
+  "⚠ Nur Orientierung, ohne Gewähr, keine Anlageberatung. Long/Short zeigt, wie viele Konten long oder short sind – nicht, wer recht hat. Fibonacci und Marken sind Rechenwerte aus dem Chart, kein Signal.":
+    "⚠ For orientation only, no guarantee, not investment advice. Long/short shows how many accounts are long or short – not who is right. Fibonacci and levels are values calculated from the chart, not a signal.",
+  "Kraken Futures und Binance Futures: öffentliche Marktdaten (Perpetual gegen US-Dollar), ohne Konto und ohne Schlüssel. Fibonacci: 4h-Kerzen von Kraken (Spot gegen Euro), Hoch und Tief der letzten 20 Tage; die laufende Kerze zählt nicht mit.":
+    "Kraken Futures and Binance Futures: public market data (perpetual against US dollar), without an account and without keys. Fibonacci: 4h candles from Kraken (spot against euro), high and low of the last 20 days; the running candle does not count.",
+  "Für diesen Wert gibt es keine Krypto-Marktdaten.": "There is no crypto market data for this asset.",
+  "Krypto-Marktdaten gibt es nur in der App (ab Version 0.78).": "Crypto market data is only available in the app (from version 0.78).",
+  "Lade Krypto-Marktdaten …": "Loading crypto market data …", "Keine Verbindung – Krypto-Marktdaten nicht geladen.": "No connection – crypto market data not loaded.",
+  "Krypto-Marktdaten geladen.": "Crypto market data loaded.", "Gespeichert im Download-Ordner deines Browsers.": "Saved in your browser's download folder.",
+  "Binance – Handelsverlauf (Spot gegen Euro)": "Binance – trade history (spot against euro)", "Binance – Handelsverlauf": "Binance – trade history",
+  "📊 Krypto im Detail: Long/Short und Open Interest (Kraken Futures, Binance Futures) auf Knopfdruck – dazu Fibonacci aus dem 4h-Chart (letztes Hoch und Tief) und Marken-Vorschläge (Pivot, Unterstützung, Widerstand).":
+    "📊 Crypto in the detail view: long/short and open interest (Kraken Futures, Binance Futures) at the tap of a button – plus Fibonacci from the 4h chart (last high and low) and suggested levels (pivot, support, resistance).",
+  "📥 Neuer Import: Binance – Handelsverlauf (Spot gegen Euro). Andere Paare werden sichtbar übersprungen. Zum Ausprobieren liegt eine Testdatei bei.":
+    "📥 New import: Binance – trade history (spot against euro). Other pairs are visibly skipped. A test file is included to try it out.",
+  "💵 Einstellungen → Depot-Anzeige: Werte wahlweise in US-Dollar (nur Anzeige, gerechnet wird in Euro).": "💵 Settings → Portfolio display: values optionally in US dollars (display only, calculations stay in euro).",
+  "🌡️ Marktstimmung: Link zum CNN Fear & Greed Index für Aktien.": "🌡️ Market mood: link to the CNN Fear & Greed Index for stocks.",
+});
+UEB_MUSTER.en.push([/^Fibonacci: keine 4h-Kerzen für (.+) gegen Euro bei Kraken\.$/, "Fibonacci: no 4h candles for $1 against euro on Kraken."]);
+UEB_MUSTER.en.push([/^Gebühr ([\d.,e-]+) (\S+) \(nicht in Euro, nicht abgezogen\)$/, "Fee $1 $2 (not in euro, not deducted)"]);
+Object.assign(UEB.en, { "frei ab #/#/#": "tax-free from #/#/#", "frei seit #/#/#": "tax-free since #/#/#" });   // 0.78: englisches Datumsformat
+Object.assign(UEB.en, { "(••••• €). Bis zum Break-even darf er um": "(••••• €). It may fall by", "(# $). Bis zum Break-even darf er um": "(# $). It may fall by" });   // 0.78: verdeckt bzw. Dollar-Anzeige
+Object.assign(UEB.en, {   // 0.79: KI nur mit Schalter sichtbar
+  "eigene Schlüssel für Dienste eintragen": "enter your own keys for services",
+  "Aus (Standard) = KI ist komplett ausgeblendet und nichts wird gesendet. An = unten in der Leiste erscheint „KI“: KI-Chat zu Portfolio, Einzelwerten und Watchlist über deinen Anbieter (eigener Schlüssel) – nur Name, Einstiegskurs, Long/Short (Anteile nur auf Wunsch), nie Depotbeträge, Stückzahlen oder Konten, nur auf Knopfdruck.":
+    "Off (default) = AI is completely hidden and nothing is sent. On = “AI” appears in the bottom bar: AI chat about portfolio, single securities and watchlist via your provider (own key) – only name, entry price, long/short (shares only on request), never portfolio amounts, quantities or accounts, only at the push of a button.",
+  "✨ KI ist jetzt standardmäßig ausgeblendet – unten in der Leiste und unter „Mehr“. Wer sie nutzen möchte: Einstellungen → Zusatzmodule → KI-Zusammenfassung einschalten, dann erscheint „KI“ unten in der Leiste. Ohne Schalter wird nie etwas gesendet.":
+    "✨ AI is now hidden by default – in the bottom bar and under “More”. If you want to use it: Settings → Add-on modules → switch on AI summary, then “AI” appears in the bottom bar. Without the switch nothing is ever sent.",
+});
+Object.assign(UEB.en, {   // 0.79: Tranchen – Kaufpreis wählbar, Vergleich sofort / Limit
+  "Kaufpreis: Marktpreis": "Buy price: market price", "Kaufpreis: eigener Preis (Limit)": "Buy price: own price (limit)",
+  "Eigener Kaufpreis / Limit-Order €": "Own buy price / limit order €", "Eigener Kaufpreis / Limit-Order $": "Own buy price / limit order $",
+  "Eigenen Kaufpreis (Limit) eintragen – oder „Marktpreis“ wählen.": "Enter your own buy price (limit) – or choose “market price”.",
+  "⚖️ Jetzt kaufen oder auf Limit warten?": "⚖️ Buy now or wait for a limit?",
+  "A kauft sofort zum Kurs jetzt, B wartet auf deinen eigenen Kaufpreis (Limit) – beide mit dem Budget der Tranche. Optional eine 2. Tranche bei einem tieferen Limit.":
+    "A buys right away at the current price, B waits for your own buy price (limit) – both with the tranche budget. Optionally a 2nd tranche at a lower limit.",
+  "2. Tranche: Limit € (optional)": "2nd tranche: limit € (optional)", "2. Tranche: Limit $ (optional)": "2nd tranche: limit $ (optional)",
+  "2. Tranche: Budget €": "2nd tranche: budget €", "2. Tranche: Budget $": "2nd tranche: budget $", "wie 1. Tranche": "same as 1st tranche",
+  "Für den Vergleich fehlt noch:": "Still missing for the comparison:",
+  "A · sofort": "A · now", "B · Limit": "B · limit", "B + 2. Tranche": "B + 2nd tranche", "Kaufpreis": "Buy price", "Zusätzliches Kapital": "Additional capital",
+  "Neue Position (Stück)": "New position (units)", "Einsatz gesamt": "Total invested", "Neuer Ø Einstand": "New average entry", "Veränderung Ø": "Change of average",
+  "Ø-Unterschied A → B": "Average difference A → B", "B ist günstiger": "B is cheaper", "B ist nicht günstiger": "B is not cheaper",
+  "Mehr Stück bei B fürs gleiche Geld": "More units with B for the same money", "zum Kurs jetzt ≈ # €": "at the current price ≈ # €", "zum Kurs jetzt ≈ # $": "at the current price ≈ # $",
+  "zum Kurs jetzt ≈": "at the current price ≈",
+  "Kapital bis Ziel-Ø # €": "Capital to target average # €", "Kapital bis Ziel-Ø # $": "Capital to target average # $", "Kapital bis Ziel-Ø": "Capital to target average",
+  "# € · # €": "# € · # €", "# $ · # $": "# $ · # $", "sofort · mit Limit": "now · with limit",
+  "sofort · mit Limit (Unterschied # €)": "now · with limit (difference # €)", "sofort · mit Limit (Unterschied # $)": "now · with limit (difference # $)",
+  "Ein Limit wird nur ausgeführt, wenn der Kurs dorthin fällt. Steigt er vorher, kaufst du gar nicht oder später teurer. Ohne Steuern, keine Anlageberatung.":
+    "A limit only fills if the price falls there. If it rises first, you do not buy at all or later at a higher price. Without taxes, not investment advice.",
+  "Dein Limit liegt nicht unter dem Kurs jetzt – dann bringt Warten keinen besseren Einstand.": "Your limit is not below the current price – then waiting brings no better entry.",
+  "Die 2. Tranche liegt nicht unter dem ersten Limit.": "The 2nd tranche is not below the first limit.",
+  "Ø jetzt": "Average now", "Ø Einstand im Vergleich": "Average entry compared", "Gestrichelt: dein Ziel-Ø.": "Dashed: your target average.",
+  "Bestand und Ø Einstandskurs": "holding and average entry price", "Kurs jetzt": "Price now", "Budget der Tranche": "tranche budget", "eigenen Kaufpreis (Limit)": "own buy price (limit)",
+});
+UEB_MUSTER.en.push([/^Für den Vergleich fehlt noch: (.+)\.$/, (m, t) => "Still missing for the comparison: " + t.replace("Bestand und Ø Einstandskurs", "holding and average entry price").replace("Kurs jetzt", "current price").replace("Budget der Tranche", "tranche budget").replace("eigenen Kaufpreis (Limit)", "own buy price (limit)") + "."]);
+Object.assign(UEB.en, { "⚖️ Tranchen-Rechner: Kaufpreis wählbar – Marktpreis oder eigener Preis (Limit-Order). Neu: „Jetzt kaufen oder auf Limit warten?“ – Szenario A (sofort) und B (Limit) nebeneinander, optional mit 2. Tranche: Kapital, neue Position, neuer Ø und Unterschied, dazu Kapital bis zum Ziel-Ø.": "⚖️ Tranche calculator: choose the buy price – market price or your own price (limit order). New: “Buy now or wait for a limit?” – scenario A (now) and B (limit) side by side, optionally with a 2nd tranche: capital, new position, new average and difference, plus capital to reach the target average." });
+Object.assign(UEB.en, {   // 0.80: Vorlagen mit geschütztem Leerzeichen (englische Zahlenformatierung)
+  "zum Kurs jetzt ≈ #\u00a0€": "at the current price ≈ #\u00a0€", "zum Kurs jetzt ≈ #\u00a0$": "at the current price ≈ #\u00a0$",
+  "Kapital bis Ziel-Ø #\u00a0€": "Capital to target average #\u00a0€", "Kapital bis Ziel-Ø #\u00a0$": "Capital to target average #\u00a0$",
+  "sofort · mit Limit (Unterschied #\u00a0€)": "now · with limit (difference #\u00a0€)", "sofort · mit Limit (Unterschied #\u00a0$)": "now · with limit (difference #\u00a0$)",
+  "#\u00a0€ · #\u00a0€": "#\u00a0€ · #\u00a0€", "#\u00a0$ · #\u00a0$": "#\u00a0$ · #\u00a0$",
+});
+Object.assign(UEB.en, {   // 0.80: Alarm-Töne je Wert
+  "🔊 Ton je Wert": "🔊 Sound per asset", "Standard (Handy-Ton)": "Default (phone sound)", "▶ Anhören": "▶ Listen",
+  "Zweiklang hoch": "Two-tone high", "Zweiklang tief": "Two-tone low", "Dreifach-Piep": "Triple beep", "Glocke": "Bell",
+  "Aufsteigend": "Rising", "Absteigend": "Falling", "Klopfen": "Knocking", "Sirene kurz": "Short siren",
+  "Jeder Wert kann einen eigenen Ton bekommen – so hörst du am Klang, welcher Wert sich meldet. Melden sich mehrere gleichzeitig, kommen die Töne nacheinander (ca. 2 Sekunden Abstand). Lautstärke und Ton lassen sich zusätzlich in den Android-Einstellungen je Kanal ändern.":
+    "Each asset can get its own sound – so you can tell by ear which asset is calling. If several trigger at once, the sounds play one after another (about 2 seconds apart). Volume and sound can also be changed per channel in the Android settings.",
+  "Anhören geht nur in der Android-App – der Desktop hat keine Benachrichtigungen.": "Listening only works in the Android app – the desktop has no notifications.",
+  "Töne gibt es für Werte mit Yahoo-Ticker (nur die prüft der Hintergrund).": "Sounds are available for assets with a Yahoo ticker (only those are checked in the background).",
+  "Ton gespeichert.": "Sound saved.", "Ton wählen": "Choose sound",
+});
+Object.assign(UEB.en, { "🔊 Alarm-Töne je Wert: unter Watchlist → Alarme eigenen Ton wählen (8 eigene Töne) und vorab anhören. Melden sich mehrere Werte gleichzeitig, kommen die Töne nacheinander – so hörst du, welcher Wert es ist.": "🔊 Alarm sounds per asset: under Watchlist → Alarms choose your own sound (8 own sounds) and listen first. If several assets trigger at once, the sounds come one after another – so you hear which asset it is." });
+Object.assign(UEB.en, {   // 0.81: Kontakt nur über Discord-Ticket
+  "Discord-Ticket – was du schicken sollst und was nicht": "Discord ticket – what to send and what not to",
+  "🎫 Kontakt nur noch über ein Ticket auf unserem Discord – die App öffnet keine E-Mail mehr. Sicherheitslücken bitte vertraulich per Ticket oder privat über GitHub melden.":
+    "🎫 Contact only via a ticket on our Discord – the app no longer opens e-mail. Please report security issues confidentially via ticket or privately on GitHub.",
+});
+Object.assign(UEB.en, {   // 0.82
+  "🧹 Texte aufgeräumt – Lizenz: PolyForm Noncommercial 1.0.0.": "🧹 Texts tidied up – licence: PolyForm Noncommercial 1.0.0.",
+});
+// 0.83 Nach Update suchen
+Object.assign(UEB.en, {
+  "🔄 Nach Update suchen": "🔄 Check for update", "Suche nach Update …": "Checking for update …",
+  "Nach Update suchen gibt es nur in der App.": "Check for update is only available in the app.",
+  "Keine Antwort von GitHub – später noch einmal versuchen.": "No answer from GitHub – please try again later.",
+  "Zur Download-Seite auf GitHub": "Go to the download page on GitHub",
+  "Nach Update suchen:": "Check for update:",
+  "fragt bei GitHub nur die Nummer der neuesten Version ab – nur wenn du den Knopf drückst.": "only asks GitHub for the number of the newest version – only when you press the button." });
+// 0.83
+Object.assign(UEB.en, {
+  "🔄 Nach Update suchen: unter Mehr → Über die App fragt die App auf Knopfdruck bei GitHub nach der neuesten Version und zeigt, wie du aktualisierst (Handy: Obtainium oder APK, PC: git pull bzw. neue ZIP + docker compose). Es wird nichts automatisch installiert.": "🔄 Check for update: under More → About the app, the app asks GitHub for the newest version at the press of a button and shows how to update (phone: Obtainium or APK, PC: git pull or new ZIP + docker compose). Nothing is installed automatically.",
+  "nur über ein Ticket auf unserem Discord – was du dort schreibst, entscheidest du selbst.": "only via a ticket on our Discord – you decide what you write there." });
+// 0.84
+Object.assign(UEB.en, {
+  "💼 Mein Portfolio": "💼 My portfolio", "👁 Beobachtet": "👁 Watched", "aktueller Kurs": "current price",
+  "Kurs des Basiswerts. Mit Einstieg und Hebel erscheinen Einstieg, Stop-Loss, Take-Profit und Knock-out im Chart.": "Price of the underlying. With entry and leverage, the chart shows entry, stop-loss, take-profit and knock-out." });
+Object.assign(UEB.en, {
+  "📈 Hebel-Rechner: Der Kurs-Chart erscheint jetzt auch ohne Einstieg und Hebel. Bei Knock-out-Produkten wird mindestens mit Hebel 1,01 gerechnet – bei Hebel 1 lag der Knock-out auf 0 und KO-Produkte verschwanden.": "📈 Leverage calculator: the price chart now also appears without entry and leverage. Knock-out products use at least leverage 1.01 – with leverage 1 the knock-out was at 0 and KO products disappeared.",
+  "🔗 Zertifikate-Finder: Jeder Treffer hat jetzt einen Link „Onvista ↗“ zum Datenblatt.": "🔗 Certificate finder: every result now has an “Onvista ↗” link to its data sheet.",
+  "📰 News: neue Filter „Mein Portfolio“ und „Beobachtet“ (beobachtete Depots + Watchlist). Die Marktstimmung steht jetzt bei den News statt in der Übersicht.": "📰 News: new filters “My portfolio” and “Watched” (watched portfolios + watchlist). Market sentiment now sits with the news instead of the overview.",
+  "🔐 Desktop: PIN mit scrypt geschützt, im Heimnetz nur noch mit App-PIN und eigener Sitzung je Browser. Nach richtiger PIN öffnet sich die App sofort.": "🔐 Desktop: PIN protected with scrypt, on the home network only with an app PIN and a separate session per browser. After the correct PIN the app opens right away." });
+Object.assign(UEB.en, {
+  "Neue Schlagzeilen zu %d weiteren Werten – in der App unter News": "New headlines for %d more holdings – see News in the app",
+  "Ad-hoc-Meldung": "Ad hoc announcement",
+  "Ad-hoc-Meldungen": "Ad hoc announcements",
+  "nur für Werte, die du unter News → ⚡ abonniert hast": "only for holdings you subscribed to under News → ⚡",
+  "Schlagzeilen für": "Headlines for",
+  "Mein Portfolio": "My portfolio",
+  "Portfolio und Watchlist": "Portfolio and watchlist",
+  "Schlagzeilen-Meldungen je Prüfung höchstens": "Headline notifications per check at most",
+  "Gibt es zu mehr Werten neue Schlagzeilen, kommt dafür nur eine Sammel-Meldung.": "If more holdings have new headlines, you get a single summary notification for them.",
+  "⚡ Ad-hoc": "⚡ Ad hoc",
+  "🔔 Benachrichtigung bei neuen Schlagzeilen": "🔔 Notify me about new headlines",
+  "ab Werk aus · Sammel-Meldung statt Spam": "off by default · summary instead of spam",
+  "Benachrichtigungen sind insgesamt aus.": "Notifications are switched off overall.",
+  "🔔 Benachrichtigungen einrichten": "🔔 Set up notifications",
+  "⚡ Ad-hoc-Meldungen abonnieren": "⚡ Subscribe to ad hoc announcements",
+  "Pflichtmitteilungen der Firmen (Ad-hoc, Insiderinformation). Abonnierte Werte durchsucht „News laden“ extra danach – mit Benachrichtigungen meldet sich das Handy auch im Hintergrund. Gezählt werden nur Überschriften, die nach Ad-hoc aussehen.": "Mandatory company disclosures (ad hoc, inside information). “Load news” searches subscribed holdings for them separately – with notifications on, your phone also alerts you in the background. Only headlines that look like ad hoc announcements count.",
+  "Keine Aktien oder Kryptowerte im Depot oder auf der Watchlist.": "No stocks or crypto in your portfolios or on the watchlist.",
+  "Ad-hoc-Meldungen abonniert.": "Subscribed to ad hoc announcements.",
+  "Ad-hoc-Abo beendet.": "Ad hoc subscription ended.",
+  "Lade Ad-hoc-Meldungen …": "Loading ad hoc announcements …",
+  "Spot – direkt beim Broker (Aktie, ETF, Krypto · Trade Republic, Scalable …)": "Spot – directly at your broker (stock, ETF, crypto · Trade Republic, Scalable …)",
+  "⚡ Hebel & Derivate": "⚡ Leverage & derivatives",
+  "🪙 Spot (ohne Hebel)": "🪙 Spot (no leverage)",
+  "Paar:": "Pair:" });
+Object.assign(UEB.en, {
+  "🪙 Hebel-Rechner: oben direkt „Hebel & Derivate“ oder „Spot (ohne Hebel)“ wählen – neu auch Spot direkt beim Broker (Aktie, ETF, Krypto). Die Wahl bleibt für neue Rechnungen.": "🪙 Leverage calculator: choose “Leverage & derivatives” or “Spot (no leverage)” right at the top – now also spot directly at your broker (stock, ETF, crypto). Your choice is kept for new calculations.",
+  "💱 Krypto-Paar wählbar: nach der Suche z. B. XRP/EUR, XRP/USD oder XRP/CHF antippen – Kurs, Chart und Rechner-Währung folgen dem Paar.": "💱 Choose the crypto pair: after searching, tap e.g. XRP/EUR, XRP/USD or XRP/CHF – price, chart and calculator currency follow the pair.",
+  "🔔 News-Benachrichtigungen ohne Spam: direkt auf der News-Seite an/aus, nur fürs eigene Portfolio oder mit Watchlist, höchstens 1–10 Meldungen je Prüfung, der Rest als eine Sammel-Meldung.": "🔔 News notifications without spam: switch them on/off right on the News page, for your own portfolio only or with the watchlist, at most 1–10 notifications per check, the rest as one summary.",
+  "⚡ Ad-hoc-Meldungen: unter News je Wert abonnieren. „News laden“ sucht dann extra danach, mit Benachrichtigungen meldet sich das Handy auch im Hintergrund. Neuer Filter „⚡ Ad-hoc“.": "⚡ Ad hoc announcements: subscribe per holding under News. “Load news” then searches for them separately, and with notifications your phone also alerts you in the background. New filter “⚡ Ad hoc”." });
+Object.assign(UEB.en, {
+  "🧹 Kleinere Textkorrekturen in „Was ist neu“ und bei den Credits.": "🧹 Minor text corrections in “What's new” and in the credits." });

@@ -1,0 +1,1 @@
+Notifications fixed (missing Android permission ACCESS_NETWORK_STATE, found via the error log), error code DK-09, position list cleanly separated.

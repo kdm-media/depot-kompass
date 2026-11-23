@@ -1,0 +1,1 @@
+Earnings-Ergebnis als Benachrichtigung (Gewinn je Aktie gegen Erwartung), Benachrichtigungsverlauf der letzten 90 Tage mit Prüfprotokoll, Prüfabstand ab 1 Stunde und Meldung bei Bewegung seit der letzten Prüfung.

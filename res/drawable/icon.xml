@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Depot-Kompass App-Symbol (Vektor, scharf in jeder Groesse). Erzeugt mit entwurf/logo_bauen.py - nicht von Hand aendern. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android" xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
+  <path android:name="bahn_hinten" android:pathData="M3.45,33.15 L3.35,32.86 L3.3,32.55 L3.3,32.22 L3.35,31.87 L3.45,31.5 L3.6,31.11 L3.8,30.71 L4.04,30.29 L4.34,29.85 L4.68,29.4 L5.07,28.94 L5.51,28.46 L5.99,27.98 L6.51,27.48 L7.08,26.98 L7.68,26.47 L8.33,25.95 L9.01,25.43 L9.73,24.9 L10.48,24.37 L11.27,23.85 L12.09,23.32 L12.93,22.79 L13.8,22.27 L14.7,21.75 L15.62,21.24 L16.56,20.73 L17.52,20.23 L18.49,19.74 L19.48,19.26 L20.47,18.79 L21.48,18.34 L22.49,17.89 L23.51,17.47 L24.52,17.05 L25.54,16.66 L26.55,16.28 L27.55,15.92 L28.55,15.58 L29.54,15.27 L30.51,14.97 L31.47,14.69 L32.4,14.44 L33.32,14.21 L34.22,14 L35.09,13.82 L35.94,13.66 L36.75,13.52 L37.54,13.42 L38.29,13.33 L39.01,13.28 L39.69,13.24 L40.33,13.24 L40.94,13.26 L41.5,13.31 L42.03,13.38 L42.5,13.48 L42.94,13.6 L43.33,13.75 L43.67,13.92 L43.96,14.12 L44.21,14.34 L44.41,14.58 L44.55,14.85" android:strokeWidth="1.6" android:strokeLineCap="round">
+    <aapt:attr name="android:strokeColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#7C3AED" android:endColor="#2DD4BF"/></aapt:attr>
+  </path>
+  <path android:name="scheibe" android:pathData="M9.8,24 A14.2,14.2 0 1,1 38.2,24 A14.2,14.2 0 1,1 9.8,24 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#1E1652" android:endColor="#0E0B2E"/></aapt:attr>
+  </path>
+  <group android:name="scheibe_begrenzt">
+  <clip-path android:pathData="M9.8,24 A14.2,14.2 0 1,1 38.2,24 A14.2,14.2 0 1,1 9.8,24 Z"/>
+  <path android:name="balken" android:pathData="M21.2,30.5 Q21.2,29.5 22.2,29.5 L23.6,29.5 Q24.6,29.5 24.6,30.5 L24.6,38 L21.2,38 Z M25.4,27.5 Q25.4,26.5 26.4,26.5 L27.8,26.5 Q28.8,26.5 28.8,27.5 L28.8,38 L25.4,38 Z M29.6,24 Q29.6,23 30.6,23 L32,23 Q33,23 33,24 L33,38 L29.6,38 Z M33.8,20 Q33.8,19 34.8,19 L36.2,19 Q37.2,19 37.2,20 L37.2,38 L33.8,38 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#34E8A0" android:endColor="#19C48A"/></aapt:attr>
+  </path>
+  </group>
+  <path android:name="ring" android:pathData="M7.4,24 A16.6,16.6 0 1,1 40.6,24 A16.6,16.6 0 1,1 7.4,24 Z M10.4,24 A13.6,13.6 0 1,0 37.6,24 A13.6,13.6 0 1,0 10.4,24 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#D35BF5" android:endColor="#5B2BE0"/></aapt:attr>
+  </path>
+  <path android:name="spitzen" android:pathData="M24,1.5 L27.2,9 L24,11.5 L20.8,9 Z M24,46.5 L27.2,39 L24,36.5 L20.8,39 Z M1.5,24 L9,20.8 L11.5,24 L9,27.2 Z M46.5,24 L39,20.8 L36.5,24 L39,27.2 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#C084FC" android:endColor="#6D28D9"/></aapt:attr>
+  </path>
+  <path android:name="nadel_dunkel" android:pathData="M10.8,37.2 L20.7,20.7 L37.2,10.8 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#A855F7" android:endColor="#7C3AED"/></aapt:attr>
+  </path>
+  <path android:name="nadel_hell" android:pathData="M10.8,37.2 L27.3,27.3 L37.2,10.8 Z">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#FFFFFF" android:endColor="#D9CCFF"/></aapt:attr>
+  </path>
+  <path android:name="mitte" android:pathData="M21.1,24 A2.9,2.9 0 1,1 26.9,24 A2.9,2.9 0 1,1 21.1,24 Z" android:strokeWidth="1.1" android:strokeLineCap="round">
+    <aapt:attr name="android:fillColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#3B2A8F" android:endColor="#24186B"/></aapt:attr>
+    <aapt:attr name="android:strokeColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#F5F0FF" android:endColor="#F5F0FF"/></aapt:attr>
+  </path>
+  <path android:name="bahn_vorn" android:pathData="M44.55,14.85 L44.65,15.14 L44.7,15.45 L44.7,15.78 L44.65,16.13 L44.55,16.5 L44.4,16.89 L44.2,17.29 L43.96,17.71 L43.66,18.15 L43.32,18.6 L42.93,19.06 L42.49,19.54 L42.01,20.02 L41.49,20.52 L40.92,21.02 L40.32,21.53 L39.67,22.05 L38.99,22.57 L38.27,23.1 L37.52,23.63 L36.73,24.15 L35.91,24.68 L35.07,25.21 L34.2,25.73 L33.3,26.25 L32.38,26.76 L31.44,27.27 L30.48,27.77 L29.51,28.26 L28.52,28.74 L27.53,29.21 L26.52,29.66 L25.51,30.11 L24.49,30.53 L23.48,30.95 L22.46,31.34 L21.45,31.72 L20.45,32.08 L19.45,32.42 L18.46,32.73 L17.49,33.03 L16.53,33.31 L15.6,33.56 L14.68,33.79 L13.78,34 L12.91,34.18 L12.06,34.34 L11.25,34.48 L10.46,34.58 L9.71,34.67 L8.99,34.72 L8.31,34.76 L7.67,34.76 L7.06,34.74 L6.5,34.69 L5.97,34.62 L5.5,34.52 L5.06,34.4 L4.67,34.25 L4.33,34.08 L4.04,33.88 L3.79,33.66 L3.59,33.42 L3.45,33.15" android:strokeWidth="1.9" android:strokeLineCap="round">
+    <aapt:attr name="android:strokeColor"><gradient android:type="linear" android:startX="8" android:startY="8" android:endX="40" android:endY="40" android:startColor="#2DD4BF" android:endColor="#E879F9"/></aapt:attr>
+  </path>
+</vector>

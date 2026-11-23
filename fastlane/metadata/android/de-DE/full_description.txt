@@ -1,0 +1,32 @@
+<p><b>Depot-Kompass</b> bringt deine Depots, Krypto-Konten, dein Cash und deine Sachwerte an einen Ort – auf deinem Handy, ohne Konto, ohne Werbung, ohne Tracking.</p>
+
+<p>Du lädst die CSV- oder PDF-Exporte deiner Broker und Banken. Die App rechnet daraus Gesamtvermögen, Gewinn/Verlust, Wertverlauf, Streuung, Dividenden und eine Steuer-Übersicht. Deine Daten verlassen das Handy nicht.</p>
+
+<p><b>Import</b></p>
+<ul>
+<li>Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX, Sparkasse und weitere Banken (CSV oder PDF)</li>
+<li>Jede andere CSV über eine einmalige Spalten-Zuordnung</li>
+<li>Screenshots ausgeführter Orders (Trade Republic, Scalable Capital, Smartbroker+, Revolut, Kraken, Bitvavo, OKX) – Texterkennung direkt auf dem Handy, ohne Internet</li>
+<li>Doppelte Buchungen werden erkannt, Importe lassen sich zurücknehmen oder verschieben</li>
+</ul>
+
+<p><b>Auswertung</b></p>
+<ul>
+<li>Wertverlauf 1 Woche bis 5 Jahre, zeitgewichtete Rendite, Drawdown</li>
+<li>Positionen als Liste und Heatmap, Watchlist</li>
+<li>Kalender mit Gewinn/Verlust je Tag, Dividenden, Ex-Tagen und Earnings</li>
+<li>Steuer-Übersicht je Jahr (Aktien, ETF, Dividenden, Krypto nach FIFO)</li>
+<li>Vier Rechner in Euro oder Dollar: Positionsgröße nach festem Verlust, Gewinnmitnahme nach Betrag, Kauf in Tranchen mit Break-even, Hebel mit Knock-out – jeder Plan als Notiz mit Chart speicherbar</li>
+<li>Notizen, Sachwerte, Haushalt mit mehreren Personen</li>
+<li>KI-Chat mit eigenem Schlüssel (OpenRouter, Claude, ChatGPT, Gemini) und Benachrichtigungen – beides freiwillig, ab Werk aus</li>
+</ul>
+
+<p><b>Datenschutz</b></p>
+<ul>
+<li>Nur zwei Berechtigungen: Internet (ganz abschaltbar) und Benachrichtigungen (ab Werk aus)</li>
+<li>Keine Google-Dienste, keine Tracker, keine Werbe-ID</li>
+<li>App-PIN mit AES-256-Verschlüsselung, Sicherungen nur verschlüsselt</li>
+<li>Kurse (Yahoo Finance, Onvista), Schlagzeilen (Google News) und KI (OpenRouter, eigener kostenloser Schlüssel) nur auf Knopfdruck</li>
+</ul>
+
+<p>Keine Anlageberatung. Die App rechnet nur mit deinen eigenen Daten.</p>

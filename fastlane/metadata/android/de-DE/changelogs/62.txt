@@ -1,0 +1,1 @@
+🔔 Alarme als eigener Reiter in der Watchlist: mehrere benannte Alarme je Wert (z. B. Kaufzone, Stop, Ziel 1) – Marke unter/über, Zone von–bis oder Bewegung in % – für Watchlist und eigene Positionen. Alte Marken werden übernommen. Alarme lassen sich als Text teilen und einfügen.

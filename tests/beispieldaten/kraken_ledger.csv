@@ -1,0 +1,7 @@
+"txid","refid","time","type","subtype","aclass","subclass","asset","wallet","amount","fee","balance"
+"L1","R1","2026-01-05 10:00:00","deposit","","currency","","ZEUR","spot / main","100.00000000","0.00000000",""
+"L2","T1","2026-01-06 11:00:00","trade","","currency","","ZEUR","spot / main","-50.00000000","0.20000000",""
+"L3","T1","2026-01-06 11:00:00","trade","","currency","","ADA","spot / main","100.00000000","0.00000000",""
+"L6","R2","2026-03-01 00:00:00","staking","","currency","","ADA.S","spot / main","1.50000000","0.00000000",""
+"L7","T3","2026-04-01 12:00:00","trade","","currency","","ADA","spot / main","-40.00000000","0.00000000",""
+"L8","T3","2026-04-01 12:00:00","trade","","currency","","ZEUR","spot / main","28.00000000","0.10000000",""

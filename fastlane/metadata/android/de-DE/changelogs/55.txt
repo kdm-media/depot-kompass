@@ -1,0 +1,1 @@
+Neu: Break-even immer sichtbar (bis Break-even / Puffer, nach Gebühren) mit Rechenbeispiel. Bessere Suche: ISIN und WKN landen bei Xetra in Euro, auch ETCs und Xetra-Gold. Krypto ohne Euro-Paar (NEAR, HYPE, SUI) bekommt einen Kurs.

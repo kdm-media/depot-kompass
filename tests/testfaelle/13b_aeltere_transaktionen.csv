@@ -1,0 +1,4 @@
+"datetime","date","account_type","category","type","asset_class","name","symbol","shares","price","amount","fee","tax","currency","original_amount","original_currency","fx_rate","description","transaction_id","counterparty_name","counterparty_iban","payment_reference","mcc_code"
+"2025-01-10T10:00:00.000Z","2025-01-10","DEFAULT","TRADING","BUY","STOCK","Rueck AG","DE000TEST013","6","90.00","-540.00","-1.00","","EUR","","","","","fall-13a","","","",""
+"2025-06-10T10:00:00.000Z","2025-06-10","DEFAULT","TRADING","BUY","STOCK","Rueck AG","DE000TEST013","6","95.00","-570.00","-1.00","","EUR","","","","","fall-13b","","","",""
+"2025-09-10T10:00:00.000Z","2025-09-10","DEFAULT","TRADING","SELL","STOCK","Rueck AG","DE000TEST013","-2","100.00","200.00","-1.00","","EUR","","","","","fall-13c","","","",""

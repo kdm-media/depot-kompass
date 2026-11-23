@@ -1,0 +1,6 @@
+"txid","refid","time","type","subtype","aclass","subclass","asset","wallet","amount","fee","balance"
+"L1","D1","2026-02-01 10:00:00","deposit","","currency","","ZEUR","spot / main","2000.0000","0.0000",""
+"L2","TQ1","2026-02-02 11:00:00","trade","","currency","","ZEUR","spot / main","-900.0000","2.3400",""
+"L3","TQ1","2026-02-02 11:00:00","trade","","currency","","XETH","spot / main","0.3000000000","0.0000000000",""
+"L4","TQ2","2026-03-02 11:00:00","trade","","currency","","XETH","spot / main","-0.1000000000","0.0000000000",""
+"L5","TQ2","2026-03-02 11:00:00","trade","","currency","","ZEUR","spot / main","330.0000","0.8600",""

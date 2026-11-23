@@ -1,0 +1,5 @@
+﻿datetime;date;account_type;category;type;asset_class;name;symbol;shares;price;amount;fee;tax;currency;original_amount;original_currency;fx_rate;description;transaction_id;counterparty_name;counterparty_iban;payment_reference;mcc_code
+2026-03-02T10:00:00.000Z;2026-03-02;DEFAULT;CASH;TRANSFER_INBOUND;;;;;;1000,00;;;EUR;;;;;fall-2a;;;;
+2026-03-03T10:00:00.000Z;2026-03-03;DEFAULT;TRADING;BUY;STOCK;Beispiel AG;DE000TEST0002;3;101,50;-304,50;-1,00;;EUR;;;;;fall-2b;;;;
+2026-03-10T10:00:00.000Z;2026-03-10;DEFAULT;TRADING;SELL;STOCK;Beispiel AG;DE000TEST0002;-3;110,25;330,75;-1,00;;EUR;;;;;fall-2c;;;;
+2026-03-11T10:00:00.000Z;2026-03-11;DEFAULT;TRADING;BUY;CRYPTO;Bitcoin;BTC;0,0125;64000,00;-800,00;-1,00;;EUR;;;;;fall-2d;;;;

@@ -1,0 +1,112 @@
+{
+ "2": {
+  "realisiert": 24.25,
+  "konto": 223.25,
+  "btc": 0.0125,
+  "positionen": 1
+ },
+ "3": {
+  "name": "<img src=x onerror=\"document.title='XSS'\">Müller & Söhne \"Prüf\" AG",
+  "einstand": 87.38
+ },
+ "4": {
+  "realisiert": 98,
+  "positionen": 0,
+  "warnung": true
+ },
+ "5": {
+  "stueck": 8,
+  "einstand": 381.0,
+  "kaufkurs": 47.625,
+  "realisiert": 246
+ },
+ "6": {
+  "stueck": 25,
+  "einstand": 3140.56,
+  "realisiert": 158.46,
+  "dividenden": 26.5,
+  "buchungen": 3
+ },
+ "12": {
+  "stueck": 18,
+  "einstand": 839.94,
+  "realisiert": 50.99,
+  "dividenden": 26.5
+ },
+ "8": {
+  "konto": -89.0
+ },
+ "13": {
+  "anfang": 5,
+  "anfang_datum": "2025-01-09",
+  "stueck": 15,
+  "einstand": 1378.24,
+  "realisiert": 15.24
+ },
+ "9": {
+  "buchungen": 20001,
+  "realisiert": -20000.0,
+  "positionen": 0
+ },
+ "10": {
+  "eth": 0.2,
+  "einstand": 601.56,
+  "realisiert": 28.36,
+  "konto": 1426.8,
+  "buchungen": 3
+ },
+ "11": {
+  "konto": 12.0,
+  "verluste": 60.0,
+  "bonus": 20.0,
+  "einsatz": 70.0,
+  "realisiert": -18.0
+ },
+ "14": {
+  "buchungen": 9,
+  "btc": 0.010024,
+  "eth": 0.5,
+  "einstand": 1500.0,
+  "konto": 80.0,
+  "verluste": 10.0,
+  "bonus": 50.0,
+  "realisiert": -60.0
+ },
+ "15": {
+  "konto": 449.5,
+  "buchungen": 3
+ },
+ "17": {
+  "konto": 64.51,
+  "buchungen": 4,
+  "karte": 19.99,
+  "gebuehren": 5.5
+ },
+ "18": {
+  "konto": 414.5,
+  "stueck": 2.0,
+  "realisiert": 10.0,
+  "dividenden": 6.0,
+  "buchungen": 6
+ },
+ "19": {
+  "ada": 5.7572,
+  "konto": 4.0,
+  "buchungen": 3
+ },
+ "20": {
+  "konto": 651.1,
+  "test_ag": 3.0,
+  "etf": 0.5,
+  "realisiert": 10.0,
+  "dividenden": 5.0,
+  "buchungen": 9
+ },
+ "22": {
+  "stueck": 2.5,
+  "einstand": 313.125,
+  "realisiert": 6.125,
+  "datum_kauf": "2026-03-15",
+  "datum_verkauf": "2026-03-19"
+ }
+}

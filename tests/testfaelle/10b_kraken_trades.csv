@@ -1,0 +1,3 @@
+"txid","ordertxid","pair","time","type","ordertype","price","cost","fee","vol","margin","misc","ledgers"
+"TQ1","O1","XETHZEUR","2026-02-02 11:00:00","buy","limit","3000.00","900.00","2.34","0.30","0","","L2,L3"
+"TQ2","O2","XETHZEUR","2026-03-02 11:00:00","sell","limit","3300.00","330.00","0.86","0.10","0","","L4,L5"

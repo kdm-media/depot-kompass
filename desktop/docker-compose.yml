@@ -1,0 +1,24 @@
+# Depot-Kompass Desktop (ab 0.46) - dieselbe Oberflaeche wie die Android-App, lokal im Browser.
+#
+#   docker compose up -d --build      ->  http://127.0.0.1:8098
+#
+# Port NUR an 127.0.0.1 (nicht im Netz erreichbar). Daten verschluesselt in ./daten (gehoert nie ins Repository).
+# Heimnetz/eigenes VPN (z. B. Tablet): Datei .env neben dieser Datei mit
+#   DK_BIND=<IP>     (IP DIESES Rechners im Heimnetz, nie 0.0.0.0)
+#   DK_HOSTS=<IP>    (dieselbe IP; andere Hostnamen lehnt die App ab)
+#   DK_PORT=8198     (nur falls Port 8098 schon belegt ist)
+# Kein Port nach draussen: am Router nichts freigeben. Unterwegs nur ueber VPN ins Heimnetz.
+services:
+  depot-kompass:
+    build: .
+    container_name: depot-kompass-desktop
+    ports:
+      - "${DK_BIND:-127.0.0.1}:${DK_PORT:-8098}:8098"   # DK_PORT: anderer Port, falls 8098 belegt
+    volumes:
+      - ../assets:/app/assets:ro
+      - ../AndroidManifest.xml:/app/AndroidManifest.xml:ro   # Versionsnummer = immer dieselbe wie die App
+      - ./daten:/daten
+    environment:
+      - TZ=Europe/Berlin
+      - DK_HOSTS=${DK_HOSTS:-}
+    restart: unless-stopped

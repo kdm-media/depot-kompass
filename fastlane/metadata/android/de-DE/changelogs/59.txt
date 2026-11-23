@@ -1,0 +1,1 @@
+Neues Fehlerprotokoll mit Auswertung, Benachrichtigungen nach „Aktualisieren“ repariert (Android-Grenze), Hinweis ab −35 %, Credits „Inspiration“, Desktop mit gleicher Versionsnummer.

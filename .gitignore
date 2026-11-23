@@ -1,0 +1,40 @@
+build/
+*.apk
+tests/testseite.html
+tests/_echt/
+__pycache__/
+# Signierschluessel und Sicherungen nie ins Repository
+*.jks
+*.keystore
+*.p12
+*.pem
+*.key
+*.dksafe
+.env
+.env.*
+*.env
+local.properties
+.gradle/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+*.log
+# Desktop: verschluesselte Nutzerdaten (nur der leere Ordner gehoert ins Repository)
+desktop/daten/*
+!desktop/daten/.gitkeep
+# Interne Projektdateien (Vorgabe 17.11.2026) - gehoeren nie ins oeffentliche Repository
+LOGBUCH.md
+TODO.md
+FAHRPLAN*.md
+VEROEFFENTLICHEN.md
+PLAN_STAND.md
+entwurf/*
+!entwurf/logo_bauen.py
+*.bak*
+annahmen.json
+TOKEN_JE_VERSION*
+kosten*.html
+privat-muster*
+erlaubte-mails*
+signatur-sicherung/

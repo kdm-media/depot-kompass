@@ -1,0 +1,5 @@
+Neu seit 0.49:
+- Vier Rechner: Positionsgröße nach festem Verlust, Gewinnmitnahme nach Betrag, Nachkauf mit Break-even, Hebel – in Euro oder Dollar, mit Chart und kurzer Erklärung
+- Rechner-Pläne als Notiz speichern und später weiterbearbeiten
+- Schlüssel-Ampel: zeigt, ob ein API-Schlüssel gültig ist
+- Aktualisieren-Knopf oben neben den Einstellungen
