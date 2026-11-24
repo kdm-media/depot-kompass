@@ -1955,7 +1955,7 @@ function hebelChart(r, skala) {
 
 /** Kacheln (auch fuer das Bild): [Titel, Wert, Unterzeile, Klasse] */
 function discountKacheln(x) {
-  const z = (v) => fZahl.format(rund(v, v >= 100 ? 2 : 4));
+  const z = (v) => verstecktAuch("kurse") ? "•••" : fZahl.format(rund(v, v >= 100 ? 2 : 4));   // 0.87 Bugliste 11
   const k = [
     ["Basiswert jetzt", z(x.E), "Discount – günstiger als direkt kaufen", ""],
     ["Cap (Höchstbetrag)", z(x.B), `${pct(x.bpAbstand)} · darüber kein Mehrgewinn`, ""],
@@ -1974,7 +1974,7 @@ function discountKacheln(x) {
 
 function optionKacheln(x) {
   if (x.discount) return discountKacheln(x);
-  const z = (v) => fZahl.format(rund(v, v >= 100 ? 2 : 4));
+  const z = (v) => verstecktAuch("kurse") ? "•••" : fZahl.format(rund(v, v >= 100 ? 2 : 4));   // 0.87 Bugliste 11
   const k = [
     ["Basiswert jetzt", z(x.E), x.call ? "Call – gewinnt, wenn er steigt" : "Put – gewinnt, wenn er fällt", ""],
     ["Basispreis", z(x.B), `${pct(x.bpAbstand)} · ${x.imGeld ? "im Geld" : "aus dem Geld"}`, ""],
@@ -1993,7 +1993,7 @@ function optionKacheln(x) {
 /** Kacheln (auch fuer das Bild): [Titel, Wert, Unterzeile, Klasse] */
 function hebelKacheln(x) {
   if (x.option) return optionKacheln(x);
-  const z = (v) => fZahl.format(rund(v, v >= 100 ? 2 : 4));
+  const z = (v) => verstecktAuch("kurse") ? "•••" : fZahl.format(rund(v, v >= 100 ? 2 : 4));   // 0.87 Bugliste 11
   const eurPct = (e, p) => `${e != null ? hGeldVz(e) + " · " : ""}${pct(p)}`;
   const j = hebelJetzt(x.r || {});
   const k = [
@@ -2006,14 +2006,14 @@ function hebelKacheln(x) {
     ["Verlust am Stop-Loss", !x.ohneStop && x.verlust != null ? eurPct(x.verlustEur, x.verlust) : x.risikoEur != null ? hGeldVz(-x.risikoEur) + " · " + pct(-x.risikoPct) : pct(-x.risikoPct), !x.ohneStop ? "Produkt" : x.spot ? "bis auf 0" : "bis zum Knock-out", "minus-t"],
     ["Chance : Risiko", x.crv ? fPct.format(x.crv) + " : 1" : "–", "", ""],
   ];
-  if (x.stueck != null) k.push(["Stückzahl", hStk(x.stueck, " Stück"), `je ${hFmt(x.kauf)} = ${hGeld(x.investiert)}${x.bvAbgeleitet ? " · Bezugsverhältnis aus dem Preis" : ""}`, ""]);
+  if (x.stueck != null) k.push(["Stückzahl", hStk(x.stueck, " Stück"), `je ${verstecktAuch("kurse") ? "•••" : hFmt(x.kauf)} = ${hGeld(x.investiert)}${x.bvAbgeleitet ? " · Bezugsverhältnis aus dem Preis" : ""}`, ""]);
   if (x.kostenEur) k.push(["Kosten", hGeld(x.kostenEur), "Spread + Ordergebühren (Kauf und Verkauf)", ""]);
   if (x.einsatzFuerMax != null && !x.ohneStop && !x.stopAuto) k.push(["Einsatz für deinen Max.-Verlust", hGeld(x.einsatzFuerMax), x.stueckFuerMax != null && !ui.verdeckt ? "= " + fZahl.format(x.stueckFuerMax) + " Stück" : "", ""]);
   return k;
 }
 
 function hebelZahlen(x) {
-  const z = (v) => fZahl.format(rund(v, v >= 100 ? 2 : 4));
+  const z = (v) => verstecktAuch("kurse") ? "•••" : fZahl.format(rund(v, v >= 100 ? 2 : 4));   // 0.87 Bugliste 11
   const hin = [];
   if (x.option) {
     if (x.stueckZuWenig) hin.push(x.istOption ? "Der Einsatz reicht nicht für einen ganzen Kontrakt." : "Der Einsatz reicht nicht für einen ganzen Schein.");
@@ -2066,11 +2066,11 @@ function hebelErgebnis() {
 }
 
 function hebelRechner() {
-  const r = ui.rechner ||= { richtung: "long", broker: "zertifikat" };
+  const r = ui.rechner ||= { richtung: "long" };   // 0.87: broker erst aus der gemerkten Wahl (Bugliste 6)
   if (!r.broker && !r.einstieg && !r.titel && !r.basisFrei) r.broker = EIN().rechnerMarkt === "spot" ? "spot_broker" : "zertifikat";   // 0.85: letzte Wahl Hebel/Spot
   hwSetzen(r);
   if (!ui.rechnerOffen) return `<section class="karte"><button class="knopf" data-rechner-auf="1" style="width:100%">🧮 Hebel-Rechner mit Chart (Knock-out, Stop-Loss, Take-Profit)</button></section>`;
-  const f = (n, t, ph) => `<label>${HW === "EUR" ? t : t.replace(/€/g, hwSym())}<input data-rechner="${n}" inputmode="decimal" value="${esc(r[n] || "")}" placeholder="${ph}"></label>`;
+  const f = (n, t, ph) => `<label>${HW === "EUR" ? t : t.replace(/€/g, hwSym())}<input data-rechner="${n}" inputmode="decimal" value="${esc(r[n] || "")}" placeholder="${ph}"${["einsatz", "maxverlust", "ordergebuehr"].includes(n) ? rechnerGeheim() : ""}></label>`;   // 0.87 Bugliste 8
   const basen = hebelBasisListe(), br = hebelBroker(r);
   return `
     <section class="karte formular">
@@ -2098,7 +2098,7 @@ function hebelRechner() {
         <button class="knopf" type="button" data-rechner-suchen="1" style="align-self:end">🔎 Suchen</button></div>
       ${(ui.rechnerTreffer || []).length ? `<div class="karte liste" style="margin:0">${ui.rechnerTreffer.map((t, i) => `<button type="button" class="zeile" data-rechner-treffer="${i}" style="grid-template-columns:1fr auto">
         <span><span class="titel">${esc(t.name)}</span><span class="unter">${t.artDe ? `<b>${esc(t.artDe)}</b> · ` : ""}${esc(t.symbol)}${t.boerse ? " · " + esc(t.boerse) : ""}${!t.artDe && t.art ? " · " + esc(t.art) : ""}</span></span><span class="rechts">›</span></button>`).join("")}</div>` : ""}
-      ${r.basisFrei ? `<p class="klein" style="margin:0"><span>Basiswert:</span> <b>${esc(r.basisFrei.name)}</b> <span>${esc(r.basisFrei.symbol)}${r.basisFrei.waehrung ? " · " + esc(r.basisFrei.waehrung) : ""}</span>${r.kursAktuell ? `<br><span>Aktueller Kurs:</span> <b>${esc(r.kursAktuell)}</b>${r.kursDatum ? ` <span>(${esc(datum(r.kursDatum))})</span>` : ""}` : ""}<br><span>Einstieg selbst ändern, z. B. wenn du erst tiefer kaufen willst.</span></p>` : ""}
+      ${r.basisFrei ? `<p class="klein" style="margin:0"><span>Basiswert:</span> <b>${esc(r.basisFrei.name)}</b> <span>${esc(r.basisFrei.symbol)}${r.basisFrei.waehrung ? " · " + esc(r.basisFrei.waehrung) : ""}</span>${r.kursAktuell ? `<br><span>Aktueller Kurs:</span> <b>${verstecktAuch("kurse") ? "•••" : esc(r.kursAktuell)}</b>${r.kursDatum ? ` <span>(${esc(datum(r.kursDatum))})</span>` : ""}` : ""}<br><span>Einstieg selbst ändern, z. B. wenn du erst tiefer kaufen willst.</span></p>` : ""}
       ${r.basisFrei && hebelKryptoPaar(r.basisFrei.symbol) ? `<div class="reiter zeitraum" style="margin:2px 0 0"><span class="klein" style="align-self:center">Paar:</span>${KRYPTO_PAARE.map((q) =>
         `<button type="button" data-rechner-paar="${q}" class="${hebelKryptoPaar(r.basisFrei.symbol)[1] === q ? "aktiv" : ""}">${esc(hebelKryptoPaar(r.basisFrei.symbol)[0])}/${q}</button>`).join("")}</div>` : ""}
       ${basen.length || r.basisFrei ? `<label>Kursverlauf im Chart (optional)<select data-rechner-basis><option value="">– nur Marken –</option>${r.basisFrei ? `<option value="frei" ${r.basis === "frei" ? "selected" : ""}>🔎 ${esc(r.basisFrei.name)}</option>` : ""}${basen.map((b) =>
@@ -2291,22 +2291,22 @@ document.addEventListener("click", (ev) => {
   zeichnen();
 });
 
-/** Text fuer die Notiz aus der Rechnung. */
+/** Text fuer die Notiz aus der Rechnung. 0.87 (Bugliste 7): nur Kurse, Prozente und Hebel - keine Beträge und Stückzahlen im Text.
+ *  Die stehen im gespeicherten Rechner und folgen dort der Rechner-Währung und „Beträge aus“. */
 function hebelNotizText(r, x) {
   const z = (v) => v ? fZahl.format(rund(v, 4)) : "–";
   if (x.discount) return `Discount-Zertifikat${r.produkt ? " · " + r.produkt : ""}${x.verfall ? " · Verfall " + x.verfall : ""}\n` +
     `Basiswert ${z(x.E)} · Cap ${z(x.B)} · Abschlag ${fPct.format(rund(x.rabatt, 2))} % · Break-even ${z(x.be)} (${pct(x.puffer)})\n` +
-    `höchster Ertrag ${x.maxErtragEur != null ? eurVzFix(x.maxErtragEur) + " · " : ""}${pct(x.maxErtrag)}${x.Z ? ` · Take-Profit ${z(x.Z)} → ${x.gewinnEur != null ? eurVzFix(x.gewinnEur) + " · " : ""}${pct(x.gewinn)}` : ""}`;
+    `höchster Ertrag ${pct(x.maxErtrag)}${x.Z ? ` · Take-Profit ${z(x.Z)} → ${pct(x.gewinn)}` : ""}`;
   if (x.option) return `${x.istOption ? "Option" : "Optionsschein"} · ${x.call ? "Call" : "Put"}${r.produkt ? " · " + r.produkt : ""}${x.verfall ? " · Verfall " + x.verfall : ""}\n` +
     `Basiswert ${z(x.E)} · Basispreis ${z(x.B)} (${pct(x.bpAbstand)}) · Break-even am Verfall ${z(x.be)} (${pct(x.beAbstand)})\n` +
-    `${x.istOption ? "Prämie je Kontrakt" : "Preis je Schein"} ${eurFix(x.U)}${x.einsatz ? " · " + fZahl.format(rund(x.n, 4)) + " Stück = " + eurFix(x.investiert) : ""} · höchster Verlust ${x.maxVerlust != null ? eur(x.maxVerlust) : "100 %"}\n` +
-    `${x.Z ? `Take-Profit ${z(x.Z)} → ${x.gewinnEur != null ? eurVzFix(x.gewinnEur) + " · " : ""}${pct(x.gewinn)} am Verfall` : "kein Take-Profit"}`;
+    `${x.istOption ? "Prämie je Kontrakt" : "Preis je Schein"} ${z(x.U)} · höchster Verlust 100 %\n` +
+    `${x.Z ? `Take-Profit ${z(x.Z)} → ${pct(x.gewinn)} am Verfall` : "kein Take-Profit"}`;
   return `${x.long ? "Long" : "Short"} · Hebel ${fPct.format(rund(x.H, 2))}×${r.produkt ? " · " + r.produkt : ""}\n` +
-    `Einstieg ${z(x.E)}${r.kursAktuell ? " (aktueller Kurs " + r.kursAktuell + ")" : ""} · Knock-out ${z(x.ko)} (${pct(x.koAbstand)})\n` +
-    `${x.ohneStop ? "ohne Stop-Loss – Risiko bis zum Knock-out" : `Stop-Loss ${z(x.S)} → ${x.verlustEur != null ? eurVzFix(x.verlustEur) + " · " : ""}${pct(x.verlust)}`}` +
-    ` · Take-Profit ${z(x.Z)}${x.gewinn != null ? ` → ${x.gewinnEur != null ? eurVzFix(x.gewinnEur) + " · " : ""}${pct(x.gewinn)}` : ""}` +
-    `${x.crv ? "\nChance : Risiko " + fPct.format(x.crv) + " : 1" : ""}${x.stueck != null ? `\n${fZahl.format(x.stueck)} Stück je ${hFmt(x.kauf)}` : ""}` +
-    `${x.maxV ? "\nMax.-Verlust " + hFmt(x.maxV) : ""}${r.bedingung ? "\nEinstiegsbedingung: " + r.bedingung : ""}\n(vereinfachte Rechnung, keine Anlageberatung)`;
+    `Einstieg ${z(x.E)} · Knock-out ${z(x.ko)} (${pct(x.koAbstand)})\n` +
+    `${x.ohneStop ? "ohne Stop-Loss – Risiko bis zum Knock-out" : `Stop-Loss ${z(x.S)} → ${pct(x.verlust)}`}` +
+    ` · Take-Profit ${z(x.Z)}${x.gewinn != null ? ` → ${pct(x.gewinn)}` : ""}` +
+    `${x.crv ? "\nChance : Risiko " + fPct.format(x.crv) + " : 1" : ""}${r.bedingung ? "\nEinstiegsbedingung: " + r.bedingung : ""}\n(vereinfachte Rechnung, keine Anlageberatung)`;
 }
 
 document.addEventListener("click", (ev) => {
@@ -2624,7 +2624,7 @@ function wachterWerte() {
   const m = new Map(), offen = D;
   try {
     for (const d of Object.values(S.depots || {})) {
-      if (d.beobachtet) continue;
+      if (d.rolle === "beobachtet") continue;   // 0.87: Feld heisst rolle (Bugliste 4)
       D = d;
       for (const p of positionen().liste) {
         const i = p.inst || {};
@@ -3132,7 +3132,7 @@ function alarmToeneKarte(l) {
     const t = +toene[ticker] || 0;
     return `<div class="zeile" style="grid-template-columns:minmax(0,1fr) auto auto;gap:8px;align-items:center">
       <span style="min-width:0"><span class="titel">${esc(name)}</span><span class="unter">${esc(ticker)}</span></span>
-      <select data-alarm-ton="${esc(ticker)}" aria-label="Ton wählen"><option value="0">Standard (Handy-Ton)</option>${ALARM_TOENE.map((n, i) => `<option value="${i + 1}" ${t === i + 1 ? "selected" : ""}>${n}</option>`).join("")}</select>
+      <select data-alarm-ton="${esc(ticker)}" aria-label="Ton wählen" style="max-width:min(9em,30vw)"><option value="0">Standard (Handy-Ton)</option>${ALARM_TOENE.map((n, i) => `<option value="${i + 1}" ${t === i + 1 ? "selected" : ""}>${n}</option>`).join("")}</select>
       ${hoeren ? `<button class="knopf klein" type="button" data-ton-hoeren="${esc(ticker)}" ${t ? "" : "disabled"}>▶ Anhören</button>` : ""}</div>`;
   }).join("");
   return `<h2>🔊 Ton je Wert</h2><section class="karte liste">${zeilen || `<p class="klein" style="margin:8px">Töne gibt es für Werte mit Yahoo-Ticker (nur die prüft der Hintergrund).</p>`}
@@ -3481,6 +3481,7 @@ const WAS_NEU = {
            "👁️ Beträge aus gilt jetzt auch im Chart (graue Punkte statt Euro) und für die Stückzahl. Unter dem Chart: Zeitachse und wann Hoch und Tief waren.",
            "🕯️ Chart mit Kerzen und Volumen, neue Wochenansicht 1W, 5J zeigt Jahre, 1J Monate. Preisskala links, Einstieg lässt sich wie SL und TP mit dem Finger ziehen.",
            "💱 Neu in den Einstellungen: „Währung der Rechner“ (EUR, USD, CAD, CHF, GBP, USDT) – damit starten alle Rechner. Bei „Beträge aus + Kurse“ verbirgt der Hebel-Chart auch die Kurse."],
+  "0.87": ["🔢 Rechner: Werte aus einer Position werden in Englisch nicht mehr ×1000 übernommen, Ø-Einstand und Kurs mit allen Stellen (auch DOGE, SHIB); „0.005“ bleibt 0,005.", "🙈 „Beträge aus“: Einsatz, Max.-Verlust und Ordergebühr im Hebel-Rechner verdeckt, Kurse in den Kacheln folgen „Kurse verbergen“; Hebel-Notizen speichern nur noch Kurse und Prozente.", "🔔 Benachrichtigungen: beobachtete Depots melden sich nicht mehr, keine doppelten Meldungen nach dem Aufräumen, Kleinstkurse mit genug Stellen, Alarm-Töne dauerhaft richtig.", "📞 Notruf- und Seelsorge-Nummern öffnen am Handy das Wählfeld.", "🧮 Hebel-Rechner merkt sich Spot/Hebel wieder über einen Neustart.", "🖥️ Desktop: PIN-Bremse gilt auch beim Aufheben der Sperre, Sperren nur mit gültiger Sitzung.", "🌍 Englisch: Fußtext im Hebel-Rechner (Spot, Zertifikat in anderer Währung) übersetzt.", "📱 Handy: Ton-Auswahl und Vergleichstabelle brechen Namen nicht mehr mitten im Wort um."],
   "0.86": ["🧹 Kleinere Textkorrekturen in „Was ist neu“ und bei den Credits."],
   "0.85": ["🪙 Hebel-Rechner: oben direkt „Hebel & Derivate“ oder „Spot (ohne Hebel)“ wählen – neu auch Spot direkt beim Broker (Aktie, ETF, Krypto). Die Wahl bleibt für neue Rechnungen.", "💱 Krypto-Paar wählbar: nach der Suche z. B. XRP/EUR, XRP/USD oder XRP/CHF antippen – Kurs, Chart und Rechner-Währung folgen dem Paar.", "🔔 News-Benachrichtigungen ohne Spam: direkt auf der News-Seite an/aus, nur fürs eigene Portfolio oder mit Watchlist, höchstens 1–10 Meldungen je Prüfung, der Rest als eine Sammel-Meldung.", "⚡ Ad-hoc-Meldungen: unter News je Wert abonnieren. „News laden“ sucht dann extra danach, mit Benachrichtigungen meldet sich das Handy auch im Hintergrund. Neuer Filter „⚡ Ad-hoc“."],
   "0.84": ["📈 Hebel-Rechner: Der Kurs-Chart erscheint jetzt auch ohne Einstieg und Hebel. Bei Knock-out-Produkten wird mindestens mit Hebel 1,01 gerechnet – bei Hebel 1 lag der Knock-out auf 0 und KO-Produkte verschwanden.", "🔗 Zertifikate-Finder: Jeder Treffer hat jetzt einen Link „Onvista ↗“ zum Datenblatt.", "📰 News: neue Filter „Mein Portfolio“ und „Beobachtet“ (beobachtete Depots + Watchlist). Die Marktstimmung steht jetzt bei den News statt in der Übersicht.", "🔐 Desktop: PIN mit scrypt geschützt, im Heimnetz nur noch mit App-PIN und eigener Sitzung je Browser. Nach richtiger PIN öffnet sich die App sofort."],

@@ -87,6 +87,11 @@ public class MainActivity extends Activity {
                     } catch (Exception keinBrowser) { }
                     return true;
                 }
+                // 0.87: Notruf/Seelsorge-Nummern (tel:) im Telefon-Waehlfeld oeffnen - nur waehlen, nicht anrufen, keine Berechtigung noetig
+                if (url.startsWith("tel:")) {
+                    try { startActivity(new Intent(Intent.ACTION_DIAL, Uri.parse(url))); } catch (Exception keinTelefon) { }
+                    return true;
+                }
                 // 0.81: keine E-Mail mehr - Kontakt nur ueber ein Discord-Ticket (mailto: wird wie alles Fremde geblockt)
                 return !eigeneSeite(url);                     // intent:, content:, file:/sdcard ... blocken
             }

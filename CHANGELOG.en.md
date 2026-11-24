@@ -2,6 +2,16 @@
 
 All versions are **alpha** (test phase). Newest first.
 
+## 0.87 – 24 Nov 2026 – Bug fixes
+- 🔢 Calculators: values from a position are no longer taken over ×1000 in English, average cost and price keep all digits (also DOGE, SHIB); “0.005” stays 0.005.
+- 🙈 “Hide amounts”: stake, max. loss and order fee in the leverage calculator are masked, prices in the tiles follow “hide prices”; leverage notes now store only prices and percentages.
+- 🔔 Notifications: watched portfolios no longer trigger alerts, no duplicate alerts after clean-up, tiny prices with enough digits, alarm sounds stay correct.
+- 📞 Emergency and helpline numbers open the phone dialer.
+- 🧮 Leverage calculator remembers spot/leverage again after a restart.
+- 🖥️ Desktop: PIN brake also applies when removing the lock, locking only with a valid session.
+- 🌍 English: footer in the leverage calculator (spot, certificate in another currency) translated.
+- 📱 Phone: sound picker and comparison table no longer break names in the middle of a word.
+
 ## 0.86 – 23 Nov 2026 – Text corrections
 - 🧹 Minor text corrections in “What's new” and in the credits.
 

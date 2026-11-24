@@ -1275,7 +1275,7 @@ function zahl(s) {
   s = String(s).trim().replace(/[€\s"]/g, "");
   if (!s) return null;
   if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-  else if (/^-?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+  else if (/^-?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
   const n = parseFloat(s);
   return isNaN(n) ? null : n;
 }

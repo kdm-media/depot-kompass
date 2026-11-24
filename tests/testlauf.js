@@ -560,6 +560,30 @@ async function rechnen() {
     // Dezimal statt Kommazahl: 0,1 + 0,2 Stueck bleibt genau 0,3
     pruefe(nachkaufRechnen({ bestand: "0,1", einstand: "10", kurs: "5", budget: "1", art: "krypto" }).A.bestand === 0.3, "Dezimalrechnung ungenau");
 
+    // 0.87 Bugliste 24.11.: Feld-Text immer mit Komma und genug Stellen, "0.005" ist kein Tausenderpunkt
+    pruefe(nkFeld(0.125) === "0,125" && nkFeld(0.1234) === "0,1234" && nkFeld(0.0000123) === "0,0000123" && nkFeld(98972.23) === "98972,23" && nkFeld(null) === "",
+           `nkFeld: ${[nkFeld(0.125), nkFeld(0.1234), nkFeld(0.0000123), nkFeld(98972.23)].join(" ")}`);
+    pruefe(dzZahl(dz(nkFeld(0.125)), 8) === 0.125 && dzZahl(dz("0.005"), 8) === 0.005 && dzZahl(dz("59.000"), 2) === 59000 && zahl("0.005") === 0.005 && zahl("1.234") === 1234,
+           "Parser: 0.005 / 59.000 / 1.234");
+    // 0.87: Testszenarien aus dem Open-Alpha-Board (b01-26..31, strategischer Hintergrund - keine Vorgabe in der App, keine Anlageberatung).
+    // Sollwerte mit Python Decimal gerechnet (24.11.2026), Bestand 0,005062 BTC zu 98.972,23 €.
+    {
+      const h = nachkaufRechnen({ ...grund, kurs: "82.000", budget: "500" }), t = nachkaufRechnen({ ...grund, budget: "500" });
+      pruefe(nah(h.A.einstand, 89698.64, 0.01) && nah(h.A.aenderungPct, -9.37, 0.01) && h.A.einstand > t.A.einstand,
+             `Szenario b01-26 (Kauf über 80.000 € senkt den Schnitt kaum): ${JSON.stringify(h.A)}`);
+      const l55 = nachkaufRechnen({ ...grund, budget: "500", preisArt: "limit", limit: "55.000" });
+      pruefe(nahS(l55.A.stueck, 0.00909091) && nah(l55.A.einstand, 70727.33, 0.01) && l55.A.einstand < t.A.einstand,
+             `Szenario b01-27 (günstiger Einstieg per Limit): ${JSON.stringify(l55.A)}`);
+      const l52 = nachkaufRechnen({ ...grund, budget: "500", preisArt: "limit", limit: "52.000" });
+      pruefe(nah(l52.A.einstand, 68199.99, 0.01) && nah(l52.A.aenderungPct, -31.09, 0.01), `Szenario b01-28 (tieferes Tief abwarten): ${JSON.stringify(l52.A)}`);
+      const z1 = nachkaufRechnen({ ...grund, budget: "250", preisArt: "limit", limit: "56.000" });
+      const z2 = nachkaufRechnen({ bestand: String(z1.A.bestand), einstand: String(z1.A.einstand), kurs: "59.000", art: "krypto", budget: "250", preisArt: "limit", limit: "52.000" });
+      pruefe(nah(z1.A.einstand, 78834.23, 0.01) && nah(z2.A.einstand, 69833.89, 0.05) && nahS(z2.A.bestand, 0.01433398),
+             `Szenario b01-29 (Kaufzone + Wick-Fill in zwei Tranchen): ${JSON.stringify([z1.A, z2.A])}`);
+      const f = nachkaufRechnen({ ...grund, budget: "500", stufen: "50.000" }), f50 = f.C.find((z) => z.kurs === 50000);
+      pruefe(f50 && nah(f50.erloes, 676.83, 0.01) && nah(f50.gv, -324.17, 0.01) && f50.gv < 0, `Szenario b01-30 (Fakeout: Kurs fällt nach dem Kauf auf 50.000): ${JSON.stringify(f50)}`);
+    }
+
     // Oberflaeche: aus einer Position oeffnen -> Kopie, gespeicherte Position bleibt unveraendert
     zeige("positionen");
     const pos = positionen().liste.find((p) => p.stueck > 0 && !(D.instrumente[p.id] || {}).ohneStueck);

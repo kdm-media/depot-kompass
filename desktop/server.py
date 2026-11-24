@@ -424,6 +424,24 @@ def jetzt_sichern() -> str:
     return "ok:" + name
 
 
+def pin_versuch(pin):
+    """0.87: gemeinsame PIN-Pruefung mit Fehlversuch-Zaehler und Wartezeit -> (Schluessel oder None, Antwort)."""
+    with PIN_SPERRE:
+        e, jetzt = einst(), time.time()
+        if jetzt < e.get("sperreBis", 0):
+            return None, f"warten:{int(e['sperreBis'] - jetzt) + 1}"
+        try:
+            k = pin_oeffnen(pin, e)
+        except Exception:
+            f = e.get("fehlversuche", 0) + 1
+            pause = 30 * (1 << min(f - 5, 6)) if f >= 5 else 0
+            einst_setzen(fehlversuche=f, **({"sperreBis": jetzt + pause} if pause else {}))
+            return None, (f"warten:{pause}" if pause else f"falsch:{5 - f}")
+        neu = pin_huelle(str(pin), k) if e.get("pinKdf") != PIN_KDF else {}   # alte PBKDF2-Huelle umpacken
+        einst_setzen(fehlversuche=0, **neu)
+        return k, "ok"
+
+
 def bruecke(name: str, a: list):
     global haupt
     if name == "laden":
@@ -468,27 +486,18 @@ def bruecke(name: str, a: list):
         haupt = neu
         return True
     if name == "pinPruefen":
-        with PIN_SPERRE:
-            e, jetzt = einst(), time.time()
-            if jetzt < e.get("sperreBis", 0):
-                return f"warten:{int(e['sperreBis'] - jetzt) + 1}"
-            try:
-                haupt = pin_oeffnen(a[0], e)
-            except Exception:
-                f = e.get("fehlversuche", 0) + 1
-                pause = 30 * (1 << min(f - 5, 6)) if f >= 5 else 0
-                einst_setzen(fehlversuche=f, **({"sperreBis": jetzt + pause} if pause else {}))
-                return f"warten:{pause}" if pause else f"falsch:{5 - f}"
-            neu = pin_huelle(str(a[0]), haupt) if e.get("pinKdf") != PIN_KDF else {}   # alte PBKDF2-Huelle umpacken
-            einst_setzen(fehlversuche=0, **neu)
-            return "ok"
+        k, antwort = pin_versuch(a[0])
+        if k is not None:
+            haupt = k
+        return antwort
     if name == "sperreAufheben":
-        e = einst()
-        try:
-            with PIN_SPERRE:
-                k = pin_oeffnen(a[0], e)
-        except Exception:
+        # 0.87 (Bugliste 2): nur entsperrt und mit derselben Fehlversuch-Bremse wie pinPruefen
+        if haupt is None:
             return False
+        k, _ = pin_versuch(a[0])
+        if k is None:
+            return False
+        e = einst()
         neu = secrets.token_bytes(32)
         alles_umschluesseln(k, neu)
         f = DATEN / "schluessel.key"
@@ -568,7 +577,7 @@ def bruecke(name: str, a: list):
 HEIMNETZ = bool(os.environ.get("DK_HOSTS", "").strip())
 SITZUNGEN = {}                         # Token -> letzte Nutzung (nur im Speicher)
 SITZUNG_DAUER = 12 * 3600
-OHNE_SITZUNG = {"version", "sicherheitStatus", "revision", "pinPruefen", "sperren", "laden",
+OHNE_SITZUNG = {"version", "sicherheitStatus", "revision", "pinPruefen", "laden",   # 0.87: sperren nur mit Sitzung (Bugliste 14)
                 "sperrBildschirmBereit", "schutzSetzen"}   # die letzten beiden tun am Desktop nichts (nur true)
 MAX_ANFRAGE = 80_000_000               # 50-MB-Datei als Base64 + Rand (vorher 200 MB)
 HEIMNETZ_OHNE_PIN = ("<!doctype html><meta charset=utf-8><meta name=viewport content='width=device-width'>"

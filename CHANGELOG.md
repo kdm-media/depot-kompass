@@ -2,6 +2,16 @@
 
 Alle Versionen sind **Alpha** (Testphase). Neueste oben.
 
+## 0.87 – 24.11.2026 – Fehlerbehebungen
+- 🔢 Rechner: Werte aus einer Position werden in Englisch nicht mehr ×1000 übernommen, Ø-Einstand und Kurs mit allen Stellen (auch DOGE, SHIB); „0.005“ bleibt 0,005.
+- 🙈 „Beträge aus“: Einsatz, Max.-Verlust und Ordergebühr im Hebel-Rechner verdeckt, Kurse in den Kacheln folgen „Kurse verbergen“; Hebel-Notizen speichern nur noch Kurse und Prozente.
+- 🔔 Benachrichtigungen: beobachtete Depots melden sich nicht mehr, keine doppelten Meldungen nach dem Aufräumen, Kleinstkurse mit genug Stellen, Alarm-Töne dauerhaft richtig.
+- 📞 Notruf- und Seelsorge-Nummern öffnen am Handy das Wählfeld.
+- 🧮 Hebel-Rechner merkt sich Spot/Hebel wieder über einen Neustart.
+- 🖥️ Desktop: PIN-Bremse gilt auch beim Aufheben der Sperre, Sperren nur mit gültiger Sitzung.
+- 🌍 Englisch: Fußtext im Hebel-Rechner (Spot, Zertifikat in anderer Währung) übersetzt.
+- 📱 Handy: Ton-Auswahl und Vergleichstabelle brechen Namen nicht mehr mitten im Wort um.
+
 ## 0.86 – 23.11.2026 – Textkorrekturen
 - 🧹 Kleinere Textkorrekturen in „Was ist neu“ und bei den Credits.
 

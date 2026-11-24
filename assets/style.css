@@ -240,6 +240,8 @@ input[type="range"] { accent-color: var(--akzent); }
 .nk-tabelle { width: 100%; font-size: 13px; border-collapse: collapse; margin-top: 6px; }
 .nk-tabelle th, .nk-tabelle td { text-align: right; padding: 4px 3px; overflow-wrap: anywhere; }
 .nk-tabelle th:first-child, .nk-tabelle td:first-child { text-align: left; }
+/* 0.87: Zeilennamen mit Silbentrennung statt Bruch mitten im Wort (Zusätzliche-s Kapital) */
+.nk-tabelle th:first-child, .nk-tabelle td:first-child { overflow-wrap: normal; -webkit-hyphens: auto; hyphens: auto; }
 .nk-tabelle tr.nk-be { background: var(--karte-2); font-weight: 650; }
 .nk-tabelle tr.nk-aus td:first-child { color: var(--akzent); }
 .nkchart { margin-top: 8px; }

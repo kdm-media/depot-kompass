@@ -55,6 +55,13 @@ docker compose up -d --build
 ```
 Dann im Browser öffnen: <http://127.0.0.1:8098>
 
+Die App läuft im Container als Benutzer mit der Nummer 1000 (bei den meisten Linux-Systemen der erste Benutzer). Hast du die ZIP als `root` oder als anderer Benutzer entpackt, startet der Container immer wieder neu und `docker compose logs` zeigt „Kein Schreibrecht im Ordner daten/“. Dann einmal im Ordner `desktop`:
+
+```bash
+sudo chown -R 1000:1000 daten
+docker compose up -d
+```
+
 <a id="erster-start"></a>
 ## Erster Start
 ![Depot-Kompass Desktop im Browser – Übersicht mit erfundenen Testdaten](bilder/desktop_uebersicht.png)
@@ -151,7 +158,7 @@ The same interface as the Android app – locally in your browser via Docker.
 
 **Requirements:** Docker (Linux) or Docker Desktop (Windows 10/11 with WSL 2, macOS Apple chip or Intel), about 100 MB disk space (image about 70 MB, about 15 MB RAM while running), a current browser, free port 8098, internet on the first start (Docker downloads the Python image). No Python, Node or account needed.
 
-**Install:** download the repository as ZIP (Code → Download ZIP) and unpack it, open a terminal in the `desktop` folder (Windows: type `powershell` into the folder's address bar; macOS: Terminal, `cd `, drag the folder in) and run `docker compose up -d --build`, then open <http://127.0.0.1:8098>. The desktop version uses the same app files as Android, so it always has the same version.
+**Install:** download the repository as ZIP (Code → Download ZIP) and unpack it, open a terminal in the `desktop` folder (Windows: type `powershell` into the folder's address bar; macOS: Terminal, `cd `, drag the folder in) and run `docker compose up -d --build`, then open <http://127.0.0.1:8098>. Linux: the app runs as user ID 1000 inside the container – if you unpacked the ZIP as `root` or another user, run `sudo chown -R 1000:1000 daten` once in the `desktop` folder, then `docker compose up -d`. The desktop version uses the same app files as Android, so it always has the same version.
 
 ![Depot-Kompass desktop in the browser – overview with made-up test data](bilder/desktop_uebersicht.png)
 

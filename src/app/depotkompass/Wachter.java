@@ -62,16 +62,24 @@ public class Wachter extends JobService {
     /** 0.80: eigene Alarm-Toene res/raw/ton_1..8 - je Ton ein eigener Kanal (unter Android haengt der Ton am Kanal). */
     static final int TOENE = 8;
 
+    /** 0.87 (Bugliste 12): Kurs fuer die Meldung - unter 1 € so viele Stellen, dass 4 gueltige Ziffern sichtbar sind (SHIB nicht 0,00 €). */
+    static String kursText(Locale ort, double eur) {
+        double b = Math.abs(eur);
+        int st = b >= 1 || b == 0 ? 2 : Math.min(10, Math.max(2, 3 - (int) Math.floor(Math.log10(b))));
+        return String.format(ort, "%,." + st + "f €", eur);
+    }
+
     static Uri tonUri(Context c, int ton) {
         int res = ton >= 1 && ton <= TOENE ? c.getResources().getIdentifier("ton_" + ton, "raw", c.getPackageName()) : 0;
-        return res == 0 ? null : Uri.parse("android.resource://" + c.getPackageName() + "/" + res);
+        return res == 0 ? null : Uri.parse("android.resource://" + c.getPackageName() + "/raw/ton_" + ton);   // 0.87: Name statt ID (Bugliste 15)
     }
 
     /** Kanal fuer einen Ton anlegen (einmal) und seine Kennung liefern; ohne Ton der normale Kanal. */
     static String kanalFuer(Context c, NotificationManager nm, String kanalName, String tonName, int ton) {
         Uri u = tonUri(c, ton);
         if (u == null) return KANAL;
-        String id = KANAL + "-ton" + ton;
+        String id = KANAL + "-klang" + ton;                                 // 0.87: neue Kennung (Ton per Name)
+        if (nm.getNotificationChannel(KANAL + "-ton" + ton) != null) nm.deleteNotificationChannel(KANAL + "-ton" + ton);
         if (nm.getNotificationChannel(id) == null) {
             NotificationChannel ch = new NotificationChannel(id, (kanalName == null || kanalName.isEmpty() ? "Depot-Kompass" : kanalName) + " · " + ton
                     + (tonName == null || tonName.isEmpty() ? "" : " " + tonName), NotificationManager.IMPORTANCE_DEFAULT);
@@ -276,7 +284,7 @@ public class Wachter extends JobService {
         boolean kurse = k.optBoolean("kurse", true), earnings = k.optBoolean("earnings", true), news = k.optBoolean("news", false),
                 markenAn = k.optBoolean("marken", true);
         int newsMax = Math.max(1, k.optInt("newsMax", 3)), newsGezeigt = 0, newsWeitere = 0;   // 0.85: kein Spam - Rest als eine Sammel-Meldung
-        boolean adhocAn = k.optBoolean("adhoc", true), adhocGeprueft = false;
+        boolean adhocAn = k.optBoolean("adhoc", true), adhocGeprueft = false, adhocFehler = false;   // 0.87 Z2
         java.util.HashMap<String, Double> fx = new java.util.HashMap<>();   // 0.61: Euro-Umrechnung je Waehrung, einmal pro Lauf
         fx.put("EUR", 1.0);
         Locale ort = "en".equals(k.optString("sprache")) ? Locale.US : Locale.GERMANY;
@@ -390,7 +398,7 @@ public class Wachter extends JobService {
                                 if (erreicht && !gemeldet.getBoolean(mschl, false)) {
                                     String alarmName = mk.optString("name", "");
                                     melden("alarm", kanal, "🔔 " + name + (alarmName.isEmpty() ? "" : " – " + alarmName),
-                                            mk.optString("text", art) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + String.format(ort, "%,.2f €", eur), nr++, ton, tonName);
+                                            mk.optString("text", art) + " · " + t.optString("kursJetzt", "Kurs jetzt") + " " + kursText(ort, eur), nr++, ton, tonName);
                                     gemeldet.edit().putBoolean(mschl, true).apply();
                                 } else if (!erreicht && gemeldet.getBoolean(mschl, false)) {
                                     gemeldet.edit().remove(mschl).apply();   // wieder scharf, sobald der Kurs Marke/Zone verlassen hat
@@ -434,23 +442,33 @@ public class Wachter extends JobService {
                     while (m.find() && gefunden < 2) {
                         try {
                             String titel = m.group(1).replace("<![CDATA[", "").replace("]]>", "").replace("&amp;", "&").trim();
-                            if (rfc.parse(m.group(2).trim()).getTime() > letzteAdhoc && adhocMuster.matcher(titel).find()) {
+                            String aschl = "a:" + Integer.toHexString(titel.hashCode()) + ":" + heute;   // 0.87 Z2: Titel nur einmal melden
+                            if (rfc.parse(m.group(2).trim()).getTime() > letzteAdhoc && adhocMuster.matcher(titel).find() && !gemeldet.getBoolean(aschl, false)) {
                                 melden("adhoc", kanal, "⚡ " + t.optString("adhoc", "Ad-hoc-Meldung") + " · " + name, titel, nr++);
+                                gemeldet.edit().putBoolean(aschl, true).apply();
                                 gefunden++;
                             }
                         } catch (Exception ignored) { }
                     }
-                } catch (Exception ignored) { fehler++; }
+                } catch (Exception ignored) { fehler++; adhocFehler = true; }
                 adhocGeprueft = true;
             }
         }
         if (newsWeitere > 0) melden("news", kanal, "📰 Depot-Kompass", String.format(ort, t.optString("weitereNews", "Neue Schlagzeilen zu %d weiteren Werten – in der App unter News"), newsWeitere), nr++);
-        if (adhocGeprueft) gemeldet.edit().putLong("adhocStand", System.currentTimeMillis()).apply();
+        if (adhocGeprueft && !adhocFehler) gemeldet.edit().putLong("adhocStand", System.currentTimeMillis()).apply();   // 0.87 Z2: nach Netzfehler nicht weitersetzen
         if (news) gemeldet.edit().putLong("newsStand", System.currentTimeMillis()).apply();
         try { verlaufMerken(this, null, new JSONObject().put("t", System.currentTimeMillis()).put("werte", geprueft).put("meldungen", gemeldetLauf).put("fehler", fehler)); }
         catch (Exception ignored) { }
         // alte Merker (aelter als ~2 Wochen) aufraeumen
-        if (gemeldet.getAll().size() > 600) gemeldet.edit().clear().putLong("newsStand", System.currentTimeMillis()).apply();
+        // 0.87 (Bugliste 9): nur Tages-Merker k:/e: aelter als 14 Tage entfernen - m:, p:, er:, adhocStand und newsStand bleiben
+        if (gemeldet.getAll().size() > 600) {
+            String grenze = new SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).format(new Date(System.currentTimeMillis() - 14 * 86400000L));
+            SharedPreferences.Editor ed = gemeldet.edit();
+            for (String s : gemeldet.getAll().keySet()) {
+                if ((s.startsWith("k:") || s.startsWith("e:") || s.startsWith("a:")) && s.substring(s.lastIndexOf(':') + 1).compareTo(grenze) < 0) ed.remove(s);
+            }
+            ed.apply();
+        }
     }
 
     // ------------------------------------------------------------ Hilfen

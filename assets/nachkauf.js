@@ -26,7 +26,7 @@ function dz(x) {
     s = String(x).trim().replace(/[€\s" ]/g, "").replace("−", "-");
     if (!s) return null;
     if (s.includes(",")) s = s.replace(/\./g, "").replace(",", ".");
-    else if (/^[-+]?\d{1,3}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
+    else if (/^[-+]?[1-9]\d{0,2}(\.\d{3})+$/.test(s)) s = s.replace(/\./g, "");
   }
   const m = s.match(/^([-+]?)(\d*)(?:\.(\d*))?$/);
   if (!m || (!m[2] && !m[3])) return null;
@@ -353,11 +353,21 @@ function nachkaufRechner() {
     </section>`;
 }
 
+/** 0.87 (Bugliste 1+5): Zahl fuers Eingabefeld - unabhaengig von der Sprache mit Komma (gelesen wird deutsch),
+ *  10 signifikante Stellen statt fest 2/4 Nachkommastellen (DOGE 0,1234 / SHIB 0,0000123 bleiben erhalten), nie Exponentenschreibweise. */
+function nkFeld(v) {
+  if (v == null || isNaN(v)) return "";
+  const z = Number(Number(v).toPrecision(10));
+  let s = String(z);
+  if (/e/i.test(s)) s = z.toFixed(20).replace(/0+$/, "").replace(/\.$/, "");
+  return s.replace(".", ",");
+}
+
 /** Aus einer Position: Werte KOPIEREN und den Rechner oeffnen - die Position selbst bleibt, wie sie ist. */
 function nachkaufAusPosition(id) {
   const i = D.instrumente[id] || {}, p = positionen().liste.find((y) => y.id === id);
   if (!p || !p.stueck) return meldung("Diese Position hat keinen Bestand.");
-  const t = (v, n) => v == null || isNaN(v) ? "" : fmt({ maximumFractionDigits: n, useGrouping: false }).format(v);
+  const t = nkFeld;   // 0.87: immer mit Komma, genug Stellen (Bugliste 1+5)
   ui.nachkauf = { name: i.name || id, posId: id, waehrung: "eur", art: i.art === "Krypto" ? "krypto" : "aktie", bestand: t(p.stueck, 8), einstand: t(p.einstand / p.stueck, 2),
                   kurs: t(i.kurs, 4), kursDatum: (i.kursDatum || "").slice(0, 10), gebuehrAn: false, gebuehr: EIN().nachkaufGebuehr ?? "" };
   ui.nachkaufOffen = true; zeige("notizen");
@@ -667,7 +677,7 @@ function gewinnRechner() {
 function gewinnAusPosition(id) {
   const i = D.instrumente[id] || {}, p = positionen().liste.find((y) => y.id === id);
   if (!p || !p.stueck) return meldung("Diese Position hat keinen Bestand.");
-  const t = (v, n) => v == null || isNaN(v) ? "" : fmt({ maximumFractionDigits: n, useGrouping: false }).format(v);
+  const t = nkFeld;   // 0.87: immer mit Komma, genug Stellen (Bugliste 1+5)
   ui.gewinn = { name: i.name || id, posId: id, waehrung: "eur", art: i.art === "Krypto" ? "krypto" : "aktie", bestand: t(p.stueck, 8), einstand: t(p.einstand / p.stueck, 2),
                 k1: t(i.kurs, 4), a1: "", b1: "", modus: ui.gewinn?.modus || "betrag", gebuehrAn: false, gebuehr: EIN().nachkaufGebuehr ?? "" };
   ui.gewinnOffen = true; zeige("notizen");
@@ -686,7 +696,7 @@ function rechnerPosWahl(ziel, r) {
 /** Positionsgroesse: aktueller Kurs als Einstieg, Kursverlauf des Werts fuer den Schwankungs-Hinweis. Stop/Ziel traegt man selbst ein. */
 function posgrAusPosition(id) {
   const i = D.instrumente[id] || {}, key = "d:" + S.aktiv + ":" + id;
-  const t = (v, n) => v == null || isNaN(v) ? "" : fmt({ maximumFractionDigits: n, useGrouping: false }).format(v);
+  const t = nkFeld;   // 0.87: immer mit Komma, genug Stellen (Bugliste 1+5)
   ui.posgr = { ...(ui.posgr || {}), name: i.name || id, posId: id, waehrung: "eur", art: i.art === "Krypto" ? "krypto" : "aktie", richtung: i.richtung === "short" ? "short" : "long",
                einstieg: t(i.kurs, 4), stop: "", ziel: "", basis: typeof hebelBasisListe === "function" && hebelBasisListe().some((b) => b.key === key) ? key : "",
                gebuehr: ui.posgr?.gebuehr ?? EIN().nachkaufGebuehr ?? "" };
